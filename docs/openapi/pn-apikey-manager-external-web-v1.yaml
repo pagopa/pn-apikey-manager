@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  termsOfService: https://termofservice.it
+  x-api-id: api-internal-web-pa
+  title: 'Piattaforma Notifiche: API per il Front End delle PA'
+  x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
+  version: '1.0.0'
+  description: >- 
+    ## Abstract
+      API utilizzate dal portale di Piattaforma Notifiche dedicato alle Pubbliche Amministrazioni
+  contact:
+    email: pn@pagopa.it
+  license:
+    name: Licenza di PN
+    url: 'https://da-definire/'
+servers:
+- url: https://webapi.pn.pagopa.it
+  description: Ambiente di produzione
+- url: https://webapi.uat.pn.pagopa.it
+  description: Ambiente di test
+- url: https://webapi.dev.pn.pagopa.it
+  description: Ambiente di sviluppo
+tags:
+  - name: ApiKeys
+    description: >-
+      Invocazioni utilizzabili dai mittenti per la gestione delle api keys
+
+
+paths:
+  "/api-keys":
+    get:    
+      summary: Ricerca api keys
+      description: >-
+        servizio di consultazione della lista delle api keys
+      tags:
+        - ApiKeys
+      operationId: getApiKeys
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL         
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeysResponse'
+        '400':
+          description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'    
+    post:    
+      summary: Creazione api key
+      description: >-
+        servizio di creazione di un'api key
+      tags:
+        - ApiKeys
+      operationId: newApiKey
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestNewApiKey"
+        required: true         
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ResponseNewApiKey'
+        '400':
+          description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/api-keys/{id}":
+    delete:    
+      summary: Rimozione api key
+      description: >-
+        servizio di rimozione dell'api key
+      tags:
+        - ApiKeys
+      operationId: deleteApiKeys
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/pathApiKey'    
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  
+  "/api-keys/{id}/status":
+    put:    
+      summary: Cambia lo stato dell'api key
+      description: >-
+        servizio di cambio stato dell'api key
+      tags:
+        - ApiKeys
+      operationId: changeStatusApiKey
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/pathApiKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestChangeStatusApiKey"
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  
+components:
+  parameters:
+    ############################################################################################
+    ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
+    ############################################################################################
+    ### N.B. PRENDERLE DA AUTH FLEET ###
+    uidAuthFleet:
+      name: x-pagopa-pn-uid
+      in: header
+      description: User Identifier
+      required: true
+      schema:
+        type: string
+    cxTypeAuthFleet:
+      name: x-pagopa-pn-cx-type
+      in: header
+      description: Customer/Receiver Type
+      required: true
+      schema:
+        $ref: '#/components/schemas/CxTypeAuthFleet'
+    cxIdAuthFleet:
+      name: x-pagopa-pn-cx-id
+      in: header
+      description: Customer/Receiver Identifier
+      required: true
+      schema:
+        type: string
+    cxGroupsAuthFleet:
+      name: x-pagopa-pn-cx-groups
+      in: header
+      description: Customer Groups
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+
+    ############################################################################################
+    ###                        PARAMETRI RICERCA API KEY                                     ###
+    ############################################################################################
+    pathApiKey:
+      description: >-
+        Identificativo univoco dell'api key
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    CxTypeAuthFleet:
+      type: string
+      enum:
+        - 'PA'
+        - 'PF'
+        - 'PG'
+        
+    Problem:
+      properties:
+        type:
+          description: URI reference of type definition
+          type: string
+        status:
+          description: The HTTP status code generated by the origin server for this occurrence of the problem.
+          example: 400
+          exclusiveMaximum: true
+          format: int32
+          maximum: 600
+          minimum: 100
+          type: integer
+        title:
+          description: A short, summary of the problem type. Written in english and readable
+          example: Bad Request
+          maxLength: 64
+          pattern: '^[ -~]{0,64}$'
+          type: string
+        detail:
+          description: A human readable explanation of the problem.
+          example: required field 'name' missing
+          maxLength: 4096
+          pattern: '^.{0,4096}$'
+          type: string
+        traceId:
+          description: Internal support identifier associated to error
+          example: 123e4567-e89b-12d3-a456-426614174000
+          type: string
+        errors:
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/ProblemError'
+      additionalProperties: false
+      required:       
+        - type
+        - status
+        - title
+        - errors
+    ProblemError:
+      properties:
+        code:
+          description: Internal code of the error, in human-readable format
+          example: PN_PARAMETER_TOO_LONG | PN_PARAMETER_TOO_SHORT | PN_DUPLICATE_ENTRY | etc...
+          type: string
+        detail:
+          description: A human readable explanation specific to this occurrence of the problem.
+          example: Parameter not valid
+          maxLength: 4096
+          pattern: '^.{0,4096}$'
+          type: string
+      required:
+        - code
+        - detail
+    
+    ApiKeysResponse:
+      title: Elenco di api keys 
+      description: >-
+        Dto contenente la lista delle api keys associate ad un utente.
+      type: array
+      items:
+        $ref: '#/components/schemas/ApiKeyRow'
+
+    ApiKeyRow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Id dell'api key
+        name:
+          type: string
+          description: Nome dell'api key
+        apiKey:
+          type: string
+          description: Valore dell'api key
+        lastUpdate:
+          type: string
+          description: Data ultima modifica
+          format: date-time
+        groups:
+          type: array
+          description: Gruppi a cui appartiene l'api key
+          items:
+            type: string
+        status: 
+            $ref: '#/components/schemas/ApiKeyStatus'
+            description: Stato dell'api key
+        statusHistory:
+          type: array
+          description: Storico degli stati dell'api key
+          items:
+            $ref: '#/components/schemas/ApiKeyStatusHistory'
+
+    ApiKeyStatus:
+      type: string
+      enum: ['CREATED', 'ENABLED', 'BLOCKED', 'ROTATED']
+
+    ApiKeyStatusHistory:
+      type: object
+      properties:
+        status: 
+          $ref: '#/components/schemas/ApiKeyStatus'
+          description: Stato dell'api key
+        date:
+          type: string
+          description: data a cui corrisponde il cambio di stato
+          format: date-time
+        changedByDenomination:
+          type: string
+          description: nome dell'utente che ha effettuato il cambio di stato
+  
+    RequestNewApiKey:
+      title: Request creazione api key
+      description: >-
+        Request per la creazione di una nuova api key
+      type: object
+      required:
+        - name
+        - groups
+      properties:
+        name:
+          type: string
+          description: nome dell'api key
+        groups:
+          type: array
+          description: Gruppi a cui appartiene l'api key (indicare l'id dei gruppi)
+          items:
+            type: string
+    
+    ResponseNewApiKey:
+      title: Response creazione api key
+      description: >-
+        Response per la creazione di una nuova api key
+      type: object
+      required:
+        - id
+        - api-key
+      properties:
+        id:
+          type: string
+          description: id dell'api key appena generata
+        api-key:
+          type: string
+          description: Valore dell'api key appena generata
+
+    RequestChangeStatusApiKey:
+      title: Request cambio stato api key
+      description: >-
+        Action per il cambio stato di un'api key
+      type: string
+      enum:
+        - 'BLOCK'
+        - 'ENABLE'
+        - 'ROTATE'
