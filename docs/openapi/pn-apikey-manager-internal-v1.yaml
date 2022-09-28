@@ -35,11 +35,11 @@ paths:
       tags:
         - ApiKeys
       operationId: getApiKeys
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL         
+      parameters:                                           # NO EXTERNAL
+        - $ref: '#/components/parameters/uidAuthFleet'      # NO EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL         
       responses:
         '200':
           description: OK
@@ -66,11 +66,11 @@ paths:
       tags:
         - ApiKeys
       operationId: newApiKey
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
+      parameters:                                           # NO EXTERNAL
+        - $ref: '#/components/parameters/uidAuthFleet'      # NO EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
       requestBody:
         content:
           application/json:
@@ -78,41 +78,12 @@ paths:
               $ref: "#/components/schemas/RequestNewApiKey"
         required: true         
       responses:
-        '202':
-          description: OK
-        '400':
-          description: Bad request       
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '500':
-          description: Internal error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-
-  "/api-keys/generate":
-    get:    
-      summary: Genera una nuova api key da utilizzare in fase di creazione
-      description: >-
-        servizio di generazione di una nuova api key
-      tags:
-        - ApiKeys
-      operationId: generateApiKey
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL         
-      responses:
         '200':
           description: OK
           content:
-            application/json:
+            application/problem+json:
               schema:
-                $ref: '#/components/schemas/GenerateApiKeyResponse'
+                $ref: '#/components/schemas/ResponseNewApiKey'
         '400':
           description: Bad request       
           content:
@@ -126,7 +97,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-keys/{api-key}":
+  "/api-keys/{id}":
     delete:    
       summary: Rimozione api key
       description: >-
@@ -135,16 +106,22 @@ paths:
         - ApiKeys
       operationId: deleteApiKeys
       parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/uidAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/pathApiKey'    
       responses:
         '200':
           description: OK
         '400':
           description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. delete an enabled key)
           content:
             application/problem+json:
               schema:
@@ -162,7 +139,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   
-  "/api-keys/{api-key}/status":
+  "/api-keys/{id}/status":
     put:    
       summary: Cambia lo stato dell'api key
       description: >-
@@ -171,10 +148,10 @@ paths:
         - ApiKeys
       operationId: changeStatusApiKey
       parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
+        - $ref: '#/components/parameters/uidAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/pathApiKey'
       requestBody:
         content:
@@ -187,6 +164,12 @@ paths:
           description: OK
         '400':
           description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
           content:
             application/problem+json:
               schema:
@@ -210,36 +193,40 @@ components:
     ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
     ############################################################################################
     ### N.B. PRENDERLE DA AUTH FLEET ###
-    uidAuthFleet:
-      name: x-pagopa-pn-uid
-      in: header
-      description: User Identifier
-      required: true
-      schema:
-        type: string
-    cxTypeAuthFleet:
-      name: x-pagopa-pn-cx-type
-      in: header
-      description: Customer/Receiver Type
-      required: true
-      schema:
-        $ref: '#/components/schemas/CxTypeAuthFleet'
-    cxIdAuthFleet:
-      name: x-pagopa-pn-cx-id
-      in: header
-      description: Customer/Receiver Identifier
-      required: true
-      schema:
-        type: string
-    cxGroupsAuthFleet:
-      name: x-pagopa-pn-cx-groups
-      in: header
-      description: Customer Groups
-      required: false
-      schema:
-        type: array
-        items:
-          type: string
+    uidAuthFleet:                                        # NO EXTERNAL
+      name: x-pagopa-pn-uid                              # NO EXTERNAL
+      in: header                                         # NO EXTERNAL
+      description: User Identifier                       # NO EXTERNAL
+      required: true                                     # NO EXTERNAL
+      schema:                                            # NO EXTERNAL
+        type: string                                     # NO EXTERNAL
+    cxTypeAuthFleet:                                     # NO EXTERNAL
+      name: x-pagopa-pn-cx-type                          # NO EXTERNAL
+      in: header                                         # NO EXTERNAL
+      description: Customer/Receiver Type                # NO EXTERNAL
+      required: true                                     # NO EXTERNAL
+      schema:                                            # NO EXTERNAL
+        type: string                                     # NO EXTERNAL
+        enum:                                            # NO EXTERNAL
+          - 'PA'                                         # NO EXTERNAL
+          - 'PF'                                         # NO EXTERNAL
+          - 'PG'                                         # NO EXTERNAL
+    cxIdAuthFleet:                                       # NO EXTERNAL
+      name: x-pagopa-pn-cx-id                            # NO EXTERNAL
+      in: header                                         # NO EXTERNAL
+      description: Customer/Receiver Identifier          # NO EXTERNAL
+      required: true                                     # NO EXTERNAL
+      schema:                                            # NO EXTERNAL
+        type: string                                     # NO EXTERNAL
+    cxGroupsAuthFleet:                                   # NO EXTERNAL
+      name: x-pagopa-pn-cx-groups                        # NO EXTERNAL
+      in: header                                         # NO EXTERNAL
+      description: Customer Groups                       # NO EXTERNAL
+      required: false                                    # NO EXTERNAL
+      schema:                                            # NO EXTERNAL
+        type: array                                      # NO EXTERNAL
+        items:                                           # NO EXTERNAL
+          type: string                                   # NO EXTERNAL
 
     ############################################################################################
     ###                        PARAMETRI RICERCA API KEY                                     ###
@@ -247,20 +234,13 @@ components:
     pathApiKey:
       description: >-
         Identificativo univoco dell'api key
-      name: api-key
+      name: id
       in: path
       required: true
       schema:
         type: string
-
+  
   schemas:
-    CxTypeAuthFleet:
-      type: string
-      enum:
-        - 'PA'
-        - 'PF'
-        - 'PG'
-        
     Problem:
       properties:
         type:
@@ -304,11 +284,8 @@ components:
     ProblemError:
       properties:
         code:
-          description: Internal code of the error
-          example: 400-0001
-          minLength: 8
-          maxLength: 8
-          pattern: '^[0-9]{3}-[0-9]{4}$'
+          description: Internal code of the error, in human-readable format
+          example: PN_PARAMETER_TOO_LONG | PN_PARAMETER_TOO_SHORT | PN_DUPLICATE_ENTRY | etc...
           type: string
         detail:
           description: A human readable explanation specific to this occurrence of the problem.
@@ -324,17 +301,25 @@ components:
       title: Elenco di api keys 
       description: >-
         Dto contenente la lista delle api keys associate ad un utente.
-      type: array
-      items:
-        $ref: '#/components/schemas/ApiKeyRow'
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKeyRow'
 
     ApiKeyRow:
       type: object
       properties:
+        id:
+          type: string
+          description: Id dell'api key
         name:
           type: string
           description: Nome dell'api key
-        apiKey:
+        value:
           type: string
           description: Valore dell'api key
         lastUpdate:
@@ -376,43 +361,51 @@ components:
     RequestNewApiKey:
       title: Request creazione api key
       description: >-
-        Dto per la creazione di una nuova api key
+        Request per la creazione di una nuova api key
       type: object
       required:
-        - apiKey
         - name
         - groups
       properties:
-        apiKey: 
-          type: string
-          description: valore dell'api key precedentemente generata
         name:
           type: string
           description: nome dell'api key
         groups:
           type: array
-          description: Gruppi a cui appartiene l'api key
+          description: Gruppi a cui appartiene l'api key (indicare l'id dei gruppi)
           items:
             type: string
-
-    GenerateApiKeyResponse:
-      title: Response generazione nuova api key
+    
+    ResponseNewApiKey:
+      title: Response creazione api key
       description: >-
-        Dto di risposta della generazione di una nuova api key
+        Response per la creazione di una nuova api key
       type: object
       required:
-        - apiKey
+        - id
+        - api-key
       properties:
-        apiKey: 
+        id:
           type: string
-          description: valore dell'api key generata 
+          description: id dell'api key appena generata
+        api-key:
+          type: string
+          description: Valore dell'api key appena generata
 
     RequestChangeStatusApiKey:
       title: Request cambio stato api key
       description: >-
-        Dto per il cambio stato di un'api key
+        Action per il cambio stato di un'api key
       type: string
       enum:
         - 'BLOCK'
         - 'ENABLE'
         - 'ROTATE'
+
+#  securitySchemes:                                      # ONLY EXTERNAL
+#    bearerAuth:                                         # ONLY EXTERNAL
+#      type: http                                        # ONLY EXTERNAL
+#      scheme: bearer                                    # ONLY EXTERNAL
+#      bearerFormat: JWT                                 # ONLY EXTERNAL
+#security:                                               # ONLY EXTERNAL
+# - bearerAuth: []                                       # ONLY EXTERNAL

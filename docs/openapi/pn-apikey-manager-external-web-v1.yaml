@@ -35,11 +35,6 @@ paths:
       tags:
         - ApiKeys
       operationId: getApiKeys
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL         
       responses:
         '200':
           description: OK
@@ -66,11 +61,6 @@ paths:
       tags:
         - ApiKeys
       operationId: newApiKey
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
       requestBody:
         content:
           application/json:
@@ -106,16 +96,18 @@ paths:
         - ApiKeys
       operationId: deleteApiKeys
       parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
         - $ref: '#/components/parameters/pathApiKey'    
       responses:
         '200':
           description: OK
         '400':
           description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. delete an enabled key)
           content:
             application/problem+json:
               schema:
@@ -142,10 +134,6 @@ paths:
         - ApiKeys
       operationId: changeStatusApiKey
       parameters:
-        - $ref: '#/components/parameters/uidAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxTypeAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxIdAuthFleet' #NO-EXTERNAL
-        - $ref: '#/components/parameters/cxGroupsAuthFleet' #NO-EXTERNAL
         - $ref: '#/components/parameters/pathApiKey'
       requestBody:
         content:
@@ -158,6 +146,12 @@ paths:
           description: OK
         '400':
           description: Bad request       
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
           content:
             application/problem+json:
               schema:
@@ -181,36 +175,6 @@ components:
     ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
     ############################################################################################
     ### N.B. PRENDERLE DA AUTH FLEET ###
-    uidAuthFleet:
-      name: x-pagopa-pn-uid
-      in: header
-      description: User Identifier
-      required: true
-      schema:
-        type: string
-    cxTypeAuthFleet:
-      name: x-pagopa-pn-cx-type
-      in: header
-      description: Customer/Receiver Type
-      required: true
-      schema:
-        $ref: '#/components/schemas/CxTypeAuthFleet'
-    cxIdAuthFleet:
-      name: x-pagopa-pn-cx-id
-      in: header
-      description: Customer/Receiver Identifier
-      required: true
-      schema:
-        type: string
-    cxGroupsAuthFleet:
-      name: x-pagopa-pn-cx-groups
-      in: header
-      description: Customer Groups
-      required: false
-      schema:
-        type: array
-        items:
-          type: string
 
     ############################################################################################
     ###                        PARAMETRI RICERCA API KEY                                     ###
@@ -223,15 +187,8 @@ components:
       required: true
       schema:
         type: string
-
+  
   schemas:
-    CxTypeAuthFleet:
-      type: string
-      enum:
-        - 'PA'
-        - 'PF'
-        - 'PG'
-        
     Problem:
       properties:
         type:
@@ -292,9 +249,14 @@ components:
       title: Elenco di api keys 
       description: >-
         Dto contenente la lista delle api keys associate ad un utente.
-      type: array
-      items:
-        $ref: '#/components/schemas/ApiKeyRow'
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKeyRow'
 
     ApiKeyRow:
       type: object
@@ -305,7 +267,7 @@ components:
         name:
           type: string
           description: Nome dell'api key
-        apiKey:
+        value:
           type: string
           description: Valore dell'api key
         lastUpdate:
@@ -387,3 +349,11 @@ components:
         - 'BLOCK'
         - 'ENABLE'
         - 'ROTATE'
+
+  securitySchemes:                                      # ONLY EXTERNAL
+    bearerAuth:                                         # ONLY EXTERNAL
+      type: http                                        # ONLY EXTERNAL
+      scheme: bearer                                    # ONLY EXTERNAL
+      bearerFormat: JWT                                 # ONLY EXTERNAL
+security:                                               # ONLY EXTERNAL
+ - bearerAuth: []                                       # ONLY EXTERNAL
