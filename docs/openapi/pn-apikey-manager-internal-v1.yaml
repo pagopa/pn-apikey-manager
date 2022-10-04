@@ -193,13 +193,13 @@ components:
     ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
     ############################################################################################
     ### N.B. PRENDERLE DA AUTH FLEET ###
-    cxTypeAuthFleet:
+    cxTypeAuthFleet:                                                       # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'    # NO EXTERNAL
-    cxIdAuthFleet:
+    cxIdAuthFleet:                                                         # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'      # NO EXTERNAL
-    cxGroupsAuthFleet:
+    cxGroupsAuthFleet:                                                     # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'  # NO EXTERNAL
-    uidAuthFleet:
+    uidAuthFleet:                                                          # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'       # NO EXTERNAL
 
     ############################################################################################

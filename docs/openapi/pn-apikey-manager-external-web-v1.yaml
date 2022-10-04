@@ -228,7 +228,6 @@ components:
             type: string
         status: 
             $ref: '#/components/schemas/ApiKeyStatus'
-            description: Stato dell'api key
         statusHistory:
           type: array
           description: Storico degli stati dell'api key
@@ -236,6 +235,7 @@ components:
             $ref: '#/components/schemas/ApiKeyStatusHistory'
 
     ApiKeyStatus:
+      description: Stato dell'api key
       type: string
       enum: ['CREATED', 'ENABLED', 'BLOCKED', 'ROTATED']
 
@@ -244,7 +244,6 @@ components:
       properties:
         status: 
           $ref: '#/components/schemas/ApiKeyStatus'
-          description: Stato dell'api key
         date:
           type: string
           description: data a cui corrisponde il cambio di stato
