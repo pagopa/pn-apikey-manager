@@ -21,7 +21,7 @@ import javax.annotation.Generated;
  */
 
 @JsonTypeName("ApiKeyStatusHistory")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-14T12:19:13.902105400+02:00[Europe/Berlin]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-17T17:00:54.448171300+02:00[Europe/Berlin]")
 public class ApiKeyStatusHistoryDto {
 
   @JsonProperty("status")

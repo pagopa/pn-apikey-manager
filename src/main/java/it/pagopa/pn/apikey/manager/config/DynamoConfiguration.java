@@ -14,5 +14,6 @@ public class DynamoConfiguration {
         return DynamoDbEnhancedAsyncClient.builder().build();
     }
 
+
 }
 

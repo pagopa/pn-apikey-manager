@@ -1,26 +1,21 @@
 package it.pagopa.pn.apikey.manager.entity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@DynamoDBDocument
+@DynamoDbBean
 public class ApiKeyHistory {
 
-    @DynamoDBAttribute(attributeName = "status")
+    @Setter
+    @Getter(onMethod=@__({@DynamoDbAttribute("status")}))
     private String status;
 
-    @DynamoDBAttribute(attributeName = "date")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("date")}))
     private String date;
 
-    @DynamoDBAttribute(attributeName = "changeByDenomination")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("changeByDenomination")}))
     private String changeByDenomination;
 
 }

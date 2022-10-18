@@ -1,21 +1,13 @@
 package it.pagopa.pn.apikey.manager.entity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@DynamoDBTable(tableName = "pa-aggregation")
+@DynamoDbBean
 public class PaAggregation {
 
-    @DynamoDBAttribute(attributeName = "paId")
     private String paId;
 
-    @DynamoDBHashKey(attributeName = "aggregationId")
     private String aggregationId;
 }

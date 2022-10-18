@@ -1,60 +1,53 @@
 package it.pagopa.pn.apikey.manager.entity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@DynamoDBTable(tableName = "virtual-key")
+@DynamoDbBean
 public class ApiKeyModel {
 
-    @DynamoDBAttribute(attributeName = "id")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("id")}))
     private String id;
 
-    @DynamoDBHashKey(attributeName = "virtualKey")
+    @Setter @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("virtualKey")}))
     private String virtualKey;
 
-    @DynamoDBAttribute(attributeName = "name")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("name")}))
     private String name;
 
-    @Builder.Default
-    @DynamoDBAttribute(attributeName = "lastUpdate")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("lastUpdate")}))
     private String lastUpdate;
 
-    @DynamoDBAttribute(attributeName = "status")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("status")}))
     private String status;
 
-    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.L)
-    @DynamoDBAttribute(attributeName = "groups")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("groups")}))
     private List<String>  groups;
 
-    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.L)
-    @DynamoDBAttribute(attributeName = "statusHistory")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("statusHistory")}))
     private List<ApiKeyHistory> statusHistory = new ArrayList<>();
 
-    @DynamoDBAttribute(attributeName = "x-pagopa-pn-uid")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-uid")}))
     private String uid;
 
-    @DynamoDBAttribute(attributeName = "x-pagopa-pn-cx-id")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-cx-id")}))
     private String cxId;
 
-    @DynamoDBAttribute(attributeName = "x-pagopa-pn-cx-type")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-cx-type")}))
     private String cxType;
 
-    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.L)
-    @DynamoDBAttribute(attributeName = "x-pagopa-pn-cx-groups")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-cx-groups")}))
     private List<String> cxGroup;
 
-    @DynamoDBAttribute(attributeName = "correlationId")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("correlationId")}))
     private String correlationId;
 
-    @DynamoDBAttribute(attributeName = "apiKey")
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("apiKey")}))
     private String apiKey;
 }
