@@ -24,14 +24,14 @@ public class ApiKeysController implements ApiKeysApi {
 
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
-                                                         String id, String body, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return Mono.empty();
+                                                         String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        return apiKeyService.changeStatus(id,status,xPagopaPnUid).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
     public   Mono<ResponseEntity<Void>> deleteApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                       String id, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
-        return Mono.empty();
+        return apiKeyService.deleteApiKey(id).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
@@ -41,6 +41,7 @@ public class ApiKeysController implements ApiKeysApi {
 
     @Override
     public Mono<ResponseEntity<ResponseNewApiKeyDto>>newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return Mono.empty();
+        return apiKeyService.createApiKey(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,requestNewApiKeyDto, xPagopaPnCxGroups)
+                .map(s -> ResponseEntity.ok().body(s));
     }
 }
