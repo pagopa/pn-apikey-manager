@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import io.swagger.annotations.Api;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
 import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import software.amazon.awssdk.services.apigateway.model.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -27,35 +25,48 @@ public class AggregationService {
     }
 
     public Mono<String> createNewAwsApiKey(String pa) {
-        CreateApiKeyRequest createApiKeyRequest = CreateApiKeyRequest.builder()
-                .name(pa + UUID.randomUUID())
-                .enabled(true)
-                .build();
-        log.debug("CreateApiKeyRequest with name: {}",createApiKeyRequest.name());
+        CreateApiKeyRequest createApiKeyRequest = constructApiKeyRequest(pa);
         return Mono.fromFuture(apiGatewayAsyncClient.createApiKey(createApiKeyRequest))
+                .doOnNext(createApiKeyResponse -> log.info("Created ApiKey with name: {}",createApiKeyRequest.name()))
                 .flatMap(createApiKeyResponse -> createUsagePlan(createApiKeyResponse.id())
                         .map(createUsagePlanKeyResponse -> createApiKeyResponse.id()));
     }
 
     public Mono<CreateUsagePlanKeyResponse> createUsagePlan(String id) {
-        CreateUsagePlanRequest createUsagePlanRequest = CreateUsagePlanRequest.builder()
+        CreateUsagePlanRequest createUsagePlanRequest = constructUsagePlanRequest();
+        log.debug("CreateUsagePlanRequest with name: {}, quota: {}, throttle: {}, stage: {}",
+                createUsagePlanRequest.name(), createUsagePlanRequest.quota(), createUsagePlanRequest.throttle(), createUsagePlanRequest.apiStages());
+
+       return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlan(createUsagePlanRequest))
+               .flatMap(createUsagePlanResponse -> {
+            CreateUsagePlanKeyRequest createUsagePlanKeyRequest = constructUsagePlanKeyRequest(createUsagePlanResponse, id);
+            return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
+                    .doOnNext(createUsagePlanKeyResponse -> log.info("Created usagePlanKey with id: {}, keyId: {}",createUsagePlanKeyRequest.usagePlanId(), createUsagePlanKeyRequest.keyId()));
+        });
+    }
+
+    private CreateApiKeyRequest constructApiKeyRequest(String pa) {
+        return CreateApiKeyRequest.builder()
+                .name(pa + "-" +UUID.randomUUID())
+                .enabled(true)
+                .build();
+    }
+
+    private CreateUsagePlanKeyRequest constructUsagePlanKeyRequest(CreateUsagePlanResponse createUsagePlanResponse, String id) {
+        return CreateUsagePlanKeyRequest.builder()
+                .keyId(id)
+                .keyType("API_KEY")
+                .usagePlanId(createUsagePlanResponse.id())
+                .build();
+    }
+
+    private CreateUsagePlanRequest constructUsagePlanRequest() {
+        return CreateUsagePlanRequest.builder()
                 .name("pn-apikey-medium")
                 .quota(QuotaSettings.builder().limit(10000).period(QuotaPeriodType.DAY).build())
                 .throttle(ThrottleSettings.builder().rateLimit(10000D).build())
                 .apiStages(ApiStage.builder().apiId("vub3na4af4").stage("dev").build())
                 .build();
-
-        log.debug("CreateUsagePlanRequest with name: {}, quota: {}, throttle: {}, stage: {}",
-                createUsagePlanRequest.name(), createUsagePlanRequest.quota(), createUsagePlanRequest.throttle(), createUsagePlanRequest.apiStages());
-
-       return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlan(createUsagePlanRequest)).flatMap(createUsagePlanResponse -> {
-            CreateUsagePlanKeyRequest createUsagePlanKeyRequest = CreateUsagePlanKeyRequest.builder()
-                    .keyId(id)
-                    .usagePlanId(createUsagePlanResponse.id())
-                    .build();
-            return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
-                    .doOnNext(createUsagePlanKeyResponse -> log.info("Created usagePlanKey with id: {}, keyId: {}",createUsagePlanKeyRequest.usagePlanId(), createUsagePlanKeyRequest.keyId()));
-        });
     }
 
     public Mono<ApiKeyAggregation> createNewAggregation(String awsApiKey) {
@@ -68,13 +79,8 @@ public class AggregationService {
         return aggregationRepository.saveAggregation(newApiKeyAggregation);
     }
 
-    public Mono<ApiKeyAggregation> deleteAggregation(String aggregationId){
-        //TODO: REMOVE AGGREGATION, DELETE API KEY, DELETE PA ASSOCIATION, DELETE APY KEY REAL FROM VIRTUAL
-        return Mono.empty();
-    }
-
     public Mono<ApiKeyAggregation> searchAwsApiKey(String aggregationId){
-        return aggregationRepository.searchRealApiKey(aggregationId);
+        return aggregationRepository.searchRealApiKey(aggregationId).doOnNext(apiKeyAggregation -> log.info("resp: {}",apiKeyAggregation));
     }
 
 }

@@ -3,6 +3,11 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+
+import java.util.List;
 
 @Component
 public class ApiKeyRepositoryImpl implements ApiKeyRepository{
@@ -16,7 +21,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     @Override
     public Mono<String> delete(String key) {
-        return Mono.fromFuture(table.deleteItem(Key.builder().partitionValue(key).build()).thenApply(r->key));
+        return Mono.fromFuture(table.deleteItem(Key.builder().partitionValue(key).build()))
+                .map(ApiKeyModel::getId);
     }
 
     @Override
@@ -25,13 +31,15 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
     }
 
     @Override
-    public Mono<ApiKeyModel> findById(String id) {
+    public Mono<List<ApiKeyModel>> findById(String id) {
         Key key = Key.builder()
                 .partitionValue(id)
                 .build();
 
-        return Mono.fromFuture(table.getItem(key).thenApply(apiKeyModel -> apiKeyModel));
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(key))
+                .build();
+
+        return Mono.from(table.index("virtualKey-id-index").query(queryEnhancedRequest).map(Page::items));
     }
-
-
 }

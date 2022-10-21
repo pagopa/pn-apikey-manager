@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
@@ -9,6 +10,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 @Component
+@Slf4j
 public class PaRepositoryImpl implements PaRepository{
 
     private final DynamoDbAsyncTable<PaAggregation> table;
@@ -17,11 +19,14 @@ public class PaRepositoryImpl implements PaRepository{
         this.table = dynamoDbEnhancedClient.table("pn-paAggregations", TableSchema.fromBean(PaAggregation.class));
     }
     @Override
-    public Mono<String> searchAggregation(String xPagopaPnCxId) {
+    public Mono<PaAggregation> searchAggregation(String xPagopaPnCxId) {
+
         Key key = Key.builder()
                 .partitionValue(xPagopaPnCxId)
                 .build();
 
-        return Mono.fromFuture(table.getItem(key).thenApply(PaAggregation::getAggregationId));
+        return Mono.fromFuture(table.getItem(key).thenApply(paAggregation -> paAggregation))
+                .doOnNext(s -> log.info("aggregation found: {}",s.toString()));
+
     }
 }

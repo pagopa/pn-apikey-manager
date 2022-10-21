@@ -1,21 +1,16 @@
 package it.pagopa.pn.apikey.manager.exception;
 
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
 public class ApiKeyManagerException extends RuntimeException{
 
-    public ApiKeyManagerException() {
-        super();
-    }
+    @Getter
+    private final HttpStatus status;
 
-    public ApiKeyManagerException(String message) {
+    public ApiKeyManagerException(String message, HttpStatus status) {
         super(message);
-    }
-
-    public ApiKeyManagerException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ApiKeyManagerException(Throwable cause) {
-        super(cause);
+        this.status = status;
     }
 
 }

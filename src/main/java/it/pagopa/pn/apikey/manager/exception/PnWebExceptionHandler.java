@@ -47,7 +47,12 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
         Problem problem;
         try {
             log.error("Error -> {}, uri : {}",throwable.getMessage(), serverWebExchange.getRequest().getURI());
-            problem = handleException(throwable);
+            if(throwable instanceof ApiKeyManagerException){
+                ApiKeyManagerException apiKeyManagerException = (ApiKeyManagerException) throwable;
+                problem = handleApiKeyException(apiKeyManagerException);
+            }else {
+                problem = handleException(throwable);
+            }
 
             problem.setTraceId(MDC.get("trace_id"));
             problem.setTimestamp(OffsetDateTime.now());
@@ -62,9 +67,18 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
         return serverWebExchange.getResponse().writeWith(Mono.just(dataBuffer));
     }
 
+    private Problem handleApiKeyException(ApiKeyManagerException apiKeyManagerException) {
+        Problem problem = new Problem();
+        problem.setStatus(apiKeyManagerException.getStatus().value());
+        problem.setTitle("ERROR");
+        problem.setDetail(apiKeyManagerException.getMessage());
+        return problem;
+    }
+
     private Problem handleException(Throwable throwable) {
         Problem problem = new Problem();
         problem.setTitle("ERROR");
+        problem.setStatus(500);
         problem.setDetail(throwable.getMessage());
         return problem;
     }

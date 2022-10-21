@@ -1,21 +1,20 @@
 package it.pagopa.pn.apikey.manager.entity;
 
 import lombok.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@ToString
 @DynamoDbBean
 public class ApiKeyModel {
 
-    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("id")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbSecondaryPartitionKey(indexNames = "virtualKey-id-index"), @DynamoDbAttribute("id")}))
     private String id;
 
-    @Setter @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("virtualKey")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbPartitionKey,@DynamoDbSecondarySortKey(indexNames = "virtualKey-id-index"), @DynamoDbAttribute("virtualKey")}))
     private String virtualKey;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("name")}))

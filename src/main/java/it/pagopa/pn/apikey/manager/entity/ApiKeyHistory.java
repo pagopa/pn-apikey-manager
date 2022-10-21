@@ -5,6 +5,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 @Data
+@ToString
 @DynamoDbBean
 public class ApiKeyHistory {
 

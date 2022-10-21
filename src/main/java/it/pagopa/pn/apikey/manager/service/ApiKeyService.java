@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -13,6 +14,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
+import static it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto.*;
 
 
 @Service
@@ -23,6 +27,7 @@ public class ApiKeyService {
     private static final String ENABLE = "ENABLE";
     private static final String ROTATE = "ROTATE";
     private static final String CREATE = "CREATE";
+    private static final String DELETE = "DELETE";
 
 
     private final ApiKeyRepository apiKeyRepository;
@@ -39,50 +44,79 @@ public class ApiKeyService {
                                                    RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups) {
 
         List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
-
+        log.debug("list groupsToAdd size: {}", groupToAdd.size());
         return paService.searchAggregationId(xPagopaPnCxId)
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(PA_AGGREGATION_NOT_FOUND, HttpStatus.INTERNAL_SERVER_ERROR)))
                 .flatMap(s -> {
-                    if (s != null) {
                         requestNewApiKeyDto.setGroups(groupToAdd);
                         ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
                         return checkIfApikeyExists(s, apiKeyModel, xPagopaPnCxId);
-                    } else {
-                        return Mono.error(new ApiKeyManagerException("PA is not associated with an aggregation"));
-                    }
-                });
-    }
-
-    private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String s, ApiKeyModel apiKeyModel, String xPagopaPnCxId) {
-        return aggregationService.searchAwsApiKey(s)
-                .flatMap(apiKeyAggregation -> {
-                    if (apiKeyAggregation == null) {
-                        return aggregationService.createNewAwsApiKey(xPagopaPnCxId)
-                                .flatMap(s1 -> aggregationService.createNewAggregation(s1)
-                                        .flatMap(apiKeyAggregation1 -> apiKeyRepository.save(apiKeyModel)
-                                                .map(this::createResponseNewApiKey)));
-                    }
-                    return apiKeyRepository.save(apiKeyModel).map(this::createResponseNewApiKey);
-                });
-    }
-
-    public Mono<String> deleteApiKey(String id) {
-        return apiKeyRepository.delete(id);
+                    });
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid) {
         return apiKeyRepository.findById(id)
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)))
                 .flatMap(apiKeyModel -> {
-                    apiKeyModel.setStatus(decodeStatus(status).getValue());
-                    apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
-                    return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid);
+                    if (apiKeyModel.size() == 1) {
+                        if (isOperationAllowed(apiKeyModel.get(0), status)) {
+                            apiKeyModel.get(0).setStatus(decodeStatus(status, false).getValue());
+                            apiKeyModel.get(0).getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
+                            return saveAndCheckIfRotate(apiKeyModel.get(0), status, xPagopaPnUid)
+                                    .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
+                        } else {
+                            return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
+                        }
+                    }
+                    return Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR));
                 });
+    }
+
+    public Mono<String> deleteApiKey(String id) {
+        return apiKeyRepository.findById(id)
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)))
+                .flatMap(apiKeyModel -> {
+                    if (apiKeyModel.size() == 1) {
+                        if (isOperationAllowed(apiKeyModel.get(0), DELETE)) {
+                            return apiKeyRepository.delete(apiKeyModel.get(0).getVirtualKey()).doOnNext(s -> log.info("Deleted api key with id: {}", id));
+                        } else {
+                            return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
+                        }
+                    }
+                    return Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR));
+                });
+    }
+
+    private boolean isOperationAllowed(ApiKeyModel apiKeyModel, String newStatus) {
+        ApiKeyStatusDto status = ApiKeyStatusDto.fromValue(apiKeyModel.getStatus());
+        if (newStatus.equals(DELETE))
+            return status.equals(BLOCKED) || status.equals(ENABLED);
+        if (newStatus.equals(ROTATE))
+            return status.equals(ENABLED);
+        if (newStatus.equals(BLOCK))
+            return status.equals(ENABLED) || status.equals(ROTATED);
+        if (newStatus.equals(ENABLE) &&
+                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistory -> apiKeyHistory.getStatus().equals(ROTATED.getValue())))
+            return status.equals(BLOCKED);
+        else
+            return false;
+    }
+
+    private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String s, ApiKeyModel apiKeyModel, String xPagopaPnCxId) {
+        return aggregationService.searchAwsApiKey(s)
+                .doOnNext(next -> log.info("Founded realApiKey for aggregate: {}", next.getAggregateId()))
+                .switchIfEmpty(aggregationService.createNewAwsApiKey(xPagopaPnCxId)
+                        .flatMap(aggregationService::createNewAggregation))
+                .flatMap(apiKeyAggregation -> apiKeyRepository.save(apiKeyModel)
+                        .map(this::createResponseNewApiKey));
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, String status, String xPagopaPnUid) {
         return apiKeyRepository.save(apiKeyModel)
                 .flatMap(resp -> {
                     if (status.equalsIgnoreCase(ROTATE)) {
-                        return apiKeyRepository.save(constructApiKeyModelForRotate(apiKeyModel, xPagopaPnUid));
+                        return apiKeyRepository.save(constructApiKeyModelForRotate(apiKeyModel, xPagopaPnUid))
+                                .doOnNext(apiKeyModel1 -> log.info("Created new Apikey with correlationId: {}", apiKeyModel1.getCorrelationId()));
                     }
                     return Mono.just(resp);
                 });
@@ -90,7 +124,7 @@ public class ApiKeyService {
 
     private List<String> checkGroups(List<String> groups, List<String> xPagopaPnCxGroups) {
         List<String> groupsToAdd = new ArrayList<>();
-        if (!groups.isEmpty() && xPagopaPnCxGroups.containsAll(groups)) {
+        if (!groups.isEmpty() && (xPagopaPnCxGroups.containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
             groupsToAdd.addAll(groups);
             return groupsToAdd;
         } else if (groups.isEmpty() && !xPagopaPnCxGroups.isEmpty()) {
@@ -99,7 +133,7 @@ public class ApiKeyService {
         } else if (groups.isEmpty()) {
             return groupsToAdd;
         }
-        throw new ApiKeyManagerException("User cannot add groups: " + groups.iterator().next());
+        throw new ApiKeyManagerException("User cannot add groups: " + groups.iterator().next(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private ResponseNewApiKeyDto createResponseNewApiKey(ApiKeyModel apiKeyModel) {
@@ -113,7 +147,7 @@ public class ApiKeyService {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId(UUID.randomUUID().toString());
         apiKeyModel.setVirtualKey(UUID.randomUUID().toString());
-        apiKeyModel.setStatus(ApiKeyStatusDto.CREATED.getValue());
+        apiKeyModel.setStatus(ApiKeyStatusDto.ENABLED.getValue());
         apiKeyModel.setGroups(requestNewApiKeyDto.getGroups());
         apiKeyModel.setLastUpdate(LocalDateTime.now().toString());
         apiKeyModel.setName(requestNewApiKeyDto.getName());
@@ -128,7 +162,7 @@ public class ApiKeyService {
         ApiKeyModel newApiKeyModel = new ApiKeyModel();
         newApiKeyModel.setId(UUID.randomUUID().toString());
         newApiKeyModel.setVirtualKey(UUID.randomUUID().toString());
-        newApiKeyModel.setStatus(ApiKeyStatusDto.CREATED.getValue());
+        newApiKeyModel.setStatus(ApiKeyStatusDto.ENABLED.getValue());
         newApiKeyModel.setGroups(apiKeyModel.getGroups());
         newApiKeyModel.setLastUpdate(LocalDateTime.now().toString());
         newApiKeyModel.setName(apiKeyModel.getName());
@@ -143,23 +177,27 @@ public class ApiKeyService {
     private ApiKeyHistory createNewApiKeyHistory(String status, String pa) {
         ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
         apiKeyHistory.setDate(LocalDateTime.now().toString());
-        apiKeyHistory.setStatus(decodeStatus(status).getValue());
+        apiKeyHistory.setStatus(decodeStatus(status, true).getValue());
         apiKeyHistory.setChangeByDenomination(pa);
         return apiKeyHistory;
     }
 
-    private ApiKeyStatusDto decodeStatus(String body) {
+    private ApiKeyStatusDto decodeStatus(String body, boolean history) {
+        log.debug("Requested operation: {}", body);
         switch (body) {
             case BLOCK:
-                return ApiKeyStatusDto.BLOCKED;
+                return BLOCKED;
             case ENABLE:
                 return ApiKeyStatusDto.ENABLED;
+            case CREATE:
+                if (history)
+                    return ApiKeyStatusDto.CREATED;
+                else
+                    return ApiKeyStatusDto.ENABLED;
             case ROTATE:
                 return ApiKeyStatusDto.ROTATED;
-            case CREATE:
-                return ApiKeyStatusDto.CREATED;
             default:
-                throw new ApiKeyManagerException("Invalid status change");
+                throw new ApiKeyManagerException(INVALID_STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
