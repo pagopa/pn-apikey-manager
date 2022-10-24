@@ -5,9 +5,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-
 public interface ApiKeyRepository {
 
-    Mono<List<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups);
+    Mono<List<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey);
 
 }
