@@ -25,7 +25,7 @@ public class ApiKeysController implements ApiKeysApi {
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                                 String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return apiKeyService.changeStatus(id,status,xPagopaPnUid).map(s -> ResponseEntity.ok().build()); //lasciamo void o dobbiamo restituire qualcosa??
+        return apiKeyService.changeStatus(id,status,xPagopaPnUid).map(s -> ResponseEntity.ok().build());
     }
 
     @Override

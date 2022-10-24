@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
 import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +18,15 @@ public class AggregationService {
 
     private final AggregationRepository aggregationRepository;
     private final ApiGatewayAsyncClient apiGatewayAsyncClient;
+    private final PnApikeyManagerConfig pnApikeyManagerConfig;
 
     public AggregationService(AggregationRepository aggregationRepository,
-                              ApiGatewayAsyncClient apiGatewayAsyncClient) {
+                              ApiGatewayAsyncClient apiGatewayAsyncClient,
+                              PnApikeyManagerConfig pnApikeyManagerConfig
+                              ) {
         this.aggregationRepository = aggregationRepository;
         this.apiGatewayAsyncClient = apiGatewayAsyncClient;
+        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
     }
 
     public Mono<String> createNewAwsApiKey(String pa) {
@@ -38,10 +43,11 @@ public class AggregationService {
                 createUsagePlanRequest.name(), createUsagePlanRequest.quota(), createUsagePlanRequest.throttle(), createUsagePlanRequest.apiStages());
 
        return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlan(createUsagePlanRequest))
+               .doOnNext(createUsagePlanResponse -> log.info("Created AWS usagePlan with name: {}", createUsagePlanRequest.name()))
                .flatMap(createUsagePlanResponse -> {
             CreateUsagePlanKeyRequest createUsagePlanKeyRequest = constructUsagePlanKeyRequest(createUsagePlanResponse, id);
             return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
-                    .doOnNext(createUsagePlanKeyResponse -> log.info("Created usagePlanKey with id: {}, keyId: {}",createUsagePlanKeyRequest.usagePlanId(), createUsagePlanKeyRequest.keyId()));
+                    .doOnNext(createUsagePlanKeyResponse -> log.info("Created AWS usagePlanKey with id: {}, keyId: {}",createUsagePlanKeyRequest.usagePlanId(), createUsagePlanKeyRequest.keyId()));
         });
     }
 
@@ -55,7 +61,7 @@ public class AggregationService {
     private CreateUsagePlanKeyRequest constructUsagePlanKeyRequest(CreateUsagePlanResponse createUsagePlanResponse, String id) {
         return CreateUsagePlanKeyRequest.builder()
                 .keyId(id)
-                .keyType("API_KEY")
+                .keyType(pnApikeyManagerConfig.getUsageplanKeyType())
                 .usagePlanId(createUsagePlanResponse.id())
                 .build();
     }
@@ -63,24 +69,35 @@ public class AggregationService {
     private CreateUsagePlanRequest constructUsagePlanRequest() {
         return CreateUsagePlanRequest.builder()
                 .name("pn-apikey-medium")
-                .quota(QuotaSettings.builder().limit(10000).period(QuotaPeriodType.DAY).build())
-                .throttle(ThrottleSettings.builder().rateLimit(10000D).build())
-                .apiStages(ApiStage.builder().apiId("vub3na4af4").stage("dev").build())
+                .quota(QuotaSettings.builder().limit(pnApikeyManagerConfig.getUsageplanQuota()).period(QuotaPeriodType.DAY).build())
+                .throttle(ThrottleSettings.builder().rateLimit(pnApikeyManagerConfig.getUsageplanThrottle()).build())
+                .apiStages(ApiStage.builder().apiId(pnApikeyManagerConfig.getUsageplanApiId())
+                        .stage(pnApikeyManagerConfig.getUsageplanStage()).build())
                 .build();
     }
 
-    public Mono<ApiKeyAggregation> createNewAggregation(String awsApiKey) {
-        ApiKeyAggregation newApiKeyAggregation = new ApiKeyAggregation();
-        newApiKeyAggregation.setAggregateId("aggregationId");
-        newApiKeyAggregation.setAggregationName("");
-        newApiKeyAggregation.setLastUpdate(LocalDateTime.now().toString());
-        newApiKeyAggregation.setCreatedAt(LocalDateTime.now().toString());
-        newApiKeyAggregation.setApiKey(awsApiKey);
-        return aggregationRepository.saveAggregation(newApiKeyAggregation);
+    public Mono<ApiKeyAggregation> createNewAggregation(String awsApiKeyId) {
+        GetApiKeyRequest getApiKeyRequest = GetApiKeyRequest.builder().apiKey(awsApiKeyId).build();
+        return Mono.fromFuture(apiGatewayAsyncClient.getApiKey(getApiKeyRequest))
+                .flatMap(getApiKeyResponse -> {
+                    ApiKeyAggregation newApiKeyAggregation = new ApiKeyAggregation();
+                    newApiKeyAggregation.setAggregateId("aggregationId");
+                    newApiKeyAggregation.setAggregationName("");
+                    newApiKeyAggregation.setLastUpdate(LocalDateTime.now().toString());
+                    newApiKeyAggregation.setCreatedAt(LocalDateTime.now().toString());
+                    newApiKeyAggregation.setApiKeyId(awsApiKeyId);
+                    newApiKeyAggregation.setApiKey(getApiKeyResponse.value());
+                    return aggregationRepository.saveAggregation(newApiKeyAggregation);
+                });
     }
 
     public Mono<ApiKeyAggregation> searchAwsApiKey(String aggregationId){
-        return aggregationRepository.searchRealApiKey(aggregationId).doOnNext(apiKeyAggregation -> log.info("resp: {}",apiKeyAggregation));
+        return aggregationRepository.searchRealApiKey(aggregationId);
     }
+
+    //aggregateId
+    //aggregationName
+    //apiKey name
+    //usage plan name
 
 }

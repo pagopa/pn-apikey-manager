@@ -58,10 +58,42 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
+  UsagePlanQuota:
+    Type: Integer
+    Description: 'quota for new AWS usagePlan'
+
+  UsagePlanThrottle:
+    Type: Double
+    Description: 'throttle for new AWS usagePlan'
+
+  UsagePlanApiId:
+    Type: String
+    Description: 'ApiId for new AWS usagePlan'
+
+  UsagePlanKeyType:
+    Type: String
+    Description: 'keyType for new AWS usagePlan'
+
+  UsagePlanStage:
+    Type: String
+    Description: 'stage for new AWS usagePlan'
+
+  PaAggregationsTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing PaAggregations information'
+
+  AggregatesTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing Aggregates information'
+
+  VirtualKeyTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing VirtualKey information'
+
 Resources:
 
   # PN-National-Registry microservice
-  NationalRegistryMicroservice:
+  ApikeyManagerMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
@@ -70,12 +102,20 @@ Resources:
         HealthCheckTimeout: 15
         AutoscalingStrategy: REST-API
         AutoscalingThreshold: 70
-        MicroServiceUniqueName: !Sub '${ProjectName}-NationalRegistry'
+        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager'
         CpuValue: 1024
         MemoryAmount: 2GB
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
+        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_API_KEY=${ApiKeyTableName}'
+        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_AGGREGATES=${AggregatesTableName}'
+        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_PA_AGGREGATIONS=${PaAggregationsTableName}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_QUOTA=${UsagePlanQuota}'
+        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
+        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
+        ContainerEnvEntry8: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
+        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanApiStage}'
         MappedPaths: '/apikey-manager/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
@@ -83,3 +123,31 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
+
+  ExternalRegistryMicroserviceTaskPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-ApikeyManager-CustomTaskPolicy'
+      Roles:
+        - !GetAtt ApikeyManagerMicroservice.Outputs.TaskRoleName
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ExecuteTransaction
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:DeleteItem
+              - dynamodb:Query
+              - dynamodb:TransactGetItems
+              - dynamodb:TransactWriteItems
+              - dynamodb:UpdateItem
+              - dynamodb:Scan
+            Resource:
+              - !Ref AggregatesTableArn
+              - !Ref PaAggregationsTableArn
+              - !Ref ApiKeyTableArn
+

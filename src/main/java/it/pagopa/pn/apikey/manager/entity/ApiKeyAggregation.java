@@ -26,6 +26,9 @@ public class ApiKeyAggregation {
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("lastUpdate")}))
     private String lastUpdate;
 
-    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("realApiKey")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("AWSApiKey")}))
     private String apiKey;
+
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("AWSApiKeyId")}))
+    private String apiKeyId;
 }

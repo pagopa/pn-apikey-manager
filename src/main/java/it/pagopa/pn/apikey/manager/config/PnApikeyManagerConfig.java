@@ -9,12 +9,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@ConfigurationProperties(prefix = "pn.apikey-manager")
+@ConfigurationProperties(prefix = "pn.apikey.manager")
 @Slf4j
 @Data
 @ToString
 @Import(SharedAutoConfiguration.class)
 public class PnApikeyManagerConfig {
 
-
+    private String usageplanApiId;
+    private String usageplanKeyType;
+    private Integer usageplanQuota;
+    private Double usageplanThrottle;
+    private String usageplanStage;
 }

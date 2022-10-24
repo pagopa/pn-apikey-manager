@@ -1,16 +1,9 @@
 {
-  "Parameters" : {
-    "PDNDBaseURL": "",
-    "ANPRBaseURL": "",
-    "ANPRPurposeId": "",
-    "AgenziaEntrateBaseURL": "",
-    "AgenziaEntratePurposeId": "",
-    "INADBaseURL": "",
-    "INADPurposeId": "",
-    "INIPECBaseURL": "",
-    "INIPECPurposeId": "",
-    "ANPRSSLSecretName": "",
-    "PDNDANPRClientAssertionSecretName": "",
-    "PDNDANPRIntegritySecretName": ""
+  "Parameters": {
+    "UsagePlanQuota": "",
+    "UsagePlanThrottle": "",
+    "UsagePlanApiId": "",
+    "UsagePlanKeyType": "",
+    "ApiKeyGsiName" : ""
   }
 }
