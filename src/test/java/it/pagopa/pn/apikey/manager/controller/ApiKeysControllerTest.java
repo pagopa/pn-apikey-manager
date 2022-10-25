@@ -7,24 +7,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.AggregationRepositoryImpl;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepositoryImpl;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
-import it.pagopa.pn.apikey.manager.service.ApiKeyService;
-import it.pagopa.pn.apikey.manager.service.PaService;
+import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
+import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
@@ -45,13 +40,20 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 @ContextConfiguration(classes = {ApiKeysController.class})
 @ExtendWith(SpringExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ApiKeysControllerTest {
 
     @MockBean
-    private ApiKeyService apiKeyService;
+    private ManageApiKeyService manageApiKeyService;
+
+    @MockBean
+    private CreateApiKeyService createApiKeyService;
 
     @Autowired
     private ApiKeysController apiKeysController;
+
+    @MockBean
+    ServerWebExchange serverWebExchange;
 
     /**
      * Method under test: {@link ApiKeysController#changeStatusApiKey(String, CxTypeAuthFleetDto, String, String, String, List, ServerWebExchange)}
@@ -61,9 +63,9 @@ class ApiKeysControllerTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(null);
         new AggregationService(new AggregationRepositoryImpl(dynamoDbEnhancedAsyncClient),null,null);
-        when(apiKeyService.changeStatus(any(), any(), any()))
+        when(manageApiKeyService.changeStatus(any(), any(), any()))
                 .thenReturn(Mono.just(new ApiKeyModel()));
-        ApiKeysController apiKeysController = new ApiKeysController(apiKeyService);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService);
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -87,8 +89,8 @@ class ApiKeysControllerTest {
         when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(null);
         new AggregationService(new AggregationRepositoryImpl(dynamoDbEnhancedAsyncClient), null,null);
 
-        when(apiKeyService.deleteApiKey(any())).thenReturn(Mono.just("id"));
-        ApiKeysController apiKeysController = new ApiKeysController(apiKeyService);
+        when(manageApiKeyService.deleteApiKey(any())).thenReturn(Mono.just("id"));
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService);
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -101,30 +103,6 @@ class ApiKeysControllerTest {
         StepVerifier.create(apiKeysController.deleteApiKeys("foo", CxTypeAuthFleetDto.PA, "foo", "foo", xPagopaPnCxGroups,
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build()).verifyComplete();
-    }
-
-    /**
-     * Method under test: {@link ApiKeysController#getApiKeys(String, CxTypeAuthFleetDto, String, List, ServerWebExchange)}
-     */
-    @Test
-    void testGetApiKeys2() {
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
-        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
-        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
-        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
-        WebSessionManager webSessionManager = mock(WebSessionManager.class);
-        WebSession webSession = mock(WebSession.class);
-        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
-        MockServerHttpResponse response = new MockServerHttpResponse();
-        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
-
-        ApiKeysResponseDto apiKeyModel = new ApiKeysResponseDto();
-        apiKeyModel.setItems(new ArrayList<>());
-
-        ResponseEntity<ApiKeysResponseDto> responseEntity = ResponseEntity.ok().body(apiKeyModel);
-        StepVerifier.create(apiKeysController.getApiKeys("X Pagopa Pn Uid", CxTypeAuthFleetDto.PA, "42", xPagopaPnCxGroups,
-                new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
-                        new AcceptHeaderLocaleContextResolver()))).verifyComplete();
     }
 
     /**
@@ -143,9 +121,9 @@ class ApiKeysControllerTest {
         apiKeyModel.setApiKey("");
         apiKeyModel.setId("");
 
-        when(apiKeyService.createApiKey(any(), any(), any(),
+        when(createApiKeyService.createApiKey(any(), any(), any(),
                 any(),  any())).thenReturn(Mono.just(apiKeyModel));
-        ApiKeysController apiKeysController = new ApiKeysController(apiKeyService);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService);
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
@@ -163,43 +141,22 @@ class ApiKeysControllerTest {
                         new AcceptHeaderLocaleContextResolver()))).expectNext(responseEntity).verifyComplete();
     }
 
-    @InjectMocks
-    ApiKeysController apiKeysController;
-
-    @Mock
-    ServerWebExchange serverWebExchange;
-
-    @Mock
-    ApiKeyService apiKeyService;
-
-    private static Integer limit;
-    private static String xPagopaPnUid;
-    private static String lastKey;
-    private static String xPagopaPnCxId;
-    private static List<String> xPagopaPnCxGroups;
-    private static CxTypeAuthFleetDto xPagopaPnCxType;
-    private static ApiKeysResponseDto apiKeysResponseDto;
-
-    @BeforeAll
-    static void setup(){
-        xPagopaPnUid = "PA-test-1";
-        xPagopaPnCxType = CxTypeAuthFleetDto.PA;
-        xPagopaPnCxId = "user1";
-        xPagopaPnCxGroups = new ArrayList<>();
-        xPagopaPnCxGroups.add("RECLAMI");
-        limit = 10;
-        lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
-
-        apiKeysResponseDto = new ApiKeysResponseDto();
-        List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
-        apiKeysResponseDto.setItems(apiKeyRowDtos);
-    }
-
     @Test
     void testGetApiKeys() {
-        when(apiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString())).thenReturn(Mono.just(apiKeysResponseDto));
+        String xPagopaPnUid = "PA-test-1";
+        CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PA;
+        String xPagopaPnCxId = "user1";
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
+        xPagopaPnCxGroups.add("REC");
+        Integer limit = 10;
+        String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
+
+        ApiKeysResponseDto apiKeysResponseDto = new ApiKeysResponseDto();
+        List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
+        apiKeysResponseDto.setItems(apiKeyRowDtos);
+        when(manageApiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString())).thenReturn(Mono.just(apiKeysResponseDto));
         StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,serverWebExchange))
-                .expectNext(ResponseEntity.ok().body(apiKeysResponseDto));
+                .expectNext(ResponseEntity.ok().body(apiKeysResponseDto)).verifyComplete();
     }
 }
 

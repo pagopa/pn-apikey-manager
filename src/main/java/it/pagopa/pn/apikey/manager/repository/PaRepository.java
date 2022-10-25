@@ -6,4 +6,6 @@ import reactor.core.publisher.Mono;
 public interface PaRepository {
 
     Mono<PaAggregation> searchAggregation(String xPagopaPnCxId);
+
+    Mono<PaAggregation> savePaAggregation(PaAggregation toSave);
 }

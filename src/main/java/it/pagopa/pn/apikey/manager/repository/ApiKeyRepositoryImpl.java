@@ -1,5 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.*;
@@ -12,6 +14,9 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_DOES_NOT_EXISTS;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_IS_NOT_UNIQUE;
 
 @Component
 public class ApiKeyRepositoryImpl implements ApiKeyRepository{
@@ -44,7 +49,14 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .queryConditional(QueryConditional.keyEqualTo(key))
                 .build();
 
-        return Mono.from(table.index("virtualKey-id-index").query(queryEnhancedRequest).map(Page::items));
+        return Mono.from(table.index("virtualKey-id-index").query(queryEnhancedRequest))
+                .map(apiKeyModelPage -> {
+                    if (apiKeyModelPage.items().isEmpty())
+                       throw new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR);
+                    else if(apiKeyModelPage.items().size()!=1)
+                        throw new ApiKeyManagerException(KEY_IS_NOT_UNIQUE, HttpStatus.INTERNAL_SERVER_ERROR);
+                    return apiKeyModelPage.items();
+                });
     }
 
     @Override
@@ -57,17 +69,17 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
         AttributeValue pnCxId = AttributeValue.builder().s(xPagopaPnCxId).build();
         expressionValues.put(":cxid", pnCxId);
 
-        String expressionGroup = "";
-        if(xPagopaPnCxGroups.size()!=0){
+        StringBuilder expressionGroup = new StringBuilder();
+        if(!xPagopaPnCxGroups.isEmpty()){
             for(int i = 0; i < xPagopaPnCxGroups.size(); i++){
                 AttributeValue pnCxGroup = AttributeValue.builder().s(xPagopaPnCxGroups.get(i)).build();
                 expressionValues.put(":group"+i, pnCxGroup);
-                expressionGroup = expressionGroup + " contains(groups,:group"+i+") OR";
+                expressionGroup.append(" contains(groups,:group").append(i).append(") OR");
             }
-            expressionGroup = "AND ("+expressionGroup.substring(0,expressionGroup.length()-2) + ")";
+            expressionGroup.append("AND (").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
         }
         else{
-            expressionGroup = "AND ( contains(groups,:group1))";
+            expressionGroup.append("AND ( contains(groups,:group1))");
             AttributeValue pnCxGroup = AttributeValue.builder().s("").build();
             expressionValues.put(":group1", pnCxGroup);
         }

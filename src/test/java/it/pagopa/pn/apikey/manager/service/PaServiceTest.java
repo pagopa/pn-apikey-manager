@@ -14,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 @ContextConfiguration(classes = {PaService.class})
 @ExtendWith(SpringExtension.class)
@@ -29,19 +30,21 @@ class PaServiceTest {
      */
     @Test
     void testSearchAggregationId() {
-        when(paRepository.searchAggregation((String) any())).thenReturn((Mono<PaAggregation>) mock(Mono.class));
-        paService.searchAggregationId("42");
-        verify(paRepository).searchAggregation((String) any());
+        PaAggregation paAggregation = new PaAggregation();
+        paAggregation.setAggregationId("id");
+        when(paRepository.searchAggregation(any())).thenReturn(Mono.just(paAggregation));
+        StepVerifier.create(paService.searchAggregationId("42"))
+                .expectNext(paAggregation.getAggregationId()).verifyComplete();
     }
 
-    /**
-     * Method under test: {@link PaService#searchAggregationId(String)}
-     */
     @Test
-    void testSearchAggregationId2() {
-        when(paRepository.searchAggregation((String) any())).thenReturn((Mono<PaAggregation>) mock(Mono.class));
-        paService.searchAggregationId("X Pago Pa Pn Cx Id");
-        verify(paRepository).searchAggregation((String) any());
+    void createNewPaAggregationtest(){
+        PaAggregation paAggregation = new PaAggregation();
+        paAggregation.setAggregationId("id");
+        when(paRepository.savePaAggregation(paAggregation)).thenReturn(Mono.just(paAggregation));
+        StepVerifier.create(paService.createNewPaAggregation(paAggregation))
+                .expectNext(paAggregation).verifyComplete();
     }
 }
+
 

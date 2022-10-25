@@ -23,7 +23,7 @@ public class AggregationRepositoryImpl implements AggregationRepository {
     }
 
     @Override
-    public Mono<ApiKeyAggregation> searchRealApiKey(String aggregationId) {
+    public Mono<ApiKeyAggregation> getApiKeyAggregation(String aggregationId) {
         Key key = Key.builder()
                 .partitionValue(aggregationId)
                 .build();

@@ -7,6 +7,6 @@ public interface AggregationRepository {
 
     Mono<ApiKeyAggregation> saveAggregation(ApiKeyAggregation apiKeyAggregation);
 
-    Mono<ApiKeyAggregation>  searchRealApiKey(String aggregationId);
+    Mono<ApiKeyAggregation> getApiKeyAggregation(String aggregationId);
 
 }

@@ -1,14 +1,8 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
 import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
-
-import java.util.concurrent.CompletableFuture;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +13,11 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
+
+import java.util.concurrent.CompletableFuture;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {AggregationService.class})
 @ExtendWith(SpringExtension.class)
@@ -56,14 +55,36 @@ class AggregationServiceTest {
         when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture1);
         when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
 
-        StepVerifier.create(aggregationService.createNewAwsApiKey("Pa")).expectNext("id").verifyComplete();
+        StepVerifier.create(aggregationService.createNewAwsApiKey("Pa"))
+                .expectNext(CreateApiKeyResponse.builder().name("test").id("id").build()).verifyComplete();
+    }
+
+
+    @Test
+    void addAwsApiKeyToAggregateTest(){
+        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
+        apiKeyAggregation.setAggregateId("id");
+        when(aggregationRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
+        StepVerifier.create(aggregationService.addAwsApiKeyToAggregate(CreateApiKeyResponse.builder().id("id").build(), apiKeyAggregation))
+                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.equalsIgnoreCase("id")).verifyComplete();
+
+    }
+
+    @Test
+    void createNewAggregateTest(){
+        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
+        apiKeyAggregation.setAggregationName("");
+        when(aggregationRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
+        StepVerifier.create(aggregationService.createNewAggregate(CreateApiKeyResponse.builder().build()))
+                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getAggregationName().equalsIgnoreCase("")).verifyComplete();
+
     }
 
     /**
      * Method under test: {@link AggregationService#createUsagePlan(String)}
      */
     @Test
-    void testCreateUsagePlan(){
+    void testCreateUsagePlan() {
         CreateUsagePlanResponse createUsagePlanResponse = CreateUsagePlanResponse.builder().id("id").build();
         CompletableFuture<CreateUsagePlanResponse> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> createUsagePlanResponse);
@@ -78,25 +99,12 @@ class AggregationServiceTest {
                 .expectNext(createUsagePlanKeyResponse).verifyComplete();
     }
 
-    @Test
-    void testCreateNewAggregation() {
-        GetApiKeyResponse getApiKeyResponse = GetApiKeyResponse.builder().id("id").build();
-        CompletableFuture<GetApiKeyResponse> completableFuture2 = new CompletableFuture<>();
-        completableFuture2.completeAsync(() -> getApiKeyResponse);
-        when(apiGatewayAsyncClient.getApiKey((GetApiKeyRequest) any())).thenReturn(completableFuture2);
-
-        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
-        when(aggregationRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
-
-        StepVerifier.create(aggregationService.createNewAggregation("id")).expectNext(apiKeyAggregation).verifyComplete();
-    }
-
     /**
      * Method under test: {@link AggregationService#searchAwsApiKey(String)}
      */
     @Test
     void testSearchAwsApiKey() {
-        when(aggregationRepository.searchRealApiKey(any())).thenReturn(Mono.empty());
+        when(aggregationRepository.getApiKeyAggregation(any())).thenReturn(Mono.empty());
         StepVerifier.create(aggregationService.searchAwsApiKey("42")).verifyComplete();
     }
 }

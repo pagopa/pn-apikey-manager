@@ -20,4 +20,8 @@ public class PaService {
         return paRepository.searchAggregation(xPagoPaPnCxId)
                 .map(PaAggregation::getAggregationId);
     }
+
+    public Mono<PaAggregation> createNewPaAggregation(PaAggregation paAggregation) {
+        return paRepository.savePaAggregation(paAggregation);
+    }
 }

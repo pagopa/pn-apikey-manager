@@ -29,4 +29,9 @@ public class PaRepositoryImpl implements PaRepository{
                 .doOnNext(s -> log.info("aggregation found: {}",s.toString()));
 
     }
+
+    @Override
+    public Mono<PaAggregation> savePaAggregation(PaAggregation toSave) {
+        return Mono.fromFuture(table.putItem(toSave).thenApply(r -> toSave));
+    }
 }

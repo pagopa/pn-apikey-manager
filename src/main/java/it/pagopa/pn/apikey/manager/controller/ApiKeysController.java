@@ -5,7 +5,8 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponse
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.service.ApiKeyService;
+import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
+import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -16,33 +17,35 @@ import java.util.List;
 @RestController
 public class ApiKeysController implements ApiKeysApi {
 
-    private final ApiKeyService apiKeyService;
+    private final ManageApiKeyService manageApiKeyService;
+    private final CreateApiKeyService createApiKeyService;
 
-    public ApiKeysController(ApiKeyService apiKeyService) {
-        this.apiKeyService = apiKeyService;
+    public ApiKeysController(ManageApiKeyService manageApiKeyService, CreateApiKeyService createApiKeyService) {
+        this.manageApiKeyService = manageApiKeyService;
+        this.createApiKeyService = createApiKeyService;
     }
 
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                                 String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return apiKeyService.changeStatus(id,status,xPagopaPnUid).map(s -> ResponseEntity.ok().build());
+        return manageApiKeyService.changeStatus(id,status,xPagopaPnUid).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                       String id, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
-        return apiKeyService.deleteApiKey(id).map(s -> ResponseEntity.ok().build());
+        return manageApiKeyService.deleteApiKey(id).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
     public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, final ServerWebExchange exchange) {
-        return apiKeyService.getApiKeyList(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey)
+        return manageApiKeyService.getApiKeyList(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey)
                 .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos));
     }
 
     @Override
     public Mono<ResponseEntity<ResponseNewApiKeyDto>>newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return apiKeyService.createApiKey(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,requestNewApiKeyDto, xPagopaPnCxGroups)
+        return createApiKeyService.createApiKey(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,requestNewApiKeyDto, xPagopaPnCxGroups)
                 .map(s -> ResponseEntity.ok().body(s));
     }
 }
