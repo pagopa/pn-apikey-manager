@@ -7,10 +7,12 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKe
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.util.List;
 
@@ -20,9 +22,13 @@ public class ApiKeysController implements ApiKeysApi {
     private final ManageApiKeyService manageApiKeyService;
     private final CreateApiKeyService createApiKeyService;
 
-    public ApiKeysController(ManageApiKeyService manageApiKeyService, CreateApiKeyService createApiKeyService) {
+    @Qualifier("apikeyManagerScheduler")
+    private final Scheduler scheduler;
+
+    public ApiKeysController(ManageApiKeyService manageApiKeyService, CreateApiKeyService createApiKeyService, Scheduler scheduler) {
         this.manageApiKeyService = manageApiKeyService;
         this.createApiKeyService = createApiKeyService;
+        this.scheduler = scheduler;
     }
 
     @Override
@@ -40,12 +46,14 @@ public class ApiKeysController implements ApiKeysApi {
     @Override
     public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, final ServerWebExchange exchange) {
         return manageApiKeyService.getApiKeyList(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey)
-                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos));
+                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos))
+                .publishOn(scheduler);
     }
 
     @Override
     public Mono<ResponseEntity<ResponseNewApiKeyDto>>newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
         return createApiKeyService.createApiKey(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,requestNewApiKeyDto, xPagopaPnCxGroups)
-                .map(s -> ResponseEntity.ok().body(s));
+                .map(s -> ResponseEntity.ok().body(s))
+                .publishOn(scheduler);
     }
 }

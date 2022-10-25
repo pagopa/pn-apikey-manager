@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,7 @@ import org.springframework.web.server.adapter.DefaultServerWebExchange;
 import org.springframework.web.server.i18n.AcceptHeaderLocaleContextResolver;
 import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
@@ -52,6 +54,10 @@ class ApiKeysControllerTest {
     @Autowired
     private ApiKeysController apiKeysController;
 
+    @Qualifier("apikeyManagerScheduler")
+    @MockBean
+    private Scheduler scheduler;
+
     @MockBean
     ServerWebExchange serverWebExchange;
 
@@ -65,7 +71,7 @@ class ApiKeysControllerTest {
         new AggregationService(new AggregationRepositoryImpl(dynamoDbEnhancedAsyncClient),null,null);
         when(manageApiKeyService.changeStatus(any(), any(), any()))
                 .thenReturn(Mono.just(new ApiKeyModel()));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -90,7 +96,7 @@ class ApiKeysControllerTest {
         new AggregationService(new AggregationRepositoryImpl(dynamoDbEnhancedAsyncClient), null,null);
 
         when(manageApiKeyService.deleteApiKey(any())).thenReturn(Mono.just("id"));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -123,7 +129,7 @@ class ApiKeysControllerTest {
 
         when(createApiKeyService.createApiKey(any(), any(), any(),
                 any(),  any())).thenReturn(Mono.just(apiKeyModel));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);

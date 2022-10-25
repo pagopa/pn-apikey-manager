@@ -117,7 +117,7 @@ public class CreateApiKeyService {
         return aggregationService.createNewAggregate(createApiKeyResponse)
                 .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}",apiKeyAggregation.getAggregateId()))
                 .flatMap(apiKeyAggregation -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apiKeyAggregation)
-                        .doOnNext(s -> log.info("updated aggregate: {} with AWS apiKey ",s)))
+                        .doOnNext(s -> log.info("updated with AWS apiKey aggregate: {}",s)))
                 .flatMap(apiKeyAggregation -> paService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation, xPagopaPnCxId))
                         .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
                         .map(PaAggregation::getAggregationId));

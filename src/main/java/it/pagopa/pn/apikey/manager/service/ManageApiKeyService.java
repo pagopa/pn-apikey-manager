@@ -7,9 +7,11 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,13 +31,16 @@ public class ManageApiKeyService {
     private static final String CREATE = "CREATE";
     private static final String DELETE = "DELETE";
 
-
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter){
+    @Qualifier("apikeyManagerScheduler")
+    private final Scheduler scheduler;
+
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, Scheduler scheduler){
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
+        this.scheduler = scheduler;
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid) {
@@ -50,7 +55,8 @@ public class ManageApiKeyService {
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
                     }
-                });
+                })
+                .publishOn(scheduler);
     }
 
     public Mono<String> deleteApiKey(String id) {
@@ -62,7 +68,8 @@ public class ManageApiKeyService {
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
                     }
-                });
+                })
+                .publishOn(scheduler);
     }
 
     public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey) {
