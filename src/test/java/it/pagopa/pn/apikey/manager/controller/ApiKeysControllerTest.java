@@ -1,5 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -18,8 +20,11 @@ import it.pagopa.pn.apikey.manager.service.PaService;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
@@ -156,6 +161,45 @@ class ApiKeysControllerTest {
         StepVerifier.create(apiKeysController.newApiKey("foo", CxTypeAuthFleetDto.PA, "foo", requestNewApiKeyDto, xPagopaPnCxGroups,
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(responseEntity).verifyComplete();
+    }
+
+    @InjectMocks
+    ApiKeysController apiKeysController;
+
+    @Mock
+    ServerWebExchange serverWebExchange;
+
+    @Mock
+    ApiKeyService apiKeyService;
+
+    private static Integer limit;
+    private static String xPagopaPnUid;
+    private static String lastKey;
+    private static String xPagopaPnCxId;
+    private static List<String> xPagopaPnCxGroups;
+    private static CxTypeAuthFleetDto xPagopaPnCxType;
+    private static ApiKeysResponseDto apiKeysResponseDto;
+
+    @BeforeAll
+    static void setup(){
+        xPagopaPnUid = "PA-test-1";
+        xPagopaPnCxType = CxTypeAuthFleetDto.PA;
+        xPagopaPnCxId = "user1";
+        xPagopaPnCxGroups = new ArrayList<>();
+        xPagopaPnCxGroups.add("RECLAMI");
+        limit = 10;
+        lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
+
+        apiKeysResponseDto = new ApiKeysResponseDto();
+        List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
+        apiKeysResponseDto.setItems(apiKeyRowDtos);
+    }
+
+    @Test
+    void testGetApiKeys() {
+        when(apiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString())).thenReturn(Mono.just(apiKeysResponseDto));
+        StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,serverWebExchange))
+                .expectNext(ResponseEntity.ok().body(apiKeysResponseDto));
     }
 }
 

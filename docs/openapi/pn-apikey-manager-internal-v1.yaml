@@ -40,6 +40,18 @@ paths:
         - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
         - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+
+        - name: lastKey
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: OK

@@ -35,8 +35,9 @@ public class ApiKeysController implements ApiKeysApi {
     }
 
     @Override
-    public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return Mono.empty();
+    public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, final ServerWebExchange exchange) {
+        return apiKeyService.getApiKeyList(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey)
+                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -281,5 +283,38 @@ class ApiKeyServiceTest {
         StepVerifier.create(apiKeyService.deleteApiKey("42"))
                 .expectError(ApiKeyManagerException.class).verify();
     }
+
+    private static Integer limit;
+    private static String xPagopaPnUid;
+    private static String lastKey;
+    private static List<String> xPagopaPnCxGroups;
+    private static ApiKeysResponseDto apiKeysResponseDto;
+    private static List<ApiKeyModel> apiKeyModels;
+
+    @BeforeAll
+    static void setup(){
+        xPagopaPnUid = "PA-test-1";
+        xPagopaPnCxGroups = new ArrayList<>();
+        xPagopaPnCxGroups.add("RECLAMI");
+        limit = 10;
+        lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
+
+        apiKeysResponseDto = new ApiKeysResponseDto();
+        List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
+        apiKeysResponseDto.setItems(apiKeyRowDtos);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModels = new ArrayList<>();
+        apiKeyModels.add(apiKeyModel);
+    }
+
+    @Test
+    void testGetApiKeyList() {
+        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyInt(), anyString()))
+                .thenReturn(Mono.just(apiKeyModels));
+        when(apiKeyConverter.convertResponsetoDto(anyList())).thenReturn(apiKeysResponseDto);
+        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, limit, lastKey)).expectNext(apiKeysResponseDto).verifyComplete();
+    }
+
 }
 

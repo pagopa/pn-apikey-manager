@@ -211,4 +211,9 @@ public class ApiKeyService {
                 throw new ApiKeyManagerException(INVALID_STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey) {
+        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey)
+                .map(apiKeyConverter::convertResponsetoDto);
+    }
 }
