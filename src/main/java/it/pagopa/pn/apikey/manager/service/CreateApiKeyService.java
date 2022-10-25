@@ -59,7 +59,7 @@ public class CreateApiKeyService {
     }
 
     private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String s, ApiKeyModel apiKeyModel, String xPagopaPnCxId) {
-        return aggregationService.searchAwsApiKey(s)
+        return aggregationService.getApiKeyAggregation(s)
                 .doOnNext(next -> log.info("Founded aggregate: {}", s))
                 .flatMap(apiKeyAggregation -> {
                     if (StringUtils.isNullOrEmpty(apiKeyAggregation.getApiKeyId())) {
@@ -116,9 +116,7 @@ public class CreateApiKeyService {
     private Mono<String> createNewAggregate(CreateApiKeyResponse createApiKeyResponse, String xPagopaPnCxId) {
         return aggregationService.createNewAggregate(createApiKeyResponse)
                 .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}",apiKeyAggregation.getAggregateId()))
-                .flatMap(apiKeyAggregation -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apiKeyAggregation)
-                        .doOnNext(s -> log.info("updated with AWS apiKey aggregate: {}",s)))
-                .flatMap(apiKeyAggregation -> paService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation, xPagopaPnCxId))
+                .flatMap(apiKeyAggregation -> paService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), xPagopaPnCxId))
                         .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
                         .map(PaAggregation::getAggregationId));
     }

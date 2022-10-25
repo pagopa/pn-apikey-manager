@@ -63,7 +63,7 @@ class CreateApiKeyServiceTest {
         apiKeyAggregation.setApiKey("test");
         apiKeyAggregation.setApiKeyId("id");
         apiKeyAggregation.setAggregateId("1");
-        when(aggregationService.searchAwsApiKey("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
+        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
         when(aggregationService.createNewAwsApiKey("42")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         ApiKeyModel apiKeyModel = new ApiKeyModel();
@@ -88,7 +88,7 @@ class CreateApiKeyServiceTest {
         apiKeyAggregation.setApiKey("test");
         apiKeyAggregation.setAggregateId("1");
         apiKeyAggregation.setApiKeyId("id");
-        when(aggregationService.searchAwsApiKey("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
+        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
         when(aggregationService.createNewAwsApiKey("42")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         ApiKeyModel apiKeyModel = new ApiKeyModel();
@@ -113,7 +113,7 @@ class CreateApiKeyServiceTest {
         apiKeyAggregation.setApiKey("test");
         apiKeyAggregation.setAggregateId("1");
         apiKeyAggregation.setApiKeyId("id");
-        when(aggregationService.searchAwsApiKey("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
+        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
         when(aggregationService.createNewAwsApiKey("42")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         ApiKeyModel apiKeyModel = new ApiKeyModel();

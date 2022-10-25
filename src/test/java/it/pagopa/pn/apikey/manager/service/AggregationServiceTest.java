@@ -100,12 +100,12 @@ class AggregationServiceTest {
     }
 
     /**
-     * Method under test: {@link AggregationService#searchAwsApiKey(String)}
+     * Method under test: {@link AggregationService#getApiKeyAggregation(String)}
      */
     @Test
     void testSearchAwsApiKey() {
         when(aggregationRepository.getApiKeyAggregation(any())).thenReturn(Mono.empty());
-        StepVerifier.create(aggregationService.searchAwsApiKey("42")).verifyComplete();
+        StepVerifier.create(aggregationService.getApiKeyAggregation("42")).verifyComplete();
     }
 }
 
