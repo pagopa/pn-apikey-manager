@@ -1,7 +1,6 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -164,7 +163,7 @@ class ApiKeysControllerTest {
         apiKeysResponseDto.setItems(apiKeyRowDtos);
         apiKeysResponseDto.setLastKey(lastKey);
         apiKeysResponseDto.setLastUpdate(lastUpdate);
-        when(apiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString(),anyString(),anyBoolean())).thenReturn(Mono.just(apiKeysResponseDto));
+        when(manageApiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString(),anyString(),anyBoolean())).thenReturn(Mono.just(apiKeysResponseDto));
         StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate,showVirtualKey,serverWebExchange))
                 .expectNext(ResponseEntity.ok().body(apiKeysResponseDto));
     }

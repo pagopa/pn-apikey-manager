@@ -72,9 +72,12 @@ public class ManageApiKeyService {
                 .publishOn(scheduler);
     }
 
-    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey) {
-        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey)
-                .map(apiKeyConverter::convertResponsetoDto);
+    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
+        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate)
+                .doOnNext(apiKeyModelPage -> {
+                    log.info("founded list size");// TO DO INFO SUL FOUND
+                })
+                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage,showVirtualKey));
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, String status, String xPagopaPnUid) {

@@ -25,6 +25,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 
 @SpringBootTest
@@ -153,25 +154,29 @@ class ManageApiKeyServiceTest {
 
     @Test
     void testGetApiKeyList() {
-
-        String xPagopaPnUid = "PA-test-1";
+        String xPagopaPnUid = "cxId";
         List<String> xPagopaPnCxGroups = new ArrayList<>();
         xPagopaPnCxGroups.add("RECLAMI");
         int limit = 10;
+        Boolean showVirtualKey = true;
         String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
+        String lastUpdate = "2022-10-25T16:25:58.334862500";
+
+        List<ApiKeyModel> apiKeyModels = new ArrayList<>();
+        apiKeyModels.add(new ApiKeyModel());
+
+        Page<ApiKeyModel> page = Page.create(apiKeyModels);
 
         ApiKeysResponseDto apiKeysResponseDto = new ApiKeysResponseDto();
-        List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
-        apiKeysResponseDto.setItems(apiKeyRowDtos);
+        apiKeysResponseDto.setItems(new ArrayList<>());
+        apiKeysResponseDto.setLastKey(lastKey);
+        apiKeysResponseDto.setLastUpdate(lastUpdate);
 
-        ApiKeyModel apiKeyModel = new ApiKeyModel();
-        List<ApiKeyModel> apiKeyModels = new ArrayList<>();
-        apiKeyModels.add(apiKeyModel);
+        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyInt(), anyString(), anyString()))
+                .thenReturn(Mono.just(page));
+        when(apiKeyConverter.convertResponsetoDto(any(),anyBoolean())).thenReturn(apiKeysResponseDto);
+        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey)).expectNext(apiKeysResponseDto).verifyComplete();
 
-        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyInt(), anyString()))
-                .thenReturn(Mono.just(apiKeyModels));
-        when(apiKeyConverter.convertResponsetoDto(anyList())).thenReturn(apiKeysResponseDto);
-        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, limit, lastKey)).expectNext(apiKeysResponseDto).verifyComplete();
     }
 
 }

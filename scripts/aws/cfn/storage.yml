@@ -32,19 +32,19 @@ Resources:
     Properties:
       TableName: !Sub '${ProjectName}-apiKey'
       AttributeDefinitions:
-        - AttributeName: "virtualKey"
+        - AttributeName: "id"
           AttributeType: "S"
       KeySchema:
-        - AttributeName: "virtualKey"
+        - AttributeName: "id"
           KeyType: "HASH"
       GlobalSecondaryIndexes:
         - IndexName: "virtualKey-id-index"
           KeySchema:
-            - AttributeName: virtualKey
-              KeyType: RANGE
             - AttributeName: id
+              KeyType: RANGE
+            - AttributeName: virtualKey
               KeyType: HASH
-        - IndexName: "lastUpdate-paId-index"
+        - IndexName: "paId-lastUpdate-index"
           KeySchema:
             - AttributeName: lastUpdate
               KeyType: RANGE
