@@ -153,16 +153,23 @@ class ApiKeysControllerTest {
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PA;
         String xPagopaPnCxId = "user1";
         List<String> xPagopaPnCxGroups = new ArrayList<>();
-        xPagopaPnCxGroups.add("REC");
+        xPagopaPnCxGroups.add("RECLAMI");
         Integer limit = 10;
+        Boolean showVirtualKey = true;
         String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
+        String lastUpdate = "2022-10-25T16:25:58.334862500";
 
         ApiKeysResponseDto apiKeysResponseDto = new ApiKeysResponseDto();
         List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
         apiKeysResponseDto.setItems(apiKeyRowDtos);
-        when(manageApiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString())).thenReturn(Mono.just(apiKeysResponseDto));
-        StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,serverWebExchange))
+        apiKeysResponseDto.setLastKey(lastKey);
+        apiKeysResponseDto.setLastUpdate(lastUpdate);
+        when(apiKeyService.getApiKeyList(anyString(),any(),anyInt(),anyString(),anyString(),anyBoolean())).thenReturn(Mono.just(apiKeysResponseDto));
+        StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate,showVirtualKey,serverWebExchange))
                 .expectNext(ResponseEntity.ok().body(apiKeysResponseDto));
     }
+
+
+
 }
 

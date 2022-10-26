@@ -52,6 +52,18 @@ paths:
           required: false
           schema:
             type: string
+        - name: lastUpdate
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: showVirtualKey
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+
       responses:
         '200':
           description: OK
@@ -248,6 +260,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiKeyRow'
+        lastKey:
+          type: string
+        lastUpdate:
+          type: string
 
     ApiKeyRow:
       type: object

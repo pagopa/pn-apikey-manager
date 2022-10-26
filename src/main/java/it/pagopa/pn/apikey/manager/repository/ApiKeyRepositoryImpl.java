@@ -54,48 +54,51 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
-    @Override
-    public Mono<List<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey){
-        Map<String, String> expressionNames = new HashMap<>();
+    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate){
+
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
-        expressionNames.put("#cxid", "x-pagopa-pn-cx-id");
-
-        AttributeValue pnCxId = AttributeValue.builder().s(xPagopaPnCxId).build();
-        expressionValues.put(":cxid", pnCxId);
-
-        StringBuilder expressionGroup = new StringBuilder();
-        if(!xPagopaPnCxGroups.isEmpty()){
+        String expressionGroup = "";
+        if(xPagopaPnCxGroups.size()!=0){
             for(int i = 0; i < xPagopaPnCxGroups.size(); i++){
                 AttributeValue pnCxGroup = AttributeValue.builder().s(xPagopaPnCxGroups.get(i)).build();
                 expressionValues.put(":group"+i, pnCxGroup);
-                expressionGroup.append(" contains(groups,:group").append(i).append(") OR");
+                expressionGroup = expressionGroup + " contains(groups,:group"+i+") OR";
             }
-            expressionGroup.append("AND (").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
+            expressionGroup = "("+expressionGroup.substring(0,expressionGroup.length()-2) + ")";
         }
         else{
-            expressionGroup.append("AND ( contains(groups,:group1))");
-            AttributeValue pnCxGroup = AttributeValue.builder().s("").build();
-            expressionValues.put(":group1", pnCxGroup);
+            expressionGroup = "attribute_exists(groups)";
         }
 
         Expression expression = Expression.builder()
-                .expression("#cxid = :cxid "+expressionGroup)
+                .expression(expressionGroup)
                 .expressionValues(expressionValues)
-                .expressionNames(expressionNames)
                 .build();
 
         Map<String,AttributeValue> startKey = null;
-        if(lastKey!=null){
+        if(lastKey!=null && lastUpdate!=null){
             startKey = new HashMap<>();
-            startKey.put("virtualKey", AttributeValue.builder().s(lastKey).build());
+            startKey.put("id", AttributeValue.builder().s(lastKey).build());
+            startKey.put("lastUpdate", AttributeValue.builder().s(lastUpdate).build());
+            startKey.put("x-pagopa-pn-cx-id", AttributeValue.builder().s(xPagopaPnCxId).build());
         }
-        ScanEnhancedRequest request = ScanEnhancedRequest.builder()
+
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
+                        .build());
+
+        QueryEnhancedRequest queryEnhancedRequest= QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
                 .exclusiveStartKey(startKey)
                 .filterExpression(expression)
+                .limit(limit)
                 .build();
 
-        return Mono.from(table.scan(request)
-                .map(Page::items));
+        return Mono.from(table.index("paId-lastUpdate-index").query(queryEnhancedRequest)
+                .map(apiKeyModelPage -> {
+                    return apiKeyModelPage;
+                }));
+
     }
 }
