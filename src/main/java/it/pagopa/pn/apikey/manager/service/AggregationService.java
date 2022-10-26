@@ -90,7 +90,7 @@ public class AggregationService {
         return CreateUsagePlanRequest.builder()
                 .name("pn-apikey-medium" + UUID.randomUUID())
                 .quota(QuotaSettings.builder().limit(pnApikeyManagerConfig.getUsageplanQuota()).period(QuotaPeriodType.DAY).build())
-                .throttle(ThrottleSettings.builder().rateLimit(pnApikeyManagerConfig.getUsageplanThrottle()).build())
+                .throttle(ThrottleSettings.builder().burstLimit(pnApikeyManagerConfig.getUsageplanBurstLimit()).rateLimit(pnApikeyManagerConfig.getUsageplanThrottle()).build())
                 .apiStages(ApiStage.builder().apiId(pnApikeyManagerConfig.getUsageplanApiId())
                         .stage(pnApikeyManagerConfig.getUsageplanStage()).build())
                 .build();

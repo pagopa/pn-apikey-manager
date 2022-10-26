@@ -118,7 +118,7 @@ class ApiKeysControllerTest {
     void testNewApiKey() {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(null);
-        new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+        new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient1 = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient1.table(any(),any())).thenReturn(null);
         new AggregationService(new AggregationRepositoryImpl(dynamoDbEnhancedAsyncClient1), null,null);

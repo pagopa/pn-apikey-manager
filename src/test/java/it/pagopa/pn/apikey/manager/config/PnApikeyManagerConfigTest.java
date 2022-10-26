@@ -34,7 +34,7 @@ class PnApikeyManagerConfigTest {
      */
     @Test
     void testConstructor() {
-        assertEquals("PnApikeyManagerConfig(usageplanApiId=null, usageplanKeyType=null, usageplanQuota=null, usageplanThrottle=null, usageplanStage=null)", (new PnApikeyManagerConfig()).toString());
+        assertEquals("PnApikeyManagerConfig(usageplanApiId=null, usageplanKeyType=null, usageplanQuota=null, usageplanThrottle=null, usageplanStage=null, usageplanBurstLimit=null)", (new PnApikeyManagerConfig()).toString());
     }
 
     /**

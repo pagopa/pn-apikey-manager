@@ -13,10 +13,10 @@ public class AggregationRepositoryImpl implements AggregationRepository {
 
     private final DynamoDbAsyncTable<ApiKeyAggregation> table;
 
-
     public AggregationRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient) {
         this.table = dynamoDbEnhancedClient.table("pn-aggregates", TableSchema.fromBean(ApiKeyAggregation.class));
     }
+
     @Override
     public Mono<ApiKeyAggregation> saveAggregation(ApiKeyAggregation toSave) {
         return Mono.fromFuture(table.putItem(toSave).thenApply(r -> toSave));

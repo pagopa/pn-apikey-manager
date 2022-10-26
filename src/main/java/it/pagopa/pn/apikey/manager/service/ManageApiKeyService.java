@@ -47,10 +47,10 @@ public class ManageApiKeyService {
         return apiKeyRepository.findById(id)
                 .doOnNext(apiKeyModels -> log.info("founded ApiKey with id: {}", id))
                 .flatMap(apiKeyModel -> {
-                    if (isOperationAllowed(apiKeyModel.get(0), status)) {
-                        apiKeyModel.get(0).setStatus(decodeStatus(status, false).getValue());
-                        apiKeyModel.get(0).getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
-                        return saveAndCheckIfRotate(apiKeyModel.get(0), status, xPagopaPnUid)
+                    if (isOperationAllowed(apiKeyModel, status)) {
+                        apiKeyModel.setStatus(decodeStatus(status, false).getValue());
+                        apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
+                        return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
@@ -63,8 +63,8 @@ public class ManageApiKeyService {
         return apiKeyRepository.findById(id)
                 .doOnNext(apiKeyModels -> log.info("founded ApiKey for id: {}", id))
                 .flatMap(apiKeyModel -> {
-                    if (isOperationAllowed(apiKeyModel.get(0), DELETE)) {
-                        return apiKeyRepository.delete(apiKeyModel.get(0).getVirtualKey()).doOnNext(s -> log.info("Deleted ApiKey: {}", id));
+                    if (isOperationAllowed(apiKeyModel, DELETE)) {
+                        return apiKeyRepository.delete(apiKeyModel.getVirtualKey()).doOnNext(s -> log.info("Deleted ApiKey: {}", id));
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
                     }

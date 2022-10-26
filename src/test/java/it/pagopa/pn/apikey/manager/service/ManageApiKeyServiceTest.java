@@ -59,7 +59,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel1.setId("42");
         apiKeyModel1.setStatus("ENABLED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
         StepVerifier.create(apiKeyService.changeStatus("42", "ENABLE", "1234"))
                 .expectNext(apiKeyModel1).verifyComplete();
@@ -75,7 +75,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel1.setId("42");
         apiKeyModel1.setStatus("ENABLED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
         StepVerifier.create(apiKeyService.changeStatus("42", "test", "1234"))
                 .expectError(ApiKeyManagerException.class).verify();
@@ -91,7 +91,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel1.setId("42");
         apiKeyModel1.setStatus("BLOCKED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
         StepVerifier.create(apiKeyService.changeStatus("42", "BLOCK", "1234"))
                 .expectNext(apiKeyModel1).verifyComplete();
@@ -107,7 +107,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel1.setId("42");
         apiKeyModel1.setStatus("BLOCKED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
         StepVerifier.create(apiKeyService.changeStatus("42", "ENABLE", "1234"))
                 .expectError(ApiKeyManagerException.class).verify();
@@ -123,7 +123,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel1.setId("42");
         apiKeyModel1.setStatus("BLOCKED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
         StepVerifier.create(apiKeyService.changeStatus("42", "ROTATE", "1234"))
                 .expectNext(apiKeyModel1).verifyComplete();
@@ -135,7 +135,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel.setId("42");
         apiKeyModel.setStatus("ROTATED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         StepVerifier.create(apiKeyService.deleteApiKey("42"))
                 .expectError(ApiKeyManagerException.class).verify();
     }
@@ -146,7 +146,7 @@ class ManageApiKeyServiceTest {
         apiKeyModel.setId("42");
         apiKeyModel.setStatus("ENABLED");
 
-        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(List.of(apiKeyModel)));
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.delete(any())).thenReturn(Mono.just("id"));
         StepVerifier.create(apiKeyService.deleteApiKey("42")).expectNext("id").verifyComplete();
     }

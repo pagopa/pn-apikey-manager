@@ -21,4 +21,5 @@ public class PnApikeyManagerConfig {
     private Integer usageplanQuota;
     private Double usageplanThrottle;
     private String usageplanStage;
+    private Integer usageplanBurstLimit;
 }

@@ -66,6 +66,10 @@ Parameters:
     Type: Double
     Description: 'throttle for new AWS usagePlan'
 
+  UsagePlanBurstLimit:
+    Type: Integer
+    Description: 'throttle burstLimit for new AWS usagePlan'
+
   UsagePlanApiId:
     Type: String
     Description: 'ApiId for new AWS usagePlan'

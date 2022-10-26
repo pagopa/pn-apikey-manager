@@ -21,8 +21,7 @@
         <java.version>11</java.version>
         <spring.boot-version>2.5.2</spring.boot-version>
         <sonar.coverage.exclusions>
-            **/it/pagopa/pn/apikey/manager/entity/*,
-            **/it/pagopa/pn/apikey/manager/repository/*,
+            **/it/pagopa/pn/apikey/manager/entity/*
         </sonar.coverage.exclusions>
         <awssdk.version>2.16.97</awssdk.version>
     </properties>

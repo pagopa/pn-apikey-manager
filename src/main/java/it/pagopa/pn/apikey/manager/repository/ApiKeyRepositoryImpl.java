@@ -23,15 +23,12 @@ import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.
 public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     private final DynamoDbAsyncTable<ApiKeyModel> table;
-    private final String gsiVirtualKey;
     private final String gsiLastUpdate;
 
     public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
-                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.virtual-key}") String gsiVirtualKey,
                                 @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.last-update}") String gsiLastUpdate) {
         this.table = dynamoDbEnhancedClient.table("pn-apiKey", TableSchema.fromBean(ApiKeyModel.class));
         this.gsiLastUpdate = gsiLastUpdate;
-        this.gsiVirtualKey = gsiVirtualKey;
     }
 
 
@@ -43,27 +40,18 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     @Override
     public Mono<ApiKeyModel> save(ApiKeyModel apiKeyModel) {
-        return Mono.fromFuture(table.putItem(apiKeyModel).thenApply(r -> apiKeyModel));
+        return Mono.fromFuture(table.putItem(apiKeyModel))
+                .map(r -> apiKeyModel);
     }
 
     @Override
-    public Mono<List<ApiKeyModel>> findById(String id) {
+    public Mono<ApiKeyModel> findById(String id) {
         Key key = Key.builder()
                 .partitionValue(id)
                 .build();
 
-        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
-                .queryConditional(QueryConditional.keyEqualTo(key))
-                .build();
-
-        return Mono.from(table.index(gsiVirtualKey).query(queryEnhancedRequest))
-                .map(apiKeyModelPage -> {
-                    if (apiKeyModelPage.items().isEmpty())
-                       throw new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR);
-                    else if(apiKeyModelPage.items().size()!=1)
-                        throw new ApiKeyManagerException(KEY_IS_NOT_UNIQUE, HttpStatus.INTERNAL_SERVER_ERROR);
-                    return apiKeyModelPage.items();
-                });
+        return Mono.fromFuture(table.getItem(key))
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
     @Override

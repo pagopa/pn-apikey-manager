@@ -10,4 +10,4 @@ public class DynamoConfiguration {
     public DynamoDbEnhancedAsyncClient dynamoDb(){
         return DynamoDbEnhancedAsyncClient.builder().build();
     }
-}
+ }
