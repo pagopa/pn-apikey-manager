@@ -1,21 +1,20 @@
 package it.pagopa.pn.apikey.manager.entity;
 
 import lombok.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @DynamoDbBean
-public class ApiKeyModel {
+public class ApiKeyModel extends SpringDataWebProperties.Pageable {
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("id")}))
     private String id;
 
-    @Setter @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("virtualKey")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("virtualKey")}))
     private String virtualKey;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("name")}))
@@ -36,7 +35,7 @@ public class ApiKeyModel {
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-uid")}))
     private String uid;
 
-    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-cx-id")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbSecondaryPartitionKey(indexNames = "paId-lastUpdate-index"), @DynamoDbAttribute("x-pagopa-pn-cx-id")}))
     private String cxId;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("x-pagopa-pn-cx-type")}))
@@ -50,4 +49,5 @@ public class ApiKeyModel {
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("apiKey")}))
     private String apiKey;
+
 }

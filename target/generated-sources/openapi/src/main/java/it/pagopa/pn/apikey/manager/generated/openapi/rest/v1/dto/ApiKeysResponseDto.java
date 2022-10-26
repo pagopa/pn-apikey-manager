@@ -21,12 +21,18 @@ import javax.annotation.Generated;
  */
 
 @JsonTypeName("ApiKeysResponse")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-17T17:00:54.448171300+02:00[Europe/Berlin]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-26T17:24:36.171131800+02:00[Europe/Berlin]")
 public class ApiKeysResponseDto {
 
   @JsonProperty("items")
   @Valid
   private List<ApiKeyRowDto> items = new ArrayList<>();
+
+  @JsonProperty("lastKey")
+  private String lastKey;
+
+  @JsonProperty("lastUpdate")
+  private String lastUpdate;
 
   public ApiKeysResponseDto items(List<ApiKeyRowDto> items) {
     this.items = items;
@@ -54,6 +60,42 @@ public class ApiKeysResponseDto {
     this.items = items;
   }
 
+  public ApiKeysResponseDto lastKey(String lastKey) {
+    this.lastKey = lastKey;
+    return this;
+  }
+
+  /**
+   * Get lastKey
+   * @return lastKey
+  */
+  
+  public String getLastKey() {
+    return lastKey;
+  }
+
+  public void setLastKey(String lastKey) {
+    this.lastKey = lastKey;
+  }
+
+  public ApiKeysResponseDto lastUpdate(String lastUpdate) {
+    this.lastUpdate = lastUpdate;
+    return this;
+  }
+
+  /**
+   * Get lastUpdate
+   * @return lastUpdate
+  */
+  
+  public String getLastUpdate() {
+    return lastUpdate;
+  }
+
+  public void setLastUpdate(String lastUpdate) {
+    this.lastUpdate = lastUpdate;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -63,12 +105,14 @@ public class ApiKeysResponseDto {
       return false;
     }
     ApiKeysResponseDto apiKeysResponse = (ApiKeysResponseDto) o;
-    return Objects.equals(this.items, apiKeysResponse.items);
+    return Objects.equals(this.items, apiKeysResponse.items) &&
+        Objects.equals(this.lastKey, apiKeysResponse.lastKey) &&
+        Objects.equals(this.lastUpdate, apiKeysResponse.lastUpdate);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(items);
+    return Objects.hash(items, lastKey, lastUpdate);
   }
 
   @Override
@@ -76,6 +120,8 @@ public class ApiKeysResponseDto {
     StringBuilder sb = new StringBuilder();
     sb.append("class ApiKeysResponseDto {\n");
     sb.append("    items: ").append(toIndentedString(items)).append("\n");
+    sb.append("    lastKey: ").append(toIndentedString(lastKey)).append("\n");
+    sb.append("    lastUpdate: ").append(toIndentedString(lastUpdate)).append("\n");
     sb.append("}");
     return sb.toString();
   }

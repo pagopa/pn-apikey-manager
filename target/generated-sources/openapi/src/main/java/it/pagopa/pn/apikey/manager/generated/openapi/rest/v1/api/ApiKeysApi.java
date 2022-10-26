@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-24T09:54:10.898669500+02:00[Europe/Berlin]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-26T17:24:36.171131800+02:00[Europe/Berlin]")
 @Validated
 public interface ApiKeysApi {
 
@@ -134,6 +134,8 @@ public interface ApiKeysApi {
      * @param xPagopaPnCxGroups Customer Groups (optional)
      * @param limit  (optional, default to 10)
      * @param lastKey  (optional)
+     * @param lastUpdate  (optional)
+     * @param showVirtualKey  (optional, default to true)
      * @return OK (status code 200)
      *         or Bad request (status code 400)
      *         or Internal error (status code 500)
@@ -155,13 +157,17 @@ public interface ApiKeysApi {
 ,
          @Valid @RequestParam(value = "lastKey", required = false) String lastKey
 ,
+         @Valid @RequestParam(value = "lastUpdate", required = false) String lastUpdate
+,
+         @Valid @RequestParam(value = "showVirtualKey", required = false, defaultValue = "true") Boolean showVirtualKey
+,
          final ServerWebExchange exchange
     ) {
-        return _getApiKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, exchange);
+        return _getApiKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey, exchange);
     }
 
     // Override this method
-    default  Mono<ResponseEntity<ApiKeysResponseDto>> _getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey,  final ServerWebExchange exchange) {
+    default  Mono<ResponseEntity<ApiKeysResponseDto>> _getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey,  final ServerWebExchange exchange) {
         Mono<Void> result = Mono.empty();
         exchange.getResponse().setStatusCode(HttpStatus.NOT_IMPLEMENTED);
         for (MediaType mediaType : exchange.getRequest().getHeaders().getAccept()) {
