@@ -1,8 +1,8 @@
 {
   "Parameters": {
-    "UsagePlanQuota": 10,
-    "UsagePlanThrottle": 10,
-    "UsagePlanBurstLimit": 10,
+    "UsagePlanQuota": 5000,
+    "UsagePlanThrottle": 5000,
+    "UsagePlanBurstLimit": 1500,
     "UsagePlanApiId": "vub3na4af4",
     "UsagePlanKeyType": "API_KEY",
     "UsagePlanStage": "dev"

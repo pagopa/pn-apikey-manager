@@ -105,7 +105,6 @@ public class CreateApiKeyService {
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setApiKey(apiKeyModel.getVirtualKey());
         responseNewApiKeyDto.setId(apiKeyModel.getId());
-        log.debug("createResponse for new ApiKey: {}", responseNewApiKeyDto);
         return responseNewApiKeyDto;
     }
 
@@ -122,7 +121,7 @@ public class CreateApiKeyService {
         apiKeyModel.setCxId(xPagopaPnCxId);
         apiKeyModel.setCxType(xPagopaPnCxType.getValue());
         apiKeyModel.getStatusHistory().add(manageApiKeyService.createNewApiKeyHistory(CREATE, xPagopaPnUid));
-        log.debug("constructed apiKeyModel: {}", apiKeyModel);
+        log.debug("constructed apiKeyModel: {}", apiKeyModel.getId());
         return apiKeyModel;
     }
 
