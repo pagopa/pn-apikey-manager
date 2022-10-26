@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -22,9 +23,15 @@ import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.
 public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     private final DynamoDbAsyncTable<ApiKeyModel> table;
+    private final String gsiVirtualKey;
+    private final String gsiLastUpdate;
 
-    public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient) {
+    public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
+                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.virtual-key}") String gsiVirtualKey,
+                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.last-update}") String gsiLastUpdate) {
         this.table = dynamoDbEnhancedClient.table("pn-apiKey", TableSchema.fromBean(ApiKeyModel.class));
+        this.gsiLastUpdate = gsiLastUpdate;
+        this.gsiVirtualKey = gsiVirtualKey;
     }
 
 
@@ -49,7 +56,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .queryConditional(QueryConditional.keyEqualTo(key))
                 .build();
 
-        return Mono.from(table.index("virtualKey-id-index").query(queryEnhancedRequest))
+        return Mono.from(table.index(gsiVirtualKey).query(queryEnhancedRequest))
                 .map(apiKeyModelPage -> {
                     if (apiKeyModelPage.items().isEmpty())
                        throw new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR);

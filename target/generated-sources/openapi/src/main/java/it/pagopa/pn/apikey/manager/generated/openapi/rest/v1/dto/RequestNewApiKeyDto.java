@@ -20,7 +20,7 @@ import javax.annotation.Generated;
  */
 
 @JsonTypeName("RequestNewApiKey")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-25T18:12:53.565410400+02:00[Europe/Berlin]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2022-10-26T10:48:01.991809+02:00[Europe/Berlin]")
 public class RequestNewApiKeyDto {
 
   @JsonProperty("name")

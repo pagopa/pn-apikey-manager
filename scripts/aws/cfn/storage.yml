@@ -44,6 +44,12 @@ Resources:
               KeyType: RANGE
             - AttributeName: id
               KeyType: HASH
+        - IndexName: "lastUpdate-paId-index"
+          KeySchema:
+            - AttributeName: lastUpdate
+              KeyType: RANGE
+            - AttributeName: x-pagopa-pn-cx-id
+              KeyType: HASH
       BillingMode: "PAY_PER_REQUEST"
       KinesisStreamSpecification:
         StreamArn: !GetAtt apiKeyCdcKinesis.Outputs.KinesisStreamArn
