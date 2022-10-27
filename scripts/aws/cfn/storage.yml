@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Some storage with input and output
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Nome dell'ambiente destinazione
+
+  # Unused but required by CD pipeline
+  MicroserviceNumber:
+    Type: Number
+    Description: An unique number that identify the microservice inside the ECS cluster.
+
+  # Unused but required by CD pipeline
+  TemplateBucketBaseUrl:
+    Type: String
+    Description: URL da cui caricare i frammenti di template di infrastruttura
+  
+  Version:
+    Type: String
+    Description: 'keep track of used projects commitIds'
+
+
+Resources:
+  ###      KEY PAIR PER CREARE JWT NECESSARIO PER ACCEDERE AI SERVIZI M2M DI PDND    ###
+  ###   La chiave viene impiegata per firmare il client assertion che serve          ###
+  ###   per richedere a PDND il JWT da utilizzare per invocare i servizi M2M di PDND ###
+  ######################################################################################
+  # Dynamo Table
+  ApiKeyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-apiKey'
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "virtualKey-id-index"
+          KeySchema:
+            - AttributeName: id
+              KeyType: RANGE
+            - AttributeName: virtualKey
+              KeyType: HASH
+        - IndexName: "paId-lastUpdate-index"
+          KeySchema:
+            - AttributeName: lastUpdate
+              KeyType: RANGE
+            - AttributeName: x-pagopa-pn-cx-id
+              KeyType: HASH
+      BillingMode: "PAY_PER_REQUEST"
+      KinesisStreamSpecification:
+        StreamArn: !GetAtt apiKeyCdcKinesis.Outputs.KinesisStreamArn
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  AggregatesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-aggregates'
+      AttributeDefinitions:
+        - AttributeName: "aggregateId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "aggregateId"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+      KinesisStreamSpecification:
+        StreamArn: !GetAtt aaggregatesCdcKinesis.Outputs.KinesisStreamArn
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  PaAggregationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-paAggregations'
+      AttributeDefinitions:
+        - AttributeName: "x-pagopa-pn-cx-id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "x-pagopa-pn-cx-id"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+      KinesisStreamSpecification:
+        StreamArn: !GetAtt paAggregationsCdcKinesis.Outputs.KinesisStreamArn
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+#Necessario a causa di bug script deploy
+Outputs:
+
+  # Table parameters
+  PaAggregationsTableName:
+    Description: Dynamo Name used by application to access the key-value store of PaAggregationsTable
+    Value: !Ref PaAggregationsTable
+  PaAggregationsTableArn:
+    Description: ARM Dynamo Name used by application to access the key-value store of PaAggregationsTable
+    Value: !Sub '${PaAggregationsTable.Arn}'
+
+  AggregatesTableName:
+    Description: Dynamo Name used by application to access the key-value store of AggregatesTable
+    Value: !Ref AggregatesTable
+  AggregatesTableArn:
+    Description: ARM Dynamo Name used by application to access the key-value store of AggregatesTable
+    Value: !Sub '${AggregatesTable.Arn}'
+
+  ApiKeyTableName:
+    Description: Dynamo Name used by application to access the key-value store of ApiKeyTable
+    Value: !Ref ApiKeyTable
+  ApiKeyTableArn:
+    Description: ARM Dynamo Name used by application to access the key-value store of ApiKeyTable
+    Value: !Sub '${ApiKeyTable.Arn}'
+
+
+

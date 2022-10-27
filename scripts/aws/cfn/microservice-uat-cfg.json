@@ -1,0 +1,10 @@
+{
+  "Parameters": {
+    "UsagePlanQuota": "",
+    "UsagePlanThrottle": "",
+    "UsagePlanBurstLimit": "",
+    "UsagePlanApiId": "",
+    "UsagePlanKeyType": "",
+    "ApiKeyGsiName" : ""
+  }
+}
