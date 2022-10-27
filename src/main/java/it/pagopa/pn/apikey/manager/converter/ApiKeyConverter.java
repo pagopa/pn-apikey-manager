@@ -6,7 +6,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyRowDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusHistoryDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -40,7 +39,6 @@ public class ApiKeyConverter {
         return apiKeysResponseDto;
     }
 
-    @SneakyThrows
     private List<ApiKeyRowDto> getApiKeyRowDtosFromApiKeyModel(List<ApiKeyModel> apiKeyModels, Boolean showVirtualKey){
         List<ApiKeyRowDto> apiKeyRowDtos = new ArrayList<>();
 
