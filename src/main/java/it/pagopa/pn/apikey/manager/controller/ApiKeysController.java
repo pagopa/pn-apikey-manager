@@ -40,7 +40,7 @@ public class ApiKeysController implements ApiKeysApi {
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                       String id, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
-        return Mono.empty();
+        return manageApiKeyService.deleteApiKey(id).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
