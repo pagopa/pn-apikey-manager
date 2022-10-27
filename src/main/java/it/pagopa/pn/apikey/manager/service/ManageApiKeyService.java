@@ -74,9 +74,7 @@ public class ManageApiKeyService {
 
     public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate)
-                .doOnNext(apiKeyModelPage -> {
-                    log.info("founded list size");// TO DO INFO SUL FOUND
-                })
+                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id{}: and size apiKey:{}",xPagopaPnCxId,apiKeyModelPage.items().size()))
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage,showVirtualKey));
     }
 

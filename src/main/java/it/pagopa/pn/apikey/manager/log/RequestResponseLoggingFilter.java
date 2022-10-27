@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.log;
 
+import it.pagopa.pn.apikey.manager.utils.MaskDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Publisher;
@@ -37,9 +38,9 @@ public class RequestResponseLoggingFilter implements WebFilter {
                     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
                         Channels.newChannel(byteArrayOutputStream).write(dataBuffer.asByteBuffer().asReadOnlyBuffer());
                         requestBody = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
-                        log.info("Request HTTP {} to {} - body: {}", exchange.getRequest().getMethod(), httpUrl, requestBody);
+                        log.info("Request HTTP {} to {} - body: {}", exchange.getRequest().getMethod(), httpUrl, MaskDataUtils.maskInformation(requestBody));
                     } catch (IOException e) {
-                        log.info("Request HTTP {} to {} - body: {}", exchange.getRequest().getMethod(), httpUrl, requestBody);
+                        log.info("Request HTTP {} to {} - body: {}", exchange.getRequest().getMethod(), httpUrl, MaskDataUtils.maskInformation(requestBody));
                     }
                 });
             }
@@ -54,9 +55,9 @@ public class RequestResponseLoggingFilter implements WebFilter {
                     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
                         Channels.newChannel(byteArrayOutputStream).write(dataBuffer.asByteBuffer().asReadOnlyBuffer());
                         responseBody = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
-                        log.info("Response from {} - body: {}", httpUrl, responseBody);
+                        log.info("Response from {} - body: {}", httpUrl, MaskDataUtils.maskInformation(responseBody));
                     } catch (Exception e) {
-                        log.info("Response from {} - body: {}", httpUrl, responseBody);
+                        log.info("Response from {} - body: {}", httpUrl, MaskDataUtils.maskInformation(responseBody));
                     }
                 }));
             }

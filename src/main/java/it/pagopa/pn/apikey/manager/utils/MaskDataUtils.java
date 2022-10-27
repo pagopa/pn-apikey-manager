@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public class MaskDataUtils {
 
     public static String maskInformation(String dataBuffered){
-        Pattern virtualKey = Pattern.compile("(\"virtualKey\")\\s*:\\s*\"(.*?)\"");
+        Pattern virtualKey = Pattern.compile("(\"value\")\\s*:\\s*\"(.*?)\"");
 
         dataBuffered = maskMatcher(virtualKey, dataBuffered);
 
@@ -37,23 +37,21 @@ public class MaskDataUtils {
         String[] parts = strAddress.split("-");
         String masked = "";
         for (String part : parts)
-            masked = masked + maskString(part) + ",";
+            masked = masked + maskString(part) + "-";
         return masked.substring(0,masked.length()-1);
     }
 
     private static String maskString(String strText) {
         int start = 1;
-        int end = strText.length()-3;
+        int end = strText.length()-1;
         String maskChar = String.valueOf('*');
 
         if(strText.equals(""))
             return "";
-        if(strText.length() < 4){
-            end = strText.length();
+        if(strText.length() <= 3){
+            return maskChar.repeat(strText.length());
         }
         int maskLength = end - start;
-        if(maskLength == 0)
-            return maskChar;
         String sbMaskString = maskChar.repeat(Math.max(0, maskLength));
         return strText.substring(0, start)
                 + sbMaskString
