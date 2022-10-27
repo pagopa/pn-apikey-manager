@@ -4,7 +4,8 @@ import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistory;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -49,6 +50,7 @@ public class ManageApiKeyService {
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, status)) {
                         apiKeyModel.setStatus(decodeStatus(status, false).getValue());
+                        apiKeyModel.setLastUpdate(LocalDateTime.now());
                         apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
                         return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
@@ -96,7 +98,7 @@ public class ManageApiKeyService {
         newApiKeyModel.setVirtualKey(UUID.randomUUID().toString());
         newApiKeyModel.setStatus(ApiKeyStatusDto.ENABLED.getValue());
         newApiKeyModel.setGroups(apiKeyModel.getGroups());
-        newApiKeyModel.setLastUpdate(LocalDateTime.now().toString());
+        newApiKeyModel.setLastUpdate(LocalDateTime.now());
         newApiKeyModel.setName(apiKeyModel.getName());
         newApiKeyModel.setUid(xPagopaPnUid);
         newApiKeyModel.setCxId(apiKeyModel.getCxId());
@@ -108,7 +110,7 @@ public class ManageApiKeyService {
 
     protected ApiKeyHistory createNewApiKeyHistory(String status, String pa) {
         ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
-        apiKeyHistory.setDate(LocalDateTime.now().toString());
+        apiKeyHistory.setDate(LocalDateTime.now());
         apiKeyHistory.setStatus(decodeStatus(status, true).getValue());
         apiKeyHistory.setChangeByDenomination(pa);
         return apiKeyHistory;

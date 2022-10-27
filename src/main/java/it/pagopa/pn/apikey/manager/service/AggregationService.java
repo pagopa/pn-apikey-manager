@@ -2,7 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
-import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
+import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -16,15 +16,15 @@ import java.util.UUID;
 @Slf4j
 public class AggregationService {
 
-    private final AggregationRepository aggregationRepository;
+    private final AggregateRepository aggregateRepository;
     private final ApiGatewayAsyncClient apiGatewayAsyncClient;
     private final PnApikeyManagerConfig pnApikeyManagerConfig;
 
-    public AggregationService(AggregationRepository aggregationRepository,
+    public AggregationService(AggregateRepository aggregateRepository,
                               ApiGatewayAsyncClient apiGatewayAsyncClient,
                               PnApikeyManagerConfig pnApikeyManagerConfig
     ) {
-        this.aggregationRepository = aggregationRepository;
+        this.aggregateRepository = aggregateRepository;
         this.apiGatewayAsyncClient = apiGatewayAsyncClient;
         this.pnApikeyManagerConfig = pnApikeyManagerConfig;
     }
@@ -58,25 +58,25 @@ public class AggregationService {
     }
 
     public Mono<ApiKeyAggregation> getApiKeyAggregation(String aggregationId) {
-        return aggregationRepository.getApiKeyAggregation(aggregationId);
+        return aggregateRepository.getApiKeyAggregation(aggregationId);
     }
 
     public Mono<String> addAwsApiKeyToAggregate(CreateApiKeyResponse createApiKeyResponse, ApiKeyAggregation aggregate) {
-        aggregate.setLastUpdate(LocalDateTime.now().toString());
+        aggregate.setLastUpdate(LocalDateTime.now());
         aggregate.setApiKeyId(createApiKeyResponse.id());
         aggregate.setApiKey(createApiKeyResponse.value());
-        return aggregationRepository.saveAggregation(aggregate).map(ApiKeyAggregation::getAggregateId);
+        return aggregateRepository.saveAggregation(aggregate).map(ApiKeyAggregation::getAggregateId);
     }
 
     public Mono<ApiKeyAggregation> createNewAggregate(CreateApiKeyResponse createApiKeyResponse) {
         ApiKeyAggregation newApiKeyAggregation = new ApiKeyAggregation();
         newApiKeyAggregation.setAggregateId(UUID.randomUUID().toString());
         newApiKeyAggregation.setAggregationName("");
-        newApiKeyAggregation.setLastUpdate(LocalDateTime.now().toString());
-        newApiKeyAggregation.setCreatedAt(LocalDateTime.now().toString());
+        newApiKeyAggregation.setLastUpdate(LocalDateTime.now());
+        newApiKeyAggregation.setCreatedAt(LocalDateTime.now());
         newApiKeyAggregation.setApiKeyId(createApiKeyResponse.id());
         newApiKeyAggregation.setApiKey(createApiKeyResponse.value());
-        return aggregationRepository.saveAggregation(newApiKeyAggregation);
+        return aggregateRepository.saveAggregation(newApiKeyAggregation);
     }
 
     private CreateApiKeyRequest constructApiKeyRequest(String pa) {

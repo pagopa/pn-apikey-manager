@@ -9,7 +9,6 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.HashMap;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_DOES_NOT_EXISTS;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_IS_NOT_UNIQUE;
 
 @Component
 public class ApiKeyRepositoryImpl implements ApiKeyRepository{
@@ -26,8 +24,9 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
     private final String gsiLastUpdate;
 
     public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
-                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.last-update}") String gsiLastUpdate) {
-        this.table = dynamoDbEnhancedClient.table("pn-apiKey", TableSchema.fromBean(ApiKeyModel.class));
+                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.last-update}") String gsiLastUpdate,
+                                @Value("${pn.apikey.manager.dynamodb.tablename.apikey}") String tableName) {
+        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyModel.class));
         this.gsiLastUpdate = gsiLastUpdate;
     }
 
@@ -40,8 +39,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     @Override
     public Mono<ApiKeyModel> save(ApiKeyModel apiKeyModel) {
-        return Mono.fromFuture(table.putItem(apiKeyModel))
-                .map(r -> apiKeyModel);
+        return Mono.fromFuture(table.putItem(apiKeyModel).thenApply(s -> apiKeyModel));
     }
 
     @Override
@@ -58,21 +56,21 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
-        String expressionGroup = "";
-        if(xPagopaPnCxGroups.size()!=0){
+        StringBuilder expressionGroup = new StringBuilder();
+        if(!xPagopaPnCxGroups.isEmpty()){
             for(int i = 0; i < xPagopaPnCxGroups.size(); i++){
                 AttributeValue pnCxGroup = AttributeValue.builder().s(xPagopaPnCxGroups.get(i)).build();
                 expressionValues.put(":group"+i, pnCxGroup);
-                expressionGroup = expressionGroup + " contains(groups,:group"+i+") OR";
+                expressionGroup.append(" contains(groups,:group").append(i).append(") OR");
             }
-            expressionGroup = "("+expressionGroup.substring(0,expressionGroup.length()-2) + ")";
+            expressionGroup.append("(").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
         }
         else{
-            expressionGroup = "attribute_exists(groups)";
+            expressionGroup.append("attribute_exists(groups)");
         }
 
         Expression expression = Expression.builder()
-                .expression(expressionGroup)
+                .expression(expressionGroup.toString())
                 .expressionValues(expressionValues)
                 .build();
 
@@ -95,10 +93,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .limit(limit)
                 .build();
 
-        return Mono.from(table.index("paId-lastUpdate-index").query(queryEnhancedRequest)
-                .map(apiKeyModelPage -> {
-                    return apiKeyModelPage;
-                }));
+        return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest)
+                .map(apiKeyModelPage -> apiKeyModelPage));
 
     }
 }

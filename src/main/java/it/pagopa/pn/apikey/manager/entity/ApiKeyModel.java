@@ -2,28 +2,27 @@ package it.pagopa.pn.apikey.manager.entity;
 
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @ToString
 @DynamoDbBean
-public class ApiKeyModel extends SpringDataWebProperties.Pageable {
+public class ApiKeyModel{
 
-    @Setter @Getter(onMethod=@__({@DynamoDbSecondaryPartitionKey(indexNames = "virtualKey-id-index"), @DynamoDbAttribute("id")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("id"), @DynamoDbSecondarySortKey(indexNames = "virtualKey-id-index")}))
     private String id;
 
-    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("virtualKey")}))
+    @Setter @Getter(onMethod=@__({@DynamoDbSecondaryPartitionKey(indexNames = "virtualKey-id-index"), @DynamoDbAttribute("virtualKey")}))
     private String virtualKey;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("name")}))
     private String name;
 
-    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("lastUpdate")}))
-    private String lastUpdate;
+    @Setter @Getter(onMethod=@__({@DynamoDbAttribute("lastUpdate"), @DynamoDbSecondarySortKey(indexNames = "paId-lastUpdate-index")}))
+    private LocalDateTime lastUpdate;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("status")}))
     private String status;

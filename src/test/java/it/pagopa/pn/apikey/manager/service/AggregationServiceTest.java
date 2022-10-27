@@ -2,7 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
-import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
+import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(SpringExtension.class)
 class AggregationServiceTest {
     @MockBean
-    private AggregationRepository aggregationRepository;
+    private AggregateRepository aggregateRepository;
 
     @Autowired
     private AggregationService aggregationService;
@@ -64,7 +64,7 @@ class AggregationServiceTest {
     void addAwsApiKeyToAggregateTest(){
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         apiKeyAggregation.setAggregateId("id");
-        when(aggregationRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
+        when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
         StepVerifier.create(aggregationService.addAwsApiKeyToAggregate(CreateApiKeyResponse.builder().id("id").build(), apiKeyAggregation))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.equalsIgnoreCase("id")).verifyComplete();
 
@@ -74,7 +74,7 @@ class AggregationServiceTest {
     void createNewAggregateTest(){
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         apiKeyAggregation.setAggregationName("");
-        when(aggregationRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
+        when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
         StepVerifier.create(aggregationService.createNewAggregate(CreateApiKeyResponse.builder().build()))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getAggregationName().equalsIgnoreCase("")).verifyComplete();
 
@@ -104,7 +104,7 @@ class AggregationServiceTest {
      */
     @Test
     void testSearchAwsApiKey() {
-        when(aggregationRepository.getApiKeyAggregation(any())).thenReturn(Mono.empty());
+        when(aggregateRepository.getApiKeyAggregation(any())).thenReturn(Mono.empty());
         StepVerifier.create(aggregationService.getApiKeyAggregation("42")).verifyComplete();
     }
 }

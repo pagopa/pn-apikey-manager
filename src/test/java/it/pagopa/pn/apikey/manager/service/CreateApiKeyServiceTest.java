@@ -7,7 +7,7 @@ import it.pagopa.pn.apikey.manager.entity.PaAggregation;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
+import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class CreateApiKeyServiceTest {
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
     @MockBean
-    private AggregationRepository aggregationRepository;
+    private AggregateRepository aggregateRepository;
 
     @MockBean
     private ApiGatewayAsyncClient apiGatewayAsyncClient;

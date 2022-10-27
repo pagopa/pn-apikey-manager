@@ -3,7 +3,7 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
 import reactor.core.publisher.Mono;
 
-public interface AggregationRepository {
+public interface AggregateRepository {
 
     Mono<ApiKeyAggregation> saveAggregation(ApiKeyAggregation apiKeyAggregation);
 

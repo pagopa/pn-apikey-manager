@@ -25,7 +25,7 @@ class PaRepositoryImplTest {
 
     @Test
     void searchAggregation() throws IllegalAccessException, NoSuchFieldException {
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build());
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
         Field field = PaRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);
@@ -49,7 +49,7 @@ class PaRepositoryImplTest {
 
     @Test
     void savePaAggregation() throws IllegalAccessException, NoSuchFieldException {
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build());
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
         Field field = PaRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);

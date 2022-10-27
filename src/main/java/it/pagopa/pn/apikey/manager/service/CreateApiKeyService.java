@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.apigateway.model.CreateApiKeyResponse;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +115,7 @@ public class CreateApiKeyService {
         apiKeyModel.setVirtualKey(UUID.randomUUID().toString());
         apiKeyModel.setStatus(ApiKeyStatusDto.ENABLED.getValue());
         apiKeyModel.setGroups(requestNewApiKeyDto.getGroups());
-        apiKeyModel.setLastUpdate(LocalDateTime.now().toString());
+        apiKeyModel.setLastUpdate(LocalDateTime.now());
         apiKeyModel.setName(requestNewApiKeyDto.getName());
         apiKeyModel.setUid(xPagopaPnUid);
         apiKeyModel.setCorrelationId(UUID.randomUUID().toString());

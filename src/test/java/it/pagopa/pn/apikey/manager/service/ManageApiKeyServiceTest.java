@@ -5,11 +5,9 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
-import it.pagopa.pn.apikey.manager.repository.AggregationRepository;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 
 import java.util.ArrayList;

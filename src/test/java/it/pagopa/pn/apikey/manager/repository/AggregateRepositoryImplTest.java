@@ -16,15 +16,15 @@ import java.util.concurrent.CompletableFuture;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(SpringExtension.class)
-class AggregationRepositoryImplTest{
+class AggregateRepositoryImplTest {
 
     @MockBean
     DynamoDbAsyncTable<ApiKeyAggregation> apiKeyAggregationDynamoDbAsyncTable;
 
     @Test
     void saveAggregation() throws NoSuchFieldException, IllegalAccessException {
-        AggregationRepositoryImpl aggregationRepository = new AggregationRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build());
-        Field field = AggregationRepositoryImpl.class.getDeclaredField("table");
+        AggregateRepositoryImpl aggregationRepository = new AggregateRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
+        Field field = AggregateRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);
         modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
@@ -43,8 +43,8 @@ class AggregationRepositoryImplTest{
     @Test
     void getApiKeyAggregation() throws IllegalAccessException, NoSuchFieldException {
 
-        AggregationRepositoryImpl aggregationRepository = new AggregationRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build());
-        Field field = AggregationRepositoryImpl.class.getDeclaredField("table");
+        AggregateRepositoryImpl aggregationRepository = new AggregateRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
+        Field field = AggregateRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);
         modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);

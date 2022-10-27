@@ -5,6 +5,8 @@ import java.util.regex.Pattern;
 
 public class MaskDataUtils {
 
+    private MaskDataUtils(){}
+
     public static String maskInformation(String dataBuffered){
         Pattern virtualKey = Pattern.compile("(\"value\")\\s*:\\s*\"(.*?)\"");
 
@@ -35,9 +37,9 @@ public class MaskDataUtils {
 
     private static String maskVirtualKey(String strAddress){
         String[] parts = strAddress.split("-");
-        String masked = "";
+        StringBuilder masked = new StringBuilder();
         for (String part : parts)
-            masked = masked + maskString(part) + "-";
+            masked.append(maskString(part)).append("-");
         return masked.substring(0,masked.length()-1);
     }
 

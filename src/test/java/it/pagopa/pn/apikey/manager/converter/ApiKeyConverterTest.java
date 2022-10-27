@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistory;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(MockitoExtension.class)
 class ApiKeyConverterTest {
+
     @InjectMocks
     private ApiKeyConverter apiKeyConverter;
 
@@ -28,7 +30,6 @@ class ApiKeyConverterTest {
         List<ApiKeyHistory> apiKeyHistories = new ArrayList<>();
         ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
         apiKeyHistory.setChangeByDenomination("CREATE");
-        apiKeyHistory.setDate("2022-10-07T14:46:26.869Z");
         apiKeyHistory.setStatus("CREATED");
         apiKeyHistories.add(apiKeyHistory);
         groups.add("RECLAMI");
@@ -43,7 +44,6 @@ class ApiKeyConverterTest {
         apiKeyModel.setCxId("cxId");
         apiKeyModel.setCorrelationId("correlationId");
         apiKeyModel.setCxType("cxType");
-        apiKeyModel.setLastUpdate("2022-10-07T14:46:26.869Z");
         apiKeyModel.setStatusHistory(apiKeyHistories);
         apiKeyModels.add(apiKeyModel);
 
@@ -53,7 +53,7 @@ class ApiKeyConverterTest {
 
         Page<ApiKeyModel> page = Page.create(apiKeyModels,lastKey);
 
-        apiKeyConverter.convertResponsetoDto(page, true);
+        Assertions.assertNotNull(apiKeyConverter.convertResponsetoDto(page, true));
     }
 
 
@@ -64,7 +64,6 @@ class ApiKeyConverterTest {
         List<ApiKeyHistory> apiKeyHistories = new ArrayList<>();
         ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
         apiKeyHistory.setChangeByDenomination("CREATE");
-        apiKeyHistory.setDate("error");
         apiKeyHistory.setStatus("CREATED");
         apiKeyHistories.add(apiKeyHistory);
         groups.add("RECLAMI");
@@ -79,7 +78,6 @@ class ApiKeyConverterTest {
         apiKeyModel.setCxId("cxId");
         apiKeyModel.setCorrelationId("correlationId");
         apiKeyModel.setCxType("cxType");
-        apiKeyModel.setLastUpdate("2022-10-07T14:46:26.869Z");
         apiKeyModel.setStatusHistory(apiKeyHistories);
         apiKeyModels.add(apiKeyModel);
 

@@ -8,6 +8,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
+import java.time.LocalDateTime;
+
 @Data
 @ToString
 @DynamoDbBean
@@ -21,10 +23,10 @@ public class ApiKeyAggregation {
     private String aggregationName;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("createdAt")}))
-    private String createdAt;
+    private LocalDateTime createdAt;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("lastUpdate")}))
-    private String lastUpdate;
+    private LocalDateTime lastUpdate;
 
     @Setter @Getter(onMethod=@__({@DynamoDbAttribute("AWSApiKey")}))
     private String apiKey;

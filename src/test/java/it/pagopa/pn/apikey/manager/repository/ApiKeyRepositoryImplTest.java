@@ -3,6 +3,8 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.reactivestreams.Subscriber;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
@@ -10,9 +12,13 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -29,7 +35,7 @@ class ApiKeyRepositoryImplTest {
 
     @Test
     void delete() throws NoSuchFieldException, IllegalAccessException {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
         Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);
@@ -51,7 +57,7 @@ class ApiKeyRepositoryImplTest {
 
     @Test
     void save() throws NoSuchFieldException, IllegalAccessException  {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
         Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);
@@ -74,7 +80,7 @@ class ApiKeyRepositoryImplTest {
 
     @Test
     void findById() throws NoSuchFieldException, IllegalAccessException {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
         Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
         Field modifier = Field.class.getDeclaredField("modifiers");
         modifier.setAccessible(true);
@@ -94,7 +100,7 @@ class ApiKeyRepositoryImplTest {
         StepVerifier.create(apiKeyRepository.findById("42")).expectNext(apiKeyModel).verifyComplete();
     }
 
-   /* @Test
+    @Test
     void getAllWithFilter() throws NoSuchFieldException, IllegalAccessException {
         ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
         Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
@@ -114,12 +120,11 @@ class ApiKeyRepositoryImplTest {
         list.add("test2");
         list.add("test1");
 
-        PagePublisher<ApiKeyModel> pagePublisher = mock(PagePublisher.class);
         Mockito.when(table.index("")).thenReturn(index);
-        Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(pagePublisher);
+        Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
-        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId",list,1,"id"))
-                .expectNext(apiKeyModelList);
+        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId",list,1,"id",""))
+                .expectNext(Page.create(apiKeyModelList));
 
-    }*/
+    }
 }
