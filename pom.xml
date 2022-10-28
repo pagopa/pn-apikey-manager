@@ -173,7 +173,6 @@
                             <modelNameSuffix>Dto</modelNameSuffix>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
-                            <templateDirectory>src/main/resources/openapi-templates</templateDirectory>
                             <configOptions>
                                 <basePackage>
                                     it.pagopa.pn.apikey.manager.generated.openapi.rest.v1
