@@ -7,9 +7,8 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.BeanTableSchema;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -21,26 +20,22 @@ import static org.mockito.ArgumentMatchers.any;
 class PaRepositoryImplTest {
 
     @MockBean
-    private DynamoDbAsyncTable<PaAggregation> table;
+    private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
+
+    @MockBean
+    private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
     @Test
-    void searchAggregation() throws IllegalAccessException, NoSuchFieldException {
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
-        Field field = PaRepositoryImpl.class.getDeclaredField("table");
-        Field modifier = Field.class.getDeclaredField("modifiers");
-        modifier.setAccessible(true);
-        modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
-        field.set(paRepository,table);
-        field.setAccessible(false);
-        modifier.setAccessible(false);
+    void searchAggregation(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
         paAggregation.setPaId("id");
-        CompletableFuture<PaAggregation> completableFuture = new CompletableFuture<>();
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> paAggregation);
-        Mockito.when(table.getItem((Key)any())).thenReturn(completableFuture);
+        Mockito.when(dynamoDbAsyncTable.getItem((Key)any())).thenReturn(completableFuture);
 
         StepVerifier.create(paRepository.searchAggregation("id"))
                 .expectNext(paAggregation).verifyComplete();
@@ -48,21 +43,14 @@ class PaRepositoryImplTest {
     }
 
     @Test
-    void savePaAggregation() throws IllegalAccessException, NoSuchFieldException {
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"");
-        Field field = PaRepositoryImpl.class.getDeclaredField("table");
-        Field modifier = Field.class.getDeclaredField("modifiers");
-        modifier.setAccessible(true);
-        modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
-        field.set(paRepository,table);
-        field.setAccessible(false);
-        modifier.setAccessible(false);
+    void savePaAggregation(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
-        Mockito.when(table.putItem(paAggregation)).thenReturn(completableFuture);
+        Mockito.when(dynamoDbAsyncTable.putItem(paAggregation)).thenReturn(completableFuture);
 
         StepVerifier.create(paRepository.savePaAggregation(paAggregation))
                 .expectNext(paAggregation);

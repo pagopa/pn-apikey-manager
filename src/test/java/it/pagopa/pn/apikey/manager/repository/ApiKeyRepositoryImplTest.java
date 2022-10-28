@@ -28,50 +28,39 @@ import static org.mockito.Mockito.when;
 class ApiKeyRepositoryImplTest {
 
     @MockBean
-    private DynamoDbAsyncTable<ApiKeyModel> table;
+    private DynamoDbAsyncIndex<Object> index;
 
     @MockBean
-    private DynamoDbAsyncIndex<ApiKeyModel> index;
+    private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
+
+    @MockBean
+    private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
     @Test
-    void delete() throws NoSuchFieldException, IllegalAccessException {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
-        Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
-        Field modifier = Field.class.getDeclaredField("modifiers");
-        modifier.setAccessible(true);
-        modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
-        field.set(apiKeyRepository,table);
-        field.setAccessible(false);
-        modifier.setAccessible(false);
+    void delete(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         apiKeyModel.setId("42");
-        CompletableFuture<ApiKeyModel> completableFuture = new CompletableFuture<>();
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> apiKeyModel);
-        when(table.deleteItem((Key) any())).thenReturn(completableFuture);
+        when(dynamoDbAsyncTable.deleteItem((Key) any())).thenReturn(completableFuture);
 
         StepVerifier.create(apiKeyRepository.delete("42")).expectNext(apiKeyModel.getId())
                 .verifyComplete();
     }
 
     @Test
-    void save() throws NoSuchFieldException, IllegalAccessException  {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
-        Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
-        Field modifier = Field.class.getDeclaredField("modifiers");
-        modifier.setAccessible(true);
-        modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
-        field.set(apiKeyRepository,table);
-        field.setAccessible(false);
-        modifier.setAccessible(false);
+    void save(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
 
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
-        when(table.putItem(apiKeyModel)).thenReturn(completableFuture);
+        when(dynamoDbAsyncTable.putItem(apiKeyModel)).thenReturn(completableFuture);
 
         StepVerifier.create(apiKeyRepository.save(apiKeyModel))
                 .expectNext(apiKeyModel);
@@ -79,38 +68,24 @@ class ApiKeyRepositoryImplTest {
     }
 
     @Test
-    void findById() throws NoSuchFieldException, IllegalAccessException {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
-        Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
-        Field modifier = Field.class.getDeclaredField("modifiers");
-        modifier.setAccessible(true);
-        modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
-        field.set(apiKeyRepository,table);
-        field.setAccessible(false);
-        modifier.setAccessible(false);
+    void findById(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         apiKeyModel.setId("id");
 
-        CompletableFuture<ApiKeyModel> completableFuture = new CompletableFuture<>();
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> apiKeyModel);
-        when(table.getItem((Key) any())).thenReturn(completableFuture);
+        when(dynamoDbAsyncTable.getItem((Key) any())).thenReturn(completableFuture);
 
         StepVerifier.create(apiKeyRepository.findById("42")).expectNext(apiKeyModel).verifyComplete();
     }
 
     @Test
-    void getAllWithFilter() throws NoSuchFieldException, IllegalAccessException {
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient.builder().build(),"","");
-        Field field = ApiKeyRepositoryImpl.class.getDeclaredField("table");
-        Field modifier = Field.class.getDeclaredField("modifiers");
-        modifier.setAccessible(true);
-        modifier.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
-        field.set(apiKeyRepository,table);
-        field.setAccessible(false);
-        modifier.setAccessible(false);
+    void getAllWithFilter(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
@@ -120,7 +95,7 @@ class ApiKeyRepositoryImplTest {
         list.add("test2");
         list.add("test1");
 
-        Mockito.when(table.index("")).thenReturn(index);
+        Mockito.when(dynamoDbAsyncTable.index("")).thenReturn(index);
         Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
         StepVerifier.create(apiKeyRepository.getAllWithFilter("paId",list,1,"id",""))

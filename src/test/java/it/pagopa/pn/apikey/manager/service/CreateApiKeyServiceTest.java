@@ -102,12 +102,12 @@ class CreateApiKeyServiceTest {
         when(paService.searchAggregationId("42")).thenReturn(Mono.just("1"));
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
-        apiKeyAggregation.setApiKey("test");
-        apiKeyAggregation.setApiKeyId("id");
+        apiKeyAggregation.setApiKey("1");
+        apiKeyAggregation.setApiKeyId("1");
         apiKeyAggregation.setAggregateId("1");
-        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
+        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apiKeyAggregation));
         when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
-        when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
+        when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("1"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apiKeyAggregation));
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("idtest");
@@ -131,7 +131,7 @@ class CreateApiKeyServiceTest {
         apiKeyAggregation.setApiKey("test");
         apiKeyAggregation.setAggregateId("1");
         apiKeyAggregation.setApiKeyId("id");
-        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
+        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apiKeyAggregation));
         when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apiKeyAggregation));
@@ -157,7 +157,7 @@ class CreateApiKeyServiceTest {
         apiKeyAggregation.setApiKey("test");
         apiKeyAggregation.setAggregateId("1");
         apiKeyAggregation.setApiKeyId("id");
-        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(new ApiKeyAggregation()));
+        when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apiKeyAggregation));
         when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apiKeyAggregation));
