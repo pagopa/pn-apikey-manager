@@ -35,13 +35,9 @@ public class ManageApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
 
-    @Qualifier("apikeyManagerScheduler")
-    private final Scheduler scheduler;
-
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, Scheduler scheduler){
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter){
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
-        this.scheduler = scheduler;
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid) {
@@ -57,8 +53,7 @@ public class ManageApiKeyService {
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
                     }
-                })
-                .publishOn(scheduler);
+                });
     }
 
     public Mono<String> deleteApiKey(String id) {
@@ -70,8 +65,7 @@ public class ManageApiKeyService {
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
                     }
-                })
-                .publishOn(scheduler);
+                });
     }
 
     public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {

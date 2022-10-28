@@ -34,19 +34,19 @@ public class ApiKeysController implements ApiKeysApi {
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                                 String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return manageApiKeyService.changeStatus(id,status,xPagopaPnUid).map(s -> ResponseEntity.ok().build());
+        return manageApiKeyService.changeStatus(id,status,xPagopaPnUid).publishOn(scheduler).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                       String id, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
-        return manageApiKeyService.deleteApiKey(id).map(s -> ResponseEntity.ok().build());
+        return manageApiKeyService.deleteApiKey(id).publishOn(scheduler).map(s -> ResponseEntity.ok().build());
     }
 
     @Override
     public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey, final ServerWebExchange exchange) {
         return manageApiKeyService.getApiKeyList(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate,showVirtualKey)
-                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos));
+                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos)).publishOn(scheduler);
     }
 
     @Override

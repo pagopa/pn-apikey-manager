@@ -20,7 +20,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 
     @Override
     public Mono<ApiKeyAggregation> saveAggregation(ApiKeyAggregation toSave) {
-        return Mono.fromFuture(table.putItem(toSave).thenApply(r -> toSave));
+        return Mono.fromFuture(table.putItem(toSave)).thenReturn(toSave);
     }
 
     @Override

@@ -9,11 +9,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(SpringExtension.class)
 class AggregateRepositoryImplTest {
@@ -31,9 +30,10 @@ class AggregateRepositoryImplTest {
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
-        Mockito.when(dynamoDbAsyncTable.putItem(apiKeyAggregation)).thenReturn(completableFuture);
+        completableFuture.completeAsync(() -> null);
+        Mockito.when(dynamoDbAsyncTable.putItem((ApiKeyAggregation)any())).thenReturn(completableFuture);
         StepVerifier.create(aggregateRepository.saveAggregation(apiKeyAggregation))
-                .expectNext(apiKeyAggregation);
+                .expectNext(apiKeyAggregation).verifyComplete();
     }
 
     @Test

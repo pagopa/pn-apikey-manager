@@ -15,8 +15,6 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -60,10 +58,12 @@ class ApiKeyRepositoryImplTest {
         apiKeyModel.setId("id");
 
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> null);
         when(dynamoDbAsyncTable.putItem(apiKeyModel)).thenReturn(completableFuture);
 
+
         StepVerifier.create(apiKeyRepository.save(apiKeyModel))
-                .expectNext(apiKeyModel);
+                .expectNext(apiKeyModel).verifyComplete();
 
     }
 

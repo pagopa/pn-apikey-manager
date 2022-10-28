@@ -8,10 +8,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.BeanTableSchema;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -50,10 +46,11 @@ class PaRepositoryImplTest {
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> null);
         Mockito.when(dynamoDbAsyncTable.putItem(paAggregation)).thenReturn(completableFuture);
 
         StepVerifier.create(paRepository.savePaAggregation(paAggregation))
-                .expectNext(paAggregation);
+                .expectNext(paAggregation).verifyComplete();
 
     }
 }
