@@ -29,22 +29,22 @@ public class AggregationService {
         this.pnApikeyManagerConfig = pnApikeyManagerConfig;
     }
 
-    public Mono<CreateApiKeyResponse> createNewAwsApiKey(String pa) {
-        CreateApiKeyRequest createApiKeyRequest = constructApiKeyRequest(pa);
+    public Mono<CreateApiKeyResponse> createNewAwsApiKey(String aggregateName) {
+        CreateApiKeyRequest createApiKeyRequest = constructApiKeyRequest(aggregateName);
         return Mono.fromFuture(apiGatewayAsyncClient.createApiKey(createApiKeyRequest))
                 .doOnNext(createApiKeyResponse -> log.info("Created AWS ApiKey with name: {}", createApiKeyResponse.name()))
-                .flatMap(createApiKeyResponse -> createUsagePlan(createApiKeyResponse.id())
+                .flatMap(createApiKeyResponse -> createUsagePlan(aggregateName, createApiKeyResponse.id())
                         .map(createUsagePlanKeyResponse -> createApiKeyResponse));
     }
 
-    public Mono<CreateUsagePlanKeyResponse> createUsagePlan(String id) {
-        CreateUsagePlanRequest createUsagePlanRequest = constructUsagePlanRequest();
+    public Mono<CreateUsagePlanKeyResponse> createUsagePlan(String aggregateName, String apiKeyId) {
+        CreateUsagePlanRequest createUsagePlanRequest = constructUsagePlanRequest(aggregateName);
         log.debug("CreateUsagePlanRequest with name: {}, quota: {}, throttle: {}, stage: {}",
                 createUsagePlanRequest.name(), createUsagePlanRequest.quota(), createUsagePlanRequest.throttle(), createUsagePlanRequest.apiStages());
 
         return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlan(createUsagePlanRequest))
                 .doOnNext(createUsagePlanResponse -> log.info("Created AWS usagePlan with name: {}", createUsagePlanRequest.name()))
-                .flatMap(createUsagePlanResponse -> createUsagePlanKey(createUsagePlanResponse,id));
+                .flatMap(createUsagePlanResponse -> createUsagePlanKey(createUsagePlanResponse,apiKeyId));
     }
 
     private Mono<CreateUsagePlanKeyResponse> createUsagePlanKey(CreateUsagePlanResponse createUsagePlanResponse, String id) {
@@ -68,28 +68,25 @@ public class AggregationService {
         return aggregateRepository.saveAggregation(aggregate).map(ApiKeyAggregation::getAggregateId);
     }
 
-    public Mono<ApiKeyAggregation> createNewAggregate(CreateApiKeyResponse createApiKeyResponse) {
+    public Mono<ApiKeyAggregation> createNewAggregate(String paId) {
         ApiKeyAggregation newApiKeyAggregation = new ApiKeyAggregation();
         newApiKeyAggregation.setAggregateId(UUID.randomUUID().toString());
-        newApiKeyAggregation.setAggregationName("");
+        newApiKeyAggregation.setAggregateName("AGG_"+paId);
         newApiKeyAggregation.setLastUpdate(LocalDateTime.now());
         newApiKeyAggregation.setCreatedAt(LocalDateTime.now());
-        newApiKeyAggregation.setApiKeyId(createApiKeyResponse.id());
-        newApiKeyAggregation.setApiKey(createApiKeyResponse.value());
         return aggregateRepository.saveAggregation(newApiKeyAggregation);
     }
 
-    private CreateApiKeyRequest constructApiKeyRequest(String pa) {
+    private CreateApiKeyRequest constructApiKeyRequest(String aggregateName) {
         return CreateApiKeyRequest.builder()
-                .name(pa + "-" + UUID.randomUUID())
+                .name("pn_" + aggregateName + "_apikey")
                 .enabled(true)
                 .build();
     }
 
-    private CreateUsagePlanRequest constructUsagePlanRequest() {
+    private CreateUsagePlanRequest constructUsagePlanRequest(String aggregateName) {
         return CreateUsagePlanRequest.builder()
-                .name("pn-apikey-medium" + UUID.randomUUID())
-                .quota(QuotaSettings.builder().limit(pnApikeyManagerConfig.getUsageplanQuota()).period(QuotaPeriodType.DAY).build())
+                .name("pn_" + aggregateName + "_medium")
                 .throttle(ThrottleSettings.builder().burstLimit(pnApikeyManagerConfig.getUsageplanBurstLimit()).rateLimit(pnApikeyManagerConfig.getUsageplanThrottle()).build())
                 .apiStages(ApiStage.builder().apiId(pnApikeyManagerConfig.getUsageplanApiId())
                         .stage(pnApikeyManagerConfig.getUsageplanStage()).build())
@@ -103,11 +100,5 @@ public class AggregationService {
                 .usagePlanId(createUsagePlanResponse.id())
                 .build();
     }
-
-
-    //aggregateId
-    //aggregationName
-    //apiKey name
-    //usage plan name
 
 }

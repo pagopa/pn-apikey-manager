@@ -73,16 +73,13 @@ class AggregationServiceTest {
     @Test
     void createNewAggregateTest(){
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
-        apiKeyAggregation.setAggregationName("");
+        apiKeyAggregation.setAggregateName("");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
-        StepVerifier.create(aggregationService.createNewAggregate(CreateApiKeyResponse.builder().build()))
-                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getAggregationName().equalsIgnoreCase("")).verifyComplete();
+        StepVerifier.create(aggregationService.createNewAggregate("paID"))
+                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getAggregateName().equalsIgnoreCase("")).verifyComplete();
 
     }
 
-    /**
-     * Method under test: {@link AggregationService#createUsagePlan(String)}
-     */
     @Test
     void testCreateUsagePlan() {
         CreateUsagePlanResponse createUsagePlanResponse = CreateUsagePlanResponse.builder().id("id").build();
@@ -95,7 +92,7 @@ class AggregationServiceTest {
 
         when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture);
         when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
-        StepVerifier.create(aggregationService.createUsagePlan("42"))
+        StepVerifier.create(aggregationService.createUsagePlan("42","id"))
                 .expectNext(createUsagePlanKeyResponse).verifyComplete();
     }
 

@@ -58,10 +58,6 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
-  UsagePlanQuota:
-    Type: Integer
-    Description: 'quota for new AWS usagePlan'
-
   UsagePlanThrottle:
     Type: Double
     Description: 'throttle for new AWS usagePlan'
@@ -115,7 +111,6 @@ Resources:
         ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_API_KEY=${ApiKeyTableName}'
         ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_AGGREGATES=${AggregatesTableName}'
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_PA_AGGREGATIONS=${PaAggregationsTableName}'
-        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_QUOTA=${UsagePlanQuota}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
         ContainerEnvEntry8: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'

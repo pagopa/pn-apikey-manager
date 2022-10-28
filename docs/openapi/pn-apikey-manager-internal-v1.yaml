@@ -45,8 +45,6 @@ paths:
           required: false
           schema:
             type: integer
-            default: 10
-
         - name: lastKey
           in: query
           required: false

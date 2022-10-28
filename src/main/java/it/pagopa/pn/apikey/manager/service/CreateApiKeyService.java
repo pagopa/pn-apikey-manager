@@ -14,9 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.services.apigateway.model.CreateApiKeyResponse;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,42 +41,37 @@ public class CreateApiKeyService {
                                                    RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups) {
 
         List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
-        log.debug("list groupsToAdd size: {}, items: {}", groupToAdd.size(), groupToAdd.iterator().next());
+        log.debug("list groupsToAdd size: {}", groupToAdd.size());
         return paService.searchAggregationId(xPagopaPnCxId)
-                .switchIfEmpty(createNewApiKey(xPagopaPnCxId,null))
-                .doOnNext(s -> log.info("founded Pa AggregationId: {}", s))
-                .flatMap(s -> {
+                .switchIfEmpty(createNewAggregate(xPagopaPnCxId))
+                .doOnNext(aggregateId -> log.info("founded Pa AggregationId: {}", aggregateId))
+                .flatMap(aggregateId -> {
                     requestNewApiKeyDto.setGroups(groupToAdd);
                     ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
-                    return checkIfApikeyExists(s, apiKeyModel, xPagopaPnCxId);
+                    return checkIfApikeyExists(aggregateId, apiKeyModel);
                 });
     }
 
-    private Mono<String> createNewApiKey(String xPagopaPnCxId, ApiKeyAggregation apiKeyAggregation) {
-        return aggregationService.createNewAwsApiKey(xPagopaPnCxId)
-                .flatMap(createApiKeyResponse -> {
-                    if(apiKeyAggregation!=null)
-                        return aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apiKeyAggregation)
-                                .doOnNext(s1 -> log.info("Updated aggregate: {} with AWS apiKey",s1));
-                    else
-                        return createNewAggregate(createApiKeyResponse, xPagopaPnCxId);
-                });
+    private Mono<String> createNewApiKey(ApiKeyAggregation apiKeyAggregation) {
+        return aggregationService.createNewAwsApiKey(apiKeyAggregation.getAggregateName())
+                .flatMap(createApiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apiKeyAggregation)
+                        .doOnNext(s1 -> log.info("Updated aggregate: {} with AWS apiKey",s1)));
     }
 
-    private Mono<String> createNewAggregate(CreateApiKeyResponse createApiKeyResponse, String xPagopaPnCxId) {
-        return aggregationService.createNewAggregate(createApiKeyResponse)
+    private Mono<String> createNewAggregate(String xPagopaPnCxId) {
+        return aggregationService.createNewAggregate(xPagopaPnCxId)
                 .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}",apiKeyAggregation.getAggregateId()))
                 .flatMap(apiKeyAggregation -> paService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), xPagopaPnCxId))
                         .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
                         .map(PaAggregation::getAggregationId));
     }
 
-    private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String s, ApiKeyModel apiKeyModel, String xPagopaPnCxId) {
-        return aggregationService.getApiKeyAggregation(s)
-                .doOnNext(next -> log.info("Founded aggregate: {}", s))
+    private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String aggregateId, ApiKeyModel apiKeyModel) {
+        return aggregationService.getApiKeyAggregation(aggregateId)
+                .doOnNext(next -> log.info("Founded aggregate: {}", aggregateId))
                 .flatMap(apiKeyAggregation -> {
                     if (StringUtils.isNullOrEmpty(apiKeyAggregation.getApiKeyId())) {
-                        return createNewApiKey(xPagopaPnCxId,apiKeyAggregation);
+                        return createNewApiKey(apiKeyAggregation);
                     }
                     return Mono.just(apiKeyAggregation.getAggregateId());
                 })
