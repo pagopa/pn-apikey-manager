@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,12 +32,14 @@ class ApiKeyConverterTest {
         ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
         apiKeyHistory.setChangeByDenomination("CREATE");
         apiKeyHistory.setStatus("CREATED");
+        apiKeyHistory.setDate(LocalDateTime.now());
         apiKeyHistories.add(apiKeyHistory);
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
         apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
+        apiKeyModel.setLastUpdate(LocalDateTime.now());
         apiKeyModel.setVirtualKey("virtualKey");
         apiKeyModel.setGroups(groups);
         apiKeyModel.setStatus("CREATED");

@@ -128,7 +128,7 @@ Resources:
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
 
-  ExternalRegistryMicroserviceTaskPolicy:
+  ApikeyManagerMicroserviceTaskPolicy:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: !Sub '${ProjectName}-ApikeyManager-CustomTaskPolicy'
