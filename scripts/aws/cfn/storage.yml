@@ -51,10 +51,6 @@ Resources:
             - AttributeName: x-pagopa-pn-cx-id
               KeyType: HASH
       BillingMode: "PAY_PER_REQUEST"
-      KinesisStreamSpecification:
-        StreamArn: !GetAtt apiKeyCdcKinesis.Outputs.KinesisStreamArn
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
 
   AggregatesTable:
     Type: AWS::DynamoDB::Table
@@ -67,10 +63,6 @@ Resources:
         - AttributeName: "aggregateId"
           KeyType: "HASH"
       BillingMode: "PAY_PER_REQUEST"
-      KinesisStreamSpecification:
-        StreamArn: !GetAtt aaggregatesCdcKinesis.Outputs.KinesisStreamArn
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
 
   PaAggregationsTable:
     Type: AWS::DynamoDB::Table
@@ -83,10 +75,6 @@ Resources:
         - AttributeName: "x-pagopa-pn-cx-id"
           KeyType: "HASH"
       BillingMode: "PAY_PER_REQUEST"
-      KinesisStreamSpecification:
-        StreamArn: !GetAtt paAggregationsCdcKinesis.Outputs.KinesisStreamArn
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
 
 #Necessario a causa di bug script deploy
 Outputs:

@@ -86,9 +86,21 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing Aggregates information'
 
-  VirtualKeyTableName:
+  ApiKeyTableName:
     Type: String
     Description: 'Name of dynamodb table containing VirtualKey information'
+
+  PaAggregationsTableArn:
+    Type: String
+    Description: 'Arn of dynamodb table containing PaAggregations information'
+
+  AggregatesTableArn:
+    Type: String
+    Description: 'Arn of dynamodb table containing Aggregates information'
+
+  ApiKeyTableArn:
+    Type: String
+    Description: 'Arn of dynamodb table containing VirtualKey information'
 
 Resources:
 
