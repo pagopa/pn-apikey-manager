@@ -78,18 +78,6 @@ Parameters:
     Type: String
     Description: 'stage for new AWS usagePlan'
 
-  PaAggregationsTableName:
-    Type: String
-    Description: 'Name of dynamodb table containing PaAggregations information'
-
-  AggregatesTableName:
-    Type: String
-    Description: 'Name of dynamodb table containing Aggregates information'
-
-  ApiKeyTableName:
-    Type: String
-    Description: 'Name of dynamodb table containing VirtualKey information'
-
   PaAggregationsTableArn:
     Type: String
     Description: 'Arn of dynamodb table containing PaAggregations information'
@@ -120,14 +108,11 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
-        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_API_KEY=${ApiKeyTableName}'
-        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_AGGREGATES=${AggregatesTableName}'
-        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_DYNAMODB_TABLE_NAME_PA_AGGREGATIONS=${PaAggregationsTableName}'
-        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
-        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
-        ContainerEnvEntry8: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
-        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanApiStage}'
-        ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
+        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
+        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
+        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanApiStage}'
+        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
         MappedPaths: '/apikey-manager/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds

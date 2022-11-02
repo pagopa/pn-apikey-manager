@@ -37,7 +37,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void delete(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         apiKeyModel.setId("42");
@@ -52,7 +52,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void save(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
@@ -70,7 +70,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void findById(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         apiKeyModel.setId("id");
@@ -85,7 +85,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void getAllWithFilter(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();

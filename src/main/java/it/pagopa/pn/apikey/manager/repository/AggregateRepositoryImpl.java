@@ -14,8 +14,8 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 
     private final DynamoDbAsyncTable<ApiKeyAggregation> table;
 
-    public AggregateRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient, @Value("${pn.apikey.manager.dynamodb.tablename.aggregates}") String tableName) {
-        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyAggregation.class));
+    public AggregateRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient) {
+        this.table = dynamoDbEnhancedClient.table("pn-aggregates", TableSchema.fromBean(ApiKeyAggregation.class));
     }
 
     @Override

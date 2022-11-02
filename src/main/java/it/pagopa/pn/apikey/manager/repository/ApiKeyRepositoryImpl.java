@@ -24,9 +24,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
     private final String gsiLastUpdate;
 
     public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
-                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.last-update}") String gsiLastUpdate,
-                                @Value("${pn.apikey.manager.dynamodb.tablename.apikey}") String tableName) {
-        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyModel.class));
+                                @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.last-update}") String gsiLastUpdate) {
+        this.table = dynamoDbEnhancedClient.table("pn-apiKey", TableSchema.fromBean(ApiKeyModel.class));
         this.gsiLastUpdate = gsiLastUpdate;
     }
 

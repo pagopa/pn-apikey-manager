@@ -12,7 +12,6 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 
 @ExtendWith(SpringExtension.class)
 class AggregateRepositoryImplTest {
@@ -26,7 +25,7 @@ class AggregateRepositoryImplTest {
     @Test
     void saveAggregation() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient);
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
@@ -39,7 +38,7 @@ class AggregateRepositoryImplTest {
     @Test
     void getApiKeyAggregation(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn( dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient);
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();

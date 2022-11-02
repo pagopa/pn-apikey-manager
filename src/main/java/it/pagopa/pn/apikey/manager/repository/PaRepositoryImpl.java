@@ -16,8 +16,8 @@ public class PaRepositoryImpl implements PaRepository{
 
     private final DynamoDbAsyncTable<PaAggregation> table;
 
-    public PaRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient, @Value("${pn.apikey.manager.dynamodb.tablename.pa-aggregations}") String tableName) {
-        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PaAggregation.class));
+    public PaRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient) {
+        this.table = dynamoDbEnhancedClient.table("pn-paAggregations", TableSchema.fromBean(PaAggregation.class));
     }
     @Override
     public Mono<PaAggregation> searchAggregation(String xPagopaPnCxId) {

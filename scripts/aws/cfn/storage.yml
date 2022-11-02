@@ -80,23 +80,14 @@ Resources:
 Outputs:
 
   # Table parameters
-  PaAggregationsTableName:
-    Description: Dynamo Name used by application to access the key-value store of PaAggregationsTable
-    Value: !Ref PaAggregationsTable
   PaAggregationsTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store of PaAggregationsTable
     Value: !Sub '${PaAggregationsTable.Arn}'
 
-  AggregatesTableName:
-    Description: Dynamo Name used by application to access the key-value store of AggregatesTable
-    Value: !Ref AggregatesTable
   AggregatesTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store of AggregatesTable
     Value: !Sub '${AggregatesTable.Arn}'
 
-  ApiKeyTableName:
-    Description: Dynamo Name used by application to access the key-value store of ApiKeyTable
-    Value: !Ref ApiKeyTable
   ApiKeyTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store of ApiKeyTable
     Value: !Sub '${ApiKeyTable.Arn}'

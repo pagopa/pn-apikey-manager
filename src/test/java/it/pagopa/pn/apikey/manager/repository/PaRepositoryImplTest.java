@@ -24,7 +24,7 @@ class PaRepositoryImplTest {
     @Test
     void searchAggregation(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient);
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
@@ -41,7 +41,7 @@ class PaRepositoryImplTest {
     @Test
     void savePaAggregation(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient);
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
