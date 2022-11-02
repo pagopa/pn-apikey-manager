@@ -127,6 +127,7 @@ Resources:
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
         ContainerEnvEntry8: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
         ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanApiStage}'
+        ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
         MappedPaths: '/apikey-manager/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds

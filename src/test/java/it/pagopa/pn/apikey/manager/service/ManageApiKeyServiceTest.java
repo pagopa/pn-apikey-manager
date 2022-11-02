@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -44,6 +45,9 @@ class ManageApiKeyServiceTest {
 
     @MockBean
     private ApiKeyConverter apiKeyConverter;
+
+    @MockBean
+    private PnApikeyManagerConfig pnApikeyManagerConfig;
 
     /**
      * Method under test: {@link ManageApiKeyService#changeStatus(String, String, String)}
