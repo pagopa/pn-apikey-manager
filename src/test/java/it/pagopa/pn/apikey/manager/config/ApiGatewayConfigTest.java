@@ -13,9 +13,6 @@ class ApiGatewayConfigTest {
     @Autowired
     private ApiGatewayConfig apiGatewayConfig;
 
-    /**
-     * Method under test: {@link ApiGatewayConfig#apiGatewayAsync()}
-     */
     @Test
     void testApiGatewayAsync() {
         Assertions.assertNotNull(this.apiGatewayConfig.apiGatewayAsync());
