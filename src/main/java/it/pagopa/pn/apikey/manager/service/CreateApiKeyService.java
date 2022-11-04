@@ -27,13 +27,13 @@ public class CreateApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final AggregationService aggregationService;
-    private final PaService paService;
+    private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
 
-    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaService paService, ManageApiKeyService manageApiKeyService) {
+    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaAggregationsService paAggregationsService, ManageApiKeyService manageApiKeyService) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
-        this.paService = paService;
+        this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
     }
 
@@ -42,7 +42,7 @@ public class CreateApiKeyService {
 
         List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
         log.debug("list groupsToAdd size: {}", groupToAdd.size());
-        return paService.searchAggregationId(xPagopaPnCxId)
+        return paAggregationsService.searchAggregationId(xPagopaPnCxId)
                 .switchIfEmpty(createNewAggregate(xPagopaPnCxId))
                 .doOnNext(aggregateId -> log.info("founded Pa AggregationId: {}", aggregateId))
                 .flatMap(aggregateId -> {
@@ -61,7 +61,7 @@ public class CreateApiKeyService {
     private Mono<String> createNewAggregate(String xPagopaPnCxId) {
         return aggregationService.createNewAggregate(xPagopaPnCxId)
                 .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}",apiKeyAggregation.getAggregateId()))
-                .flatMap(apiKeyAggregation -> paService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), xPagopaPnCxId))
+                .flatMap(apiKeyAggregation -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), xPagopaPnCxId))
                         .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
                         .map(PaAggregation::getAggregationId));
     }

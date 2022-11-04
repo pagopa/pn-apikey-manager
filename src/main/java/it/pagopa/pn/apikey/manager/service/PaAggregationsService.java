@@ -8,11 +8,11 @@ import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
-public class PaService {
+public class PaAggregationsService {
 
     private final PaRepository paRepository;
 
-    public PaService(PaRepository paRepository) {
+    public PaAggregationsService(PaRepository paRepository) {
         this.paRepository = paRepository;
     }
 

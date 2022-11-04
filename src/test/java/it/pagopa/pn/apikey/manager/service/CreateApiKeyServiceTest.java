@@ -49,7 +49,7 @@ class CreateApiKeyServiceTest {
     private CreateApiKeyService apiKeyService;
 
     @MockBean
-    private PaService paService;
+    private PaAggregationsService paAggregationsService;
 
     @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
@@ -62,7 +62,7 @@ class CreateApiKeyServiceTest {
         ArrayList<String> stringList = new ArrayList<>();
         stringList.add("Groups1");
 
-        when(paService.searchAggregationId("42")).thenReturn(Mono.empty());
+        when(paAggregationsService.searchAggregationId("42")).thenReturn(Mono.empty());
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         apiKeyAggregation.setApiKey("test");
@@ -72,7 +72,7 @@ class CreateApiKeyServiceTest {
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("1");
-        when(paService.createNewPaAggregation(any())).thenReturn(Mono.just(paAggregation));
+        when(paAggregationsService.createNewPaAggregation(any())).thenReturn(Mono.just(paAggregation));
 
 
         when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apiKeyAggregation));
@@ -99,7 +99,7 @@ class CreateApiKeyServiceTest {
         ArrayList<String> stringList = new ArrayList<>();
         stringList.add("Groups1");
 
-        when(paService.searchAggregationId("42")).thenReturn(Mono.just("1"));
+        when(paAggregationsService.searchAggregationId("42")).thenReturn(Mono.just("1"));
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         apiKeyAggregation.setApiKey("1");
@@ -125,7 +125,7 @@ class CreateApiKeyServiceTest {
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
         requestNewApiKeyDto.addGroupsItem("Groups1");
 
-        when(paService.searchAggregationId("42")).thenReturn(Mono.just("1"));
+        when(paAggregationsService.searchAggregationId("42")).thenReturn(Mono.just("1"));
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         apiKeyAggregation.setApiKey("test");
@@ -151,7 +151,7 @@ class CreateApiKeyServiceTest {
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
         ArrayList<String> stringList = new ArrayList<>();
         stringList.add("Groups1");
-        when(paService.searchAggregationId("42")).thenReturn(Mono.just("1"));
+        when(paAggregationsService.searchAggregationId("42")).thenReturn(Mono.just("1"));
 
         ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
         apiKeyAggregation.setApiKey("test");

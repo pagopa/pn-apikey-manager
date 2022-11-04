@@ -67,7 +67,7 @@ class ApiKeysControllerTest {
     void testChangeStatusApiKey() {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(null);
-        new AggregationService(new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient),null,null);
+        new AggregationService(new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,""),null,null);
         when(manageApiKeyService.changeStatus(any(), any(), any()))
                 .thenReturn(Mono.just(new ApiKeyModel()));
         ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
@@ -92,7 +92,7 @@ class ApiKeysControllerTest {
     void testDeleteApiKeys() {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(null);
-        new AggregationService(new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient), null,null);
+        new AggregationService(new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,""), null,null);
 
         when(manageApiKeyService.deleteApiKey(any())).thenReturn(Mono.just("id"));
         ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
@@ -117,10 +117,10 @@ class ApiKeysControllerTest {
     void testNewApiKey() {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(null);
-        new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient1 = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient1.table(any(),any())).thenReturn(null);
-        new AggregationService(new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient1), null,null);
+        new AggregationService(new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient1,""), null,null);
 
         ResponseNewApiKeyDto apiKeyModel = new ResponseNewApiKeyDto();
         apiKeyModel.setApiKey("");

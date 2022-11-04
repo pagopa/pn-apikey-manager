@@ -14,24 +14,24 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-@ContextConfiguration(classes = {PaService.class})
+@ContextConfiguration(classes = {PaAggregationsService.class})
 @ExtendWith(SpringExtension.class)
-class PaServiceTest {
+class PaAggregationsServiceTest {
     @MockBean
     private PaRepository paRepository;
 
     @Autowired
-    private PaService paService;
+    private PaAggregationsService paAggregationsService;
 
     /**
-     * Method under test: {@link PaService#searchAggregationId(String)}
+     * Method under test: {@link PaAggregationsService#searchAggregationId(String)}
      */
     @Test
     void testSearchAggregationId() {
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
         when(paRepository.searchAggregation(any())).thenReturn(Mono.just(paAggregation));
-        StepVerifier.create(paService.searchAggregationId("42"))
+        StepVerifier.create(paAggregationsService.searchAggregationId("42"))
                 .expectNext(paAggregation.getAggregationId()).verifyComplete();
     }
 
@@ -40,7 +40,7 @@ class PaServiceTest {
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
         when(paRepository.savePaAggregation(paAggregation)).thenReturn(Mono.just(paAggregation));
-        StepVerifier.create(paService.createNewPaAggregation(paAggregation))
+        StepVerifier.create(paAggregationsService.createNewPaAggregation(paAggregation))
                 .expectNext(paAggregation).verifyComplete();
     }
 }
