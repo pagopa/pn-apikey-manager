@@ -148,40 +148,40 @@ Resources:
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
 
-  ApiKeyManagerCognitoUserPool:
-    Type: AWS::Cognito::UserPool
-
-  ApiKeyManagerApiGatewayAuthorizer:
-    Type: AWS::ApiGateway::Authorizer
-    Properties:
-      IdentitySource: method.request.header.Authorization
-      Name: 'api-key-manager-authorizer'
-      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-      Type: COGNITO_USER_POOLS
-      ProviderARNs:
-        - !GetAtt ApiKeyManagerCognitoUserPool.Arn
-
-  ApiKeyManagerApiGateway:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-    Parameters:
-      MicroServiceUniqueName: !Sub '${ProjectName}-ApiKeyManager'
-      AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-
-  ApiKeyManagerApiGatewayTestResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-      ParentId: !GetAtt ApiKeyManagerApiGateway.Outputs.RootResourceId
-      PathPart: apikey-manager
-
-  ApiKeyManagerApiGatewayTestMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-      ResourceId: !Ref ApiKeyManagerApiGatewayTestResource
-      HttpMethod: GET
-      ApiKeyRequired: false
-      AuthorizationType: CUSTOM
-      AuthorizerId: !GetAtt ApiKeyManagerApiGatewayAuthorizer.AuthorizerARN
+#  ApiKeyManagerCognitoUserPool:
+#    Type: AWS::Cognito::UserPool
+#
+#  ApiKeyManagerApiGatewayAuthorizer:
+#    Type: AWS::ApiGateway::Authorizer
+#    Properties:
+#      IdentitySource: method.request.header.Authorization
+#      Name: 'api-key-manager-authorizer'
+#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
+#      Type: COGNITO_USER_POOLS
+#      ProviderARNs:
+#        - !GetAtt ApiKeyManagerCognitoUserPool.Arn
+#
+#  ApiKeyManagerApiGateway:
+#    Type: AWS::CloudFormation::Stack
+#    Properties:
+#      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+#    Parameters:
+#      MicroServiceUniqueName: !Sub '${ProjectName}-ApiKeyManager'
+#      AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+#
+#  ApiKeyManagerApiGatewayTestResource:
+#    Type: AWS::ApiGateway::Resource
+#    Properties:
+#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
+#      ParentId: !GetAtt ApiKeyManagerApiGateway.Outputs.RootResourceId
+#      PathPart: apikey-manager
+#
+#  ApiKeyManagerApiGatewayTestMethod:
+#    Type: AWS::ApiGateway::Method
+#    Properties:
+#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
+#      ResourceId: !Ref ApiKeyManagerApiGatewayTestResource
+#      HttpMethod: GET
+#      ApiKeyRequired: false
+#      AuthorizationType: CUSTOM
+#      AuthorizerId: !GetAtt ApiKeyManagerApiGatewayAuthorizer.AuthorizerARN
