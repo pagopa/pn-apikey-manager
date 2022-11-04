@@ -46,18 +46,18 @@ Resources:
       GlobalSecondaryIndexes:
         - IndexName: "virtualKey-id-index"
           KeySchema:
-            - AttributeName: id
-              KeyType: RANGE
             - AttributeName: virtualKey
               KeyType: HASH
+            - AttributeName: id
+              KeyType: RANGE
           Projection:
             ProjectionType: ALL
         - IndexName: "paId-lastUpdate-index"
           KeySchema:
-            - AttributeName: lastUpdate
-              KeyType: RANGE
             - AttributeName: x-pagopa-pn-cx-id
               KeyType: HASH
+            - AttributeName: lastUpdate
+              KeyType: RANGE
           Projection:
             ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
