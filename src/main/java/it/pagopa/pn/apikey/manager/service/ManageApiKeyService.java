@@ -51,7 +51,7 @@ public class ManageApiKeyService {
                         return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.CONFLICT));
                     }
                 });
     }
@@ -63,7 +63,7 @@ public class ManageApiKeyService {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
                         return apiKeyRepository.delete(apiKeyModel.getVirtualKey()).doOnNext(s -> log.info("Deleted ApiKey: {}", id));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.CONFLICT));
                     }
                 });
     }
