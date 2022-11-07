@@ -59,11 +59,11 @@ Parameters:
     Description: 'keep track of used projects commitIds'
 
   UsagePlanThrottle:
-    Type: Double
+    Type: Number
     Description: 'throttle for new AWS usagePlan'
 
   UsagePlanBurstLimit:
-    Type: Integer
+    Type: Number
     Description: 'throttle burstLimit for new AWS usagePlan'
 
   UsagePlanApiId:
