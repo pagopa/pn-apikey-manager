@@ -1,4 +1,5 @@
 package it.pagopa.pn.apikey.manager.repository;
+
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
         this.gsiLastUpdate = gsiLastUpdate;
     }
 
-
     @Override
     public Mono<String> delete(String key) {
         return Mono.fromFuture(table.deleteItem(Key.builder().partitionValue(key).build()))
@@ -52,20 +52,19 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
-    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate){
+    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate) {
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
         StringBuilder expressionGroup = new StringBuilder();
-        if(!xPagopaPnCxGroups.isEmpty()){
-            for(int i = 0; i < xPagopaPnCxGroups.size(); i++){
+        if (!xPagopaPnCxGroups.isEmpty()) {
+            for (int i = 0; i < xPagopaPnCxGroups.size(); i++) {
                 AttributeValue pnCxGroup = AttributeValue.builder().s(xPagopaPnCxGroups.get(i)).build();
-                expressionValues.put(":group"+i, pnCxGroup);
+                expressionValues.put(":group" + i, pnCxGroup);
                 expressionGroup.append(" contains(groups,:group").append(i).append(") OR");
             }
             expressionGroup.append("(").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
-        }
-        else{
+        } else {
             expressionGroup.append("attribute_exists(groups)");
         }
 
@@ -74,8 +73,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .expressionValues(expressionValues)
                 .build();
 
-        Map<String,AttributeValue> startKey = null;
-        if(lastKey!=null && lastUpdate!=null){
+        Map<String, AttributeValue> startKey = null;
+        if (lastKey != null && lastUpdate != null) {
             startKey = new HashMap<>();
             startKey.put("id", AttributeValue.builder().s(lastKey).build());
             startKey.put("lastUpdate", AttributeValue.builder().s(lastUpdate).build());
@@ -86,7 +85,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
                         .build());
 
-        QueryEnhancedRequest queryEnhancedRequest= QueryEnhancedRequest.builder()
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .exclusiveStartKey(startKey)
                 .filterExpression(expression)
@@ -95,6 +94,5 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
         return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest)
                 .map(apiKeyModelPage -> apiKeyModelPage));
-
     }
 }

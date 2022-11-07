@@ -3,7 +3,7 @@ package it.pagopa.pn.apikey.manager.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-public class ApiKeyManagerException extends RuntimeException{
+public class ApiKeyManagerException extends RuntimeException {
 
     @Getter
     private final HttpStatus status;

@@ -22,8 +22,6 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     @Override
     public Mono<ApiKeyAggregation> saveAggregation(ApiKeyAggregation toSave) {
         return Mono.fromFuture(table.putItem(toSave)).thenReturn(toSave);
-
-
     }
 
     @Override
@@ -31,7 +29,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
         Key key = Key.builder()
                 .partitionValue(aggregationId)
                 .build();
-
         return Mono.fromFuture(table.getItem(key).thenApply(apiKeyModel -> apiKeyModel));
     }
+
 }

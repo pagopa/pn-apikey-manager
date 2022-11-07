@@ -37,7 +37,6 @@ class ApiKeyConverterTest {
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
-        apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
         apiKeyModel.setLastUpdate(LocalDateTime.now());
         apiKeyModel.setVirtualKey("virtualKey");
@@ -72,7 +71,6 @@ class ApiKeyConverterTest {
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
-        apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
         apiKeyModel.setVirtualKey("virtualKey");
         apiKeyModel.setGroups(groups);

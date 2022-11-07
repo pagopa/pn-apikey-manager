@@ -9,7 +9,7 @@ import reactor.core.scheduler.Schedulers;
 public class SchedulerConfig {
 
     @Bean("apikeyManagerScheduler")
-    public Scheduler scheduler(){
+    public Scheduler scheduler() {
         return Schedulers.boundedElastic();
     }
 

@@ -22,9 +22,9 @@ class PaRepositoryImplTest {
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
     @Test
-    void searchAggregation(){
+    void searchAggregation() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient);
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
@@ -35,13 +35,12 @@ class PaRepositoryImplTest {
 
         StepVerifier.create(paRepository.searchAggregation("id"))
                 .expectNext(paAggregation).verifyComplete();
-
     }
 
     @Test
-    void savePaAggregation(){
+    void savePaAggregation() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient);
+        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
         PaAggregation paAggregation = new PaAggregation();
         paAggregation.setAggregationId("id");
@@ -51,6 +50,5 @@ class PaRepositoryImplTest {
 
         StepVerifier.create(paRepository.savePaAggregation(paAggregation))
                 .expectNext(paAggregation).verifyComplete();
-
     }
 }
