@@ -1,9 +1,9 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import com.amazonaws.util.StringUtils;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.entity.PaAggregation;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
@@ -52,9 +52,9 @@ public class CreateApiKeyService {
                 });
     }
 
-    private Mono<String> createNewApiKey(ApiKeyAggregation apiKeyAggregation) {
-        return aggregationService.createNewAwsApiKey(apiKeyAggregation.getAggregateName())
-                .flatMap(createApiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apiKeyAggregation)
+    private Mono<String> createNewApiKey(ApiKeyAggregateModel apikeyAggregateModel) {
+        return aggregationService.createNewAwsApiKey(apikeyAggregateModel.getAggregateName())
+                .flatMap(createApiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apikeyAggregateModel)
                         .doOnNext(s1 -> log.info("Updated aggregate: {} with AWS apiKey",s1)));
     }
 
@@ -63,7 +63,7 @@ public class CreateApiKeyService {
                 .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}",apiKeyAggregation.getAggregateId()))
                 .flatMap(apiKeyAggregation -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), xPagopaPnCxId))
                         .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
-                        .map(PaAggregation::getAggregationId));
+                        .map(PaAggregationModel::getAggregateId));
     }
 
     private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String aggregateId, ApiKeyModel apiKeyModel) {
@@ -118,10 +118,10 @@ public class CreateApiKeyService {
         return apiKeyModel;
     }
 
-    private PaAggregation constructPaAggregationModel(String aggregateId, String paId) {
-        PaAggregation paAggregation = new PaAggregation();
-        paAggregation.setAggregationId(aggregateId);
-        paAggregation.setPaId(paId);
-        return paAggregation;
+    private PaAggregationModel constructPaAggregationModel(String aggregateId, String paId) {
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId(aggregateId);
+        paAggregationModel.setPaId(paId);
+        return paAggregationModel;
     }
 }

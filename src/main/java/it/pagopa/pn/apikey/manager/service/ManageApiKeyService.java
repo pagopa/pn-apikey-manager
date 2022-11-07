@@ -1,18 +1,16 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyHistory;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -102,12 +100,12 @@ public class ManageApiKeyService {
         return newApiKeyModel;
     }
 
-    protected ApiKeyHistory createNewApiKeyHistory(String status, String pa) {
-        ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
-        apiKeyHistory.setDate(LocalDateTime.now());
-        apiKeyHistory.setStatus(decodeStatus(status, true).getValue());
-        apiKeyHistory.setChangeByDenomination(pa);
-        return apiKeyHistory;
+    protected ApiKeyHistoryModel createNewApiKeyHistory(String status, String pa) {
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistoryModel.setStatus(decodeStatus(status, true).getValue());
+        apiKeyHistoryModel.setChangeByDenomination(pa);
+        return apiKeyHistoryModel;
     }
 
 
@@ -121,7 +119,7 @@ public class ManageApiKeyService {
         if (newStatus.equals(BLOCK))
             return status.equals(ENABLED) || status.equals(ROTATED);
         if (newStatus.equals(ENABLE) &&
-                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistory -> apiKeyHistory.getStatus().equals(ROTATED.getValue())))
+                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistoryModel -> apiKeyHistoryModel.getStatus().equals(ROTATED.getValue())))
             return status.equals(BLOCKED);
         else
             return false;

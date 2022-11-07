@@ -1,10 +1,10 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.api.AggregateApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.AggregateResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.AggregatesListResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.AggregateApi;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,22 +24,23 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<AggregateResponseDto>> getAggregate(String id, ServerWebExchange exchange) {
-        return AggregateApi.super.getAggregate(id, exchange);
+        return AggregateApi.super.getAggregate(id, exchange).publishOn(scheduler);
     }
 
     @Override
     public Mono<ResponseEntity<AggregatesListResponseDto>> getAggregatesList(String name, Integer limit, String lastEvaluatedId, String lastEvaluatedName, ServerWebExchange exchange) {
-        return AggregateApi.super.getAggregatesList(name, limit, lastEvaluatedId, lastEvaluatedName, exchange);
+        return AggregateApi.super.getAggregatesList(name, limit, lastEvaluatedId, lastEvaluatedName, exchange)
+                .publishOn(scheduler);
     }
 
     @Override
     public Mono<ResponseEntity<Flux<PaDetailDto>>> getAssociablePa(String id, ServerWebExchange exchange) {
-        return AggregateApi.super.getAssociablePa(id, exchange);
+        return AggregateApi.super.getAssociablePa(id, exchange).publishOn(scheduler);
     }
 
     @Override
     public Mono<ResponseEntity<Void>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
-        return AggregateApi.super.addPaListToAggregate(id, addPaListRequestDto, exchange);
+        return AggregateApi.super.addPaListToAggregate(id, addPaListRequestDto, exchange).publishOn(scheduler);
     }
 
     @Override

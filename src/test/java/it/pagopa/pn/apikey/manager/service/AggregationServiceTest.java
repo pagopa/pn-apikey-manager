@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,19 +62,19 @@ class AggregationServiceTest {
 
     @Test
     void addAwsApiKeyToAggregateTest(){
-        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
-        apiKeyAggregation.setAggregateId("id");
-        when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
-        StepVerifier.create(aggregationService.addAwsApiKeyToAggregate(CreateApiKeyResponse.builder().id("id").build(), apiKeyAggregation))
+        ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
+        apikeyAggregateModel.setAggregateId("id");
+        when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
+        StepVerifier.create(aggregationService.addAwsApiKeyToAggregate(CreateApiKeyResponse.builder().id("id").build(), apikeyAggregateModel))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.equalsIgnoreCase("id")).verifyComplete();
 
     }
 
     @Test
     void createNewAggregateTest(){
-        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
-        apiKeyAggregation.setAggregateName("");
-        when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apiKeyAggregation));
+        ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
+        apikeyAggregateModel.setAggregateName("");
+        when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
         StepVerifier.create(aggregationService.createNewAggregate("paID"))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getAggregateName().equalsIgnoreCase("")).verifyComplete();
 

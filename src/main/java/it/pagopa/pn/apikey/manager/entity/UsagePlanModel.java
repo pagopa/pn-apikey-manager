@@ -18,8 +18,11 @@ public class UsagePlanModel {
     @Getter(onMethod = @__(@DynamoDbAttribute("name")))
     private String name;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute("throttle")}))
-    private Integer throttle;
+    @Getter(onMethod = @__(@DynamoDbAttribute("description")))
+    private String description;
+
+    @Getter(onMethod = @__({@DynamoDbAttribute("rate")}))
+    private Integer rate;
 
     @Getter(onMethod = @__({@DynamoDbAttribute("burst")}))
     private Integer burst;

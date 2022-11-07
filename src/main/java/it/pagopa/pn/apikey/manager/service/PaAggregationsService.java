@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.entity.PaAggregation;
-import it.pagopa.pn.apikey.manager.repository.PaRepository;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -10,18 +10,18 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class PaAggregationsService {
 
-    private final PaRepository paRepository;
+    private final PaAggregationRepository paAggregationRepository;
 
-    public PaAggregationsService(PaRepository paRepository) {
-        this.paRepository = paRepository;
+    public PaAggregationsService(PaAggregationRepository paAggregationRepository) {
+        this.paAggregationRepository = paAggregationRepository;
     }
 
     public Mono<String> searchAggregationId(String xPagoPaPnCxId){
-        return paRepository.searchAggregation(xPagoPaPnCxId)
-                .map(PaAggregation::getAggregationId);
+        return paAggregationRepository.searchAggregation(xPagoPaPnCxId)
+                .map(PaAggregationModel::getAggregateId);
     }
 
-    public Mono<PaAggregation> createNewPaAggregation(PaAggregation paAggregation) {
-        return paRepository.savePaAggregation(paAggregation);
+    public Mono<PaAggregationModel> createNewPaAggregation(PaAggregationModel paAggregationModel) {
+        return paAggregationRepository.savePaAggregation(paAggregationModel);
     }
 }

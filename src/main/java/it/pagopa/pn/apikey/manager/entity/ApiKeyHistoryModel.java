@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 @DynamoDbBean
-public class ApiKeyHistory {
+public class ApiKeyHistoryModel {
 
     @Getter(onMethod=@__({@DynamoDbAttribute("status")}))
     private String status;

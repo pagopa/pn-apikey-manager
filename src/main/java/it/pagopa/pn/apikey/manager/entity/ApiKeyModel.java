@@ -31,7 +31,7 @@ public class ApiKeyModel {
     private List<String> groups;
 
     @Getter(onMethod = @__({@DynamoDbAttribute("statusHistory")}))
-    private List<ApiKeyHistory> statusHistory = new ArrayList<>();
+    private List<ApiKeyHistoryModel> statusHistory = new ArrayList<>();
 
     @Getter(onMethod = @__({@DynamoDbAttribute("x-pagopa-pn-uid")}))
     private String uid;

@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
-import it.pagopa.pn.apikey.manager.entity.PaAggregation;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -12,17 +12,17 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 @Slf4j
 @Component
-public class PaRepositoryImpl implements PaRepository {
+public class PaAggregationAggregationRepositoryImpl implements PaAggregationRepository {
 
-    private final DynamoDbAsyncTable<PaAggregation> table;
+    private final DynamoDbAsyncTable<PaAggregationModel> table;
 
-    public PaRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
-                            @Value("${pn.apikey.manager.dynamodb.tablename.pa-aggregations}") String tableName) {
-        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PaAggregation.class));
+    public PaAggregationAggregationRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
+                                                  @Value("${pn.apikey.manager.dynamodb.tablename.pa-aggregations}") String tableName) {
+        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PaAggregationModel.class));
     }
 
     @Override
-    public Mono<PaAggregation> searchAggregation(String xPagopaPnCxId) {
+    public Mono<PaAggregationModel> searchAggregation(String xPagopaPnCxId) {
         Key key = Key.builder()
                 .partitionValue(xPagopaPnCxId)
                 .build();
@@ -31,7 +31,7 @@ public class PaRepositoryImpl implements PaRepository {
     }
 
     @Override
-    public Mono<PaAggregation> savePaAggregation(PaAggregation toSave) {
+    public Mono<PaAggregationModel> savePaAggregation(PaAggregationModel toSave) {
         return Mono.fromFuture(table.putItem(toSave).thenApply(r -> toSave));
     }
 }

@@ -3,8 +3,8 @@ package it.pagopa.pn.apikey.manager.service;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
-import it.pagopa.pn.apikey.manager.entity.PaAggregation;
-import it.pagopa.pn.apikey.manager.repository.PaRepository;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +16,9 @@ import reactor.test.StepVerifier;
 
 @ContextConfiguration(classes = {PaAggregationsService.class})
 @ExtendWith(SpringExtension.class)
-class PaAggregationsServiceTest {
+class PaAggregationsServiceTestModel {
     @MockBean
-    private PaRepository paRepository;
+    private PaAggregationRepository paAggregationRepository;
 
     @Autowired
     private PaAggregationsService paAggregationsService;
@@ -28,20 +28,20 @@ class PaAggregationsServiceTest {
      */
     @Test
     void testSearchAggregationId() {
-        PaAggregation paAggregation = new PaAggregation();
-        paAggregation.setAggregationId("id");
-        when(paRepository.searchAggregation(any())).thenReturn(Mono.just(paAggregation));
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId("id");
+        when(paAggregationRepository.searchAggregation(any())).thenReturn(Mono.just(paAggregationModel));
         StepVerifier.create(paAggregationsService.searchAggregationId("42"))
-                .expectNext(paAggregation.getAggregationId()).verifyComplete();
+                .expectNext(paAggregationModel.getAggregateId()).verifyComplete();
     }
 
     @Test
     void createNewPaAggregationtest(){
-        PaAggregation paAggregation = new PaAggregation();
-        paAggregation.setAggregationId("id");
-        when(paRepository.savePaAggregation(paAggregation)).thenReturn(Mono.just(paAggregation));
-        StepVerifier.create(paAggregationsService.createNewPaAggregation(paAggregation))
-                .expectNext(paAggregation).verifyComplete();
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId("id");
+        when(paAggregationRepository.savePaAggregation(paAggregationModel)).thenReturn(Mono.just(paAggregationModel));
+        StepVerifier.create(paAggregationsService.createNewPaAggregation(paAggregationModel))
+                .expectNext(paAggregationModel).verifyComplete();
     }
 }
 

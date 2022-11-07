@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.converter;
 
-import it.pagopa.pn.apikey.manager.entity.ApiKeyHistory;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyRowDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
@@ -60,19 +60,19 @@ public class ApiKeyConverter {
         apiKeyRowDto.setLastUpdate(from(apiKeyModel.getLastUpdate().toInstant(ZoneOffset.UTC)));
         apiKeyRowDto.setGroups(apiKeyModel.getGroups());
         apiKeyRowDto.setStatus(ApiKeyStatusDto.fromValue(apiKeyModel.getStatus()));
-        for(ApiKeyHistory apiKeyHistory : apiKeyModel.getStatusHistory()){
-            apiKeyRowDto.addStatusHistoryItem(getApiKeyStatusHistoryDtoFromApiKeyHistory(apiKeyHistory));
+        for(ApiKeyHistoryModel apiKeyHistoryModel : apiKeyModel.getStatusHistory()){
+            apiKeyRowDto.addStatusHistoryItem(getApiKeyStatusHistoryDtoFromApiKeyHistory(apiKeyHistoryModel));
         }
         return apiKeyRowDto;
     }
 
-    private ApiKeyStatusHistoryDto getApiKeyStatusHistoryDtoFromApiKeyHistory(ApiKeyHistory apiKeyHistory){
+    private ApiKeyStatusHistoryDto getApiKeyStatusHistoryDtoFromApiKeyHistory(ApiKeyHistoryModel apiKeyHistoryModel){
 
         ApiKeyStatusHistoryDto apiKeyStatusHistoryDto = new ApiKeyStatusHistoryDto();
-        apiKeyStatusHistoryDto.setStatus(ApiKeyStatusDto.fromValue(apiKeyHistory.getStatus()));
+        apiKeyStatusHistoryDto.setStatus(ApiKeyStatusDto.fromValue(apiKeyHistoryModel.getStatus()));
 
-        apiKeyStatusHistoryDto.setDate(from(apiKeyHistory.getDate().toInstant(ZoneOffset.UTC)));
-        apiKeyStatusHistoryDto.setChangedByDenomination(apiKeyHistory.getChangeByDenomination());
+        apiKeyStatusHistoryDto.setDate(from(apiKeyHistoryModel.getDate().toInstant(ZoneOffset.UTC)));
+        apiKeyStatusHistoryDto.setChangedByDenomination(apiKeyHistoryModel.getChangeByDenomination());
 
         return apiKeyStatusHistoryDto;
     }

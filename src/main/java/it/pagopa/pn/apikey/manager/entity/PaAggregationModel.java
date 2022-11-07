@@ -8,13 +8,13 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 @Data
 @DynamoDbBean
-public class PaAggregation {
+public class PaAggregationModel {
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("x-pagopa-pn-cx-id")}))
     private String paId;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("aggregateId")}))
-    private String aggregationId;
+    private String aggregateId;
 
     @Getter(onMethod = @__({@DynamoDbAttribute("paName")}))
     private String name;

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Data
 @DynamoDbBean
-public class ApiKeyAggregation {
+public class ApiKeyAggregateModel {
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("aggregateId")}))
     private String aggregateId;

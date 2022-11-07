@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
-import it.pagopa.pn.apikey.manager.entity.PaAggregation;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(SpringExtension.class)
-class PaRepositoryImplTest {
+class PaAggregationModelRepositoryImplTest {
 
     @MockBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
@@ -24,31 +24,31 @@ class PaRepositoryImplTest {
     @Test
     void searchAggregation() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
+        PaAggregationAggregationRepositoryImpl paRepository = new PaAggregationAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
-        PaAggregation paAggregation = new PaAggregation();
-        paAggregation.setAggregationId("id");
-        paAggregation.setPaId("id");
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId("id");
+        paAggregationModel.setPaId("id");
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-        completableFuture.completeAsync(() -> paAggregation);
+        completableFuture.completeAsync(() -> paAggregationModel);
         Mockito.when(dynamoDbAsyncTable.getItem((Key)any())).thenReturn(completableFuture);
 
         StepVerifier.create(paRepository.searchAggregation("id"))
-                .expectNext(paAggregation).verifyComplete();
+                .expectNext(paAggregationModel).verifyComplete();
     }
 
     @Test
     void savePaAggregation() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        PaRepositoryImpl paRepository = new PaRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
+        PaAggregationAggregationRepositoryImpl paRepository = new PaAggregationAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
-        PaAggregation paAggregation = new PaAggregation();
-        paAggregation.setAggregationId("id");
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId("id");
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> null);
-        Mockito.when(dynamoDbAsyncTable.putItem(paAggregation)).thenReturn(completableFuture);
+        Mockito.when(dynamoDbAsyncTable.putItem(paAggregationModel)).thenReturn(completableFuture);
 
-        StepVerifier.create(paRepository.savePaAggregation(paAggregation))
-                .expectNext(paAggregation).verifyComplete();
+        StepVerifier.create(paRepository.savePaAggregation(paAggregationModel))
+                .expectNext(paAggregationModel).verifyComplete();
     }
 }

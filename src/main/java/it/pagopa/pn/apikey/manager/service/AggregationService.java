@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,24 +57,24 @@ public class AggregationService {
                         createUsagePlanKeyRequest.usagePlanId(), createUsagePlanKeyRequest.keyId()));
     }
 
-    public Mono<ApiKeyAggregation> getApiKeyAggregation(String aggregationId) {
+    public Mono<ApiKeyAggregateModel> getApiKeyAggregation(String aggregationId) {
         return aggregateRepository.getApiKeyAggregation(aggregationId);
     }
 
-    public Mono<String> addAwsApiKeyToAggregate(CreateApiKeyResponse createApiKeyResponse, ApiKeyAggregation aggregate) {
+    public Mono<String> addAwsApiKeyToAggregate(CreateApiKeyResponse createApiKeyResponse, ApiKeyAggregateModel aggregate) {
         aggregate.setLastUpdate(LocalDateTime.now());
         aggregate.setApiKeyId(createApiKeyResponse.id());
         aggregate.setApiKey(createApiKeyResponse.value());
-        return aggregateRepository.saveAggregation(aggregate).map(ApiKeyAggregation::getAggregateId);
+        return aggregateRepository.saveAggregation(aggregate).map(ApiKeyAggregateModel::getAggregateId);
     }
 
-    public Mono<ApiKeyAggregation> createNewAggregate(String paId) {
-        ApiKeyAggregation newApiKeyAggregation = new ApiKeyAggregation();
-        newApiKeyAggregation.setAggregateId(UUID.randomUUID().toString());
-        newApiKeyAggregation.setAggregateName("AGG_"+paId);
-        newApiKeyAggregation.setLastUpdate(LocalDateTime.now());
-        newApiKeyAggregation.setCreatedAt(LocalDateTime.now());
-        return aggregateRepository.saveAggregation(newApiKeyAggregation);
+    public Mono<ApiKeyAggregateModel> createNewAggregate(String paId) {
+        ApiKeyAggregateModel newApiKeyAggregateModel = new ApiKeyAggregateModel();
+        newApiKeyAggregateModel.setAggregateId(UUID.randomUUID().toString());
+        newApiKeyAggregateModel.setAggregateName("AGG_"+paId);
+        newApiKeyAggregateModel.setLastUpdate(LocalDateTime.now());
+        newApiKeyAggregateModel.setCreatedAt(LocalDateTime.now());
+        return aggregateRepository.saveAggregation(newApiKeyAggregateModel);
     }
 
     private CreateApiKeyRequest constructApiKeyRequest(String aggregateName) {
@@ -87,16 +87,16 @@ public class AggregationService {
     private CreateUsagePlanRequest constructUsagePlanRequest(String aggregateName) {
         return CreateUsagePlanRequest.builder()
                 .name("pn_" + aggregateName + "_medium")
-                .throttle(ThrottleSettings.builder().burstLimit(pnApikeyManagerConfig.getUsageplanBurstLimit()).rateLimit(pnApikeyManagerConfig.getUsageplanThrottle()).build())
-                .apiStages(ApiStage.builder().apiId(pnApikeyManagerConfig.getUsageplanApiId())
-                        .stage(pnApikeyManagerConfig.getUsageplanStage()).build())
+                .throttle(ThrottleSettings.builder().burstLimit(3000).rateLimit(10000.0).build())
+                .apiStages(ApiStage.builder().apiId(pnApikeyManagerConfig.getApiId())
+                        .stage(pnApikeyManagerConfig.getStage()).build())
                 .build();
     }
 
     private CreateUsagePlanKeyRequest constructUsagePlanKeyRequest(CreateUsagePlanResponse createUsagePlanResponse, String id) {
         return CreateUsagePlanKeyRequest.builder()
                 .keyId(id)
-                .keyType(pnApikeyManagerConfig.getUsageplanKeyType())
+                .keyType(pnApikeyManagerConfig.getKeyType())
                 .usagePlanId(createUsagePlanResponse.id())
                 .build();
     }

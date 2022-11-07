@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
-import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregation;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -26,12 +26,12 @@ class AggregateRepositoryImplTest {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
         AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
-        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
+        ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> null);
-        Mockito.when(dynamoDbAsyncTable.putItem((ApiKeyAggregation)any())).thenReturn(completableFuture);
-        StepVerifier.create(aggregateRepository.saveAggregation(apiKeyAggregation))
-                .expectNext(apiKeyAggregation).verifyComplete();
+        Mockito.when(dynamoDbAsyncTable.putItem((ApiKeyAggregateModel)any())).thenReturn(completableFuture);
+        StepVerifier.create(aggregateRepository.saveAggregation(apikeyAggregateModel))
+                .expectNext(apikeyAggregateModel).verifyComplete();
     }
 
     @Test
@@ -39,11 +39,11 @@ class AggregateRepositoryImplTest {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn( dynamoDbAsyncTable);
         AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
-        ApiKeyAggregation apiKeyAggregation = new ApiKeyAggregation();
+        ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-        completableFuture.completeAsync(() -> apiKeyAggregation);
+        completableFuture.completeAsync(() -> apikeyAggregateModel);
         Mockito.when(dynamoDbAsyncTable.getItem((Key) any())).thenReturn(completableFuture);
         StepVerifier.create(aggregateRepository.getApiKeyAggregation("42"))
-                .expectNext(apiKeyAggregation).verifyComplete();
+                .expectNext(apikeyAggregateModel).verifyComplete();
     }
 }
