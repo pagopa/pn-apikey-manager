@@ -18,8 +18,8 @@ public class PnApikeyManagerConfig {
 
     private String usageplanApiId;
     private String usageplanKeyType;
-    private Integer usageplanQuota;
-    private Double usageplanThrottle;
+    private String usageplanQuota;
+    private String usageplanThrottle;
     private String usageplanStage;
-    private Integer usageplanBurstLimit;
+    private String usageplanBurstLimit;
 }
