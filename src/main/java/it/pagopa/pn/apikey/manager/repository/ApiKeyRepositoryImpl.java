@@ -1,4 +1,5 @@
 package it.pagopa.pn.apikey.manager.repository;
+
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +19,7 @@ import java.util.Map;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_DOES_NOT_EXISTS;
 
 @Component
-public class ApiKeyRepositoryImpl implements ApiKeyRepository{
+public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
     private final DynamoDbAsyncTable<ApiKeyModel> table;
     private final String gsiLastUpdate;
@@ -29,7 +30,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
         this.gsiLastUpdate = gsiLastUpdate;
     }
 
-
     @Override
     public Mono<String> delete(String key) {
         return Mono.fromFuture(table.deleteItem(Key.builder().partitionValue(key).build()))
@@ -38,7 +38,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     @Override
     public Mono<ApiKeyModel> save(ApiKeyModel apiKeyModel) {
-        return Mono.fromFuture(table.putItem(apiKeyModel).thenApply(s -> apiKeyModel));
+        return Mono.fromFuture(table.putItem(apiKeyModel)).thenReturn(apiKeyModel);
     }
 
     @Override
@@ -46,7 +46,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
         Key key = Key.builder()
                 .partitionValue(id)
                 .build();
-
         return Mono.fromFuture(table.getItem(key))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
@@ -94,7 +93,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
             queryEnhancedRequest.limit(limit);
         }
 
-        return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest.build())
-                .map(apiKeyModelPage -> apiKeyModelPage));
+        return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest.build()));
     }
 }

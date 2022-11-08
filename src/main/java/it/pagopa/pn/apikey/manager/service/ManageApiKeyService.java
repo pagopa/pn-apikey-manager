@@ -49,7 +49,7 @@ public class ManageApiKeyService {
                         return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.CONFLICT));
+                        return Mono.error(new ApiKeyManagerException(String.format(INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
                     }
                 });
     }
@@ -62,7 +62,7 @@ public class ManageApiKeyService {
                         return apiKeyRepository.delete(id)
                                 .doOnNext(s -> log.info("Deleted ApiKey: {}", id));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.CONFLICT));
+                        return Mono.error(new ApiKeyManagerException(String.format(CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
                     }
                 });
     }
