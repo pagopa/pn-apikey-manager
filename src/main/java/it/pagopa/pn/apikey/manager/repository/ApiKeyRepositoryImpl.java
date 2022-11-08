@@ -51,20 +51,20 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
-    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String limit, String lastKey, String lastUpdate){
+    @Override
+    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate) {
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
         StringBuilder expressionGroup = new StringBuilder();
-        if(!xPagopaPnCxGroups.isEmpty()){
-            for(int i = 0; i < xPagopaPnCxGroups.size(); i++){
+        if (!xPagopaPnCxGroups.isEmpty()) {
+            for (int i = 0; i < xPagopaPnCxGroups.size(); i++) {
                 AttributeValue pnCxGroup = AttributeValue.builder().s(xPagopaPnCxGroups.get(i)).build();
-                expressionValues.put(":group"+i, pnCxGroup);
+                expressionValues.put(":group" + i, pnCxGroup);
                 expressionGroup.append(" contains(groups,:group").append(i).append(") OR");
             }
             expressionGroup.append("(").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
-        }
-        else{
+        } else {
             expressionGroup.append("attribute_exists(groups)");
         }
 
@@ -73,8 +73,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .expressionValues(expressionValues)
                 .build();
 
-        Map<String,AttributeValue> startKey = null;
-        if(lastKey!=null && lastUpdate!=null){
+        Map<String, AttributeValue> startKey = null;
+        if (lastKey != null && lastUpdate != null) {
             startKey = new HashMap<>();
             startKey.put("id", AttributeValue.builder().s(lastKey).build());
             startKey.put("lastUpdate", AttributeValue.builder().s(lastUpdate).build());
@@ -85,16 +85,16 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
                         .build());
 
-        QueryEnhancedRequest.Builder queryEnhancedRequest= QueryEnhancedRequest.builder()
+        QueryEnhancedRequest.Builder queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .exclusiveStartKey(startKey)
                 .filterExpression(expression);
 
-        if(limit!=null)
-            queryEnhancedRequest.limit(Integer.parseInt(limit));
+        if (limit != null) {
+            queryEnhancedRequest.limit(limit);
+        }
 
         return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest.build())
                 .map(apiKeyModelPage -> apiKeyModelPage));
-
     }
 }

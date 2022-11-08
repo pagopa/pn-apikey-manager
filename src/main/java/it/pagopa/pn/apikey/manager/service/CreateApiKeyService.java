@@ -43,7 +43,7 @@ public class CreateApiKeyService {
         List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
         log.debug("list groupsToAdd size: {}", groupToAdd.size());
         return paService.searchAggregationId(xPagopaPnCxId)
-                .switchIfEmpty(createNewAggregate(xPagopaPnCxId))
+                .switchIfEmpty(Mono.defer(() -> createNewAggregate(xPagopaPnCxId)))
                 .doOnNext(aggregateId -> log.info("founded Pa AggregationId: {}", aggregateId))
                 .flatMap(aggregateId -> {
                     requestNewApiKeyDto.setGroups(groupToAdd);

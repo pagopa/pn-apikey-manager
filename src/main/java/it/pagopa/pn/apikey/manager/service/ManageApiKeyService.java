@@ -67,10 +67,10 @@ public class ManageApiKeyService {
                 });
     }
 
-    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
-        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate)
-                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id{}: and size apiKey:{}",xPagopaPnCxId,apiKeyModelPage.items().size()))
-                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage,showVirtualKey));
+    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
+        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, lastUpdate)
+                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id{}: and size apiKey:{}", xPagopaPnCxId, apiKeyModelPage.items().size()))
+                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey));
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, String status, String xPagopaPnUid) {

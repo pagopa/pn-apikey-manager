@@ -44,7 +44,7 @@ paths:
           in: query
           required: false
           schema:
-            type: string
+            type: integer
         - name: lastKey
           in: query
           required: false

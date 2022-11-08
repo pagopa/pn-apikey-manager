@@ -83,11 +83,11 @@ class ApiKeyRepositoryImplTest {
     }
 
     @Test
-    void getAllWithFilter(){
-        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+    void getAllWithFilter() {
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
-        ApiKeyModel apiKeyModel= new ApiKeyModel();
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
         apiKeyModelList.add(apiKeyModel);
 
@@ -98,8 +98,7 @@ class ApiKeyRepositoryImplTest {
         Mockito.when(dynamoDbAsyncTable.index("")).thenReturn(index);
         Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
-        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId",list,"10","id",""))
+        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId", list, 10, "id", ""))
                 .expectNext(Page.create(apiKeyModelList));
-
     }
 }
