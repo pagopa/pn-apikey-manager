@@ -59,11 +59,11 @@ Parameters:
     Description: 'keep track of used projects commitIds'
 
   UsagePlanThrottle:
-    Type: Double
+    Type: Number
     Description: 'throttle for new AWS usagePlan'
 
   UsagePlanBurstLimit:
-    Type: Integer
+    Type: Number
     Description: 'throttle burstLimit for new AWS usagePlan'
 
   UsagePlanApiId:
@@ -90,6 +90,10 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
+  ApiGatewayApikeysArn:
+    Type: String
+    Description: 'Arn of apiGateway'
+
 Resources:
 
   # PN-National-Registry microservice
@@ -111,7 +115,7 @@ Resources:
         ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
         ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
-        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanApiStage}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
         MappedPaths: '/apikey-manager/*'
         ECSClusterName: !Ref ECSClusterName
@@ -132,6 +136,12 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - apigateway:POST
+              - apigateway:GET
+            Resource:
+              - !Ref ApiGatewayApikeysArn
+          - Effect: Allow
+            Action:
               - dynamodb:BatchGetItem
               - dynamodb:BatchWriteItem
               - dynamodb:ExecuteTransaction
@@ -147,6 +157,7 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Sub '${ApiKeyTableArn}/index/*'
 
 #  ApiKeyManagerCognitoUserPool:
 #    Type: AWS::Cognito::UserPool

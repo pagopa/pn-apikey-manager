@@ -54,7 +54,8 @@ class AggregationServiceTest {
 
         when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture1);
         when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
-
+        when(pnApikeyManagerConfig.getUsageplanThrottle()).thenReturn("5000");
+        when(pnApikeyManagerConfig.getUsageplanBurstLimit()).thenReturn("1500");
         StepVerifier.create(aggregationService.createNewAwsApiKey("Pa"))
                 .expectNext(CreateApiKeyResponse.builder().name("test").id("id").build()).verifyComplete();
     }
@@ -89,7 +90,8 @@ class AggregationServiceTest {
         CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().id("id").build();
         CompletableFuture<CreateUsagePlanKeyResponse> completableFuture2 = new CompletableFuture<>();
         completableFuture2.completeAsync(() -> createUsagePlanKeyResponse);
-
+        when(pnApikeyManagerConfig.getUsageplanThrottle()).thenReturn("5000");
+        when(pnApikeyManagerConfig.getUsageplanBurstLimit()).thenReturn("1500");
         when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture);
         when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
         StepVerifier.create(aggregationService.createUsagePlan("42","id"))

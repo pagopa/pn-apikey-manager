@@ -87,7 +87,8 @@ public class AggregationService {
     private CreateUsagePlanRequest constructUsagePlanRequest(String aggregateName) {
         return CreateUsagePlanRequest.builder()
                 .name("pn_" + aggregateName + "_medium")
-                .throttle(ThrottleSettings.builder().burstLimit(pnApikeyManagerConfig.getUsageplanBurstLimit()).rateLimit(pnApikeyManagerConfig.getUsageplanThrottle()).build())
+                .throttle(ThrottleSettings.builder().burstLimit(Integer.parseInt(pnApikeyManagerConfig.getUsageplanBurstLimit()))
+                        .rateLimit(Double.parseDouble(pnApikeyManagerConfig.getUsageplanThrottle())).build())
                 .apiStages(ApiStage.builder().apiId(pnApikeyManagerConfig.getUsageplanApiId())
                         .stage(pnApikeyManagerConfig.getUsageplanStage()).build())
                 .build();

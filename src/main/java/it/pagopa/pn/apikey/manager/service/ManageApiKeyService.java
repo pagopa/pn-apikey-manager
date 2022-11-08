@@ -8,11 +8,9 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -61,7 +59,8 @@ public class ManageApiKeyService {
                 .doOnNext(apiKeyModels -> log.info("founded ApiKey for id: {}", id))
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
-                        return apiKeyRepository.delete(apiKeyModel.getVirtualKey()).doOnNext(s -> log.info("Deleted ApiKey: {}", id));
+                        return apiKeyRepository.delete(id)
+                                .doOnNext(s -> log.info("Deleted ApiKey: {}", id));
                     } else {
                         return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.CONFLICT));
                     }
@@ -114,17 +113,21 @@ public class ManageApiKeyService {
     private boolean isOperationAllowed(ApiKeyModel apiKeyModel, String newStatus) {
         log.info("Verify if status can change from: {}, to: {}", apiKeyModel.getStatus(), newStatus);
         ApiKeyStatusDto status = ApiKeyStatusDto.fromValue(apiKeyModel.getStatus());
-        if (newStatus.equals(DELETE))
-            return status.equals(BLOCKED) || status.equals(ENABLED);
-        if (newStatus.equals(ROTATE))
-            return status.equals(ENABLED);
-        if (newStatus.equals(BLOCK))
-            return status.equals(ENABLED) || status.equals(ROTATED);
-        if (newStatus.equals(ENABLE) &&
-                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistory -> apiKeyHistory.getStatus().equals(ROTATED.getValue())))
+        if (newStatus.equals(DELETE)) {
             return status.equals(BLOCKED);
-        else
+        }
+        if (newStatus.equals(ROTATE)) {
+            return status.equals(ENABLED);
+        }
+        if (newStatus.equals(BLOCK)) {
+            return status.equals(ENABLED) || status.equals(ROTATED);
+        }
+        if (newStatus.equals(ENABLE) &&
+                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistory -> apiKeyHistory.getStatus().equals(ROTATED.getValue()))) {
+            return status.equals(BLOCKED);
+        } else {
             return false;
+        }
     }
 
     private ApiKeyStatusDto decodeStatus(String body, boolean history) {
