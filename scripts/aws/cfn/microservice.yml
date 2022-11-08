@@ -92,7 +92,11 @@ Parameters:
 
   ApiGatewayApikeysArn:
     Type: String
-    Description: 'Arn of apiGateway'
+    Description: 'Arn of apiGateway apiKeys'
+
+  ApiGatewayUsagePlanArn:
+    Type: String
+    Description: 'Arn of apiGateway usagePlans'
 
 Resources:
 
@@ -140,6 +144,7 @@ Resources:
               - apigateway:GET
             Resource:
               - !Ref ApiGatewayApikeysArn
+              - !Ref ApiGatewayUsagePlanArn
           - Effect: Allow
             Action:
               - dynamodb:BatchGetItem

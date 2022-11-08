@@ -5,6 +5,7 @@
     "UsagePlanApiId": "",
     "UsagePlanKeyType": "",
     "UsagePlanStage": "",
-    "ApiGatewayApikeysArn":""
+    "ApiGatewayApikeysArn":"",
+    "ApiGatewayUsagePlanArn":""
   }
 }

@@ -5,6 +5,7 @@
     "UsagePlanApiId": "vub3na4af4",
     "UsagePlanKeyType": "API_KEY",
     "UsagePlanStage": "dev",
-    "ApiGatewayApikeysArn":"arn:aws:apigateway:eu-south-1::/apikeys"
+    "ApiGatewayApikeysArn":"arn:aws:apigateway:eu-south-1::/apikeys",
+    "ApiGatewayUsagePlanArn":"arn:aws:apigateway:eu-south-1::/usageplans"
   }
 }
