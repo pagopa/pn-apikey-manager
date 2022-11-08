@@ -98,7 +98,7 @@ class ApiKeyRepositoryImplTest {
         Mockito.when(dynamoDbAsyncTable.index("")).thenReturn(index);
         Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
-        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId",list,1,"id",""))
+        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId",list,"10","id",""))
                 .expectNext(Page.create(apiKeyModelList));
 
     }

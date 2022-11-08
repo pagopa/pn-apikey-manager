@@ -159,7 +159,7 @@ class ManageApiKeyServiceTest {
         String xPagopaPnUid = "cxId";
         List<String> xPagopaPnCxGroups = new ArrayList<>();
         xPagopaPnCxGroups.add("RECLAMI");
-        int limit = 10;
+        String limit = "10";
         Boolean showVirtualKey = true;
         String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
         String lastUpdate = "2022-10-25T16:25:58.334862500";
@@ -174,7 +174,7 @@ class ManageApiKeyServiceTest {
         apiKeysResponseDto.setLastKey(lastKey);
         apiKeysResponseDto.setLastUpdate(lastUpdate);
 
-        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyInt(), anyString(), anyString()))
+        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyString(), anyString(), anyString()))
                 .thenReturn(Mono.just(page));
         when(apiKeyConverter.convertResponsetoDto(any(),anyBoolean())).thenReturn(apiKeysResponseDto);
         StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey)).expectNext(apiKeysResponseDto).verifyComplete();
