@@ -147,11 +147,11 @@ class ManageApiKeyServiceTest {
     void testDelete2() {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("42");
-        apiKeyModel.setStatus("ENABLED");
+        apiKeyModel.setStatus("BLOCKED");
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
-        when(apiKeyRepository.delete(any())).thenReturn(Mono.just("id"));
-        StepVerifier.create(apiKeyService.deleteApiKey("42")).expectNext("id").verifyComplete();
+        when(apiKeyRepository.delete(any())).thenReturn(Mono.just("42"));
+        StepVerifier.create(apiKeyService.deleteApiKey("42")).expectNext("42").verifyComplete();
     }
 
     @Test
