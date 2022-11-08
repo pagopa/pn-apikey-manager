@@ -44,7 +44,7 @@ public class ApiKeysController implements ApiKeysApi {
     }
 
     @Override
-    public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String limit, String lastKey, String lastUpdate, Boolean showVirtualKey, final ServerWebExchange exchange) {
         return manageApiKeyService.getApiKeyList(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate,showVirtualKey)
                 .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos)).publishOn(scheduler);
     }

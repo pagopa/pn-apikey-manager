@@ -51,7 +51,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
-    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate){
+    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String limit, String lastKey, String lastUpdate){
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
@@ -85,14 +85,15 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
                         .build());
 
-        QueryEnhancedRequest queryEnhancedRequest= QueryEnhancedRequest.builder()
+        QueryEnhancedRequest.Builder queryEnhancedRequest= QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .exclusiveStartKey(startKey)
-                .filterExpression(expression)
-                .limit(limit)
-                .build();
+                .filterExpression(expression);
 
-        return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest)
+        if(limit!=null)
+            queryEnhancedRequest.limit(Integer.parseInt(limit));
+
+        return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest.build())
                 .map(apiKeyModelPage -> apiKeyModelPage));
 
     }
