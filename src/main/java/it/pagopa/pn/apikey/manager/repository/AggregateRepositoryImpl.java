@@ -25,11 +25,18 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     }
 
     @Override
-    public Mono<ApiKeyAggregateModel> getApiKeyAggregation(String aggregationId) {
+    public Mono<ApiKeyAggregateModel> getApiKeyAggregation(String aggregateId) {
         Key key = Key.builder()
-                .partitionValue(aggregationId)
+                .partitionValue(aggregateId)
                 .build();
-        return Mono.fromFuture(table.getItem(key).thenApply(apiKeyModel -> apiKeyModel));
+        return Mono.fromFuture(table.getItem(key));
     }
 
+    @Override
+    public Mono<ApiKeyAggregateModel> delete(String aggregateId) {
+        Key key = Key.builder()
+                .partitionValue(aggregateId)
+                .build();
+        return Mono.fromFuture(table.deleteItem(key));
+    }
 }

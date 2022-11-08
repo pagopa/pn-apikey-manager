@@ -5,8 +5,10 @@ import reactor.core.publisher.Mono;
 
 public interface AggregateRepository {
 
-    Mono<ApiKeyAggregateModel> saveAggregation(ApiKeyAggregateModel apikeyAggregateModel);
+    Mono<ApiKeyAggregateModel> saveAggregation(ApiKeyAggregateModel aggregate);
 
-    Mono<ApiKeyAggregateModel> getApiKeyAggregation(String aggregationId);
+    Mono<ApiKeyAggregateModel> getApiKeyAggregation(String aggregateId);
+
+    Mono<ApiKeyAggregateModel> delete(String aggregateId);
 
 }

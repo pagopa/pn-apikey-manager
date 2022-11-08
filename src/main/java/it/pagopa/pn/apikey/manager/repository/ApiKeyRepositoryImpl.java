@@ -39,7 +39,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
 
     @Override
     public Mono<ApiKeyModel> save(ApiKeyModel apiKeyModel) {
-        return Mono.fromFuture(table.putItem(apiKeyModel).thenApply(s -> apiKeyModel));
+        return Mono.fromFuture(table.putItem(apiKeyModel)).thenReturn(apiKeyModel);
     }
 
     @Override

@@ -53,7 +53,7 @@ public class CreateApiKeyService {
     }
 
     private Mono<String> createNewApiKey(ApiKeyAggregateModel apikeyAggregateModel) {
-        return aggregationService.createNewAwsApiKey(apikeyAggregateModel.getAggregateName())
+        return aggregationService.createNewAwsApiKey(apikeyAggregateModel.getName())
                 .flatMap(createApiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apikeyAggregateModel)
                         .doOnNext(s1 -> log.info("Updated aggregate: {} with AWS apiKey",s1)));
     }

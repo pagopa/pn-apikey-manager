@@ -22,10 +22,6 @@ Parameters:
 
 
 Resources:
-  ###      KEY PAIR PER CREARE JWT NECESSARIO PER ACCEDERE AI SERVIZI M2M DI PDND    ###
-  ###   La chiave viene impiegata per firmare il client assertion che serve          ###
-  ###   per richedere a PDND il JWT da utilizzare per invocare i servizi M2M di PDND ###
-  ######################################################################################
   # Dynamo Table
   ApiKeyTable:
     Type: AWS::DynamoDB::Table
@@ -84,9 +80,18 @@ Resources:
       KeySchema:
         - AttributeName: "x-pagopa-pn-cx-id"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "paAggregations-aggregateId-index"
+          KeySchema:
+            - AttributeName: aggregateId
+              KeyType: HASH
+            - AttributeName: "x-pagopa-pn-cx-id"
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
 
-#Necessario a causa di bug script deploy
+# Necessario a causa di bug script deploy
 Outputs:
 
   # Table parameters

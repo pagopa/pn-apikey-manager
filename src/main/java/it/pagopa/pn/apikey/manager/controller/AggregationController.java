@@ -1,15 +1,12 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.AggregateApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.service.AggregationService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
@@ -17,9 +14,12 @@ import reactor.core.scheduler.Scheduler;
 public class AggregationController implements AggregateApi {
 
     private final Scheduler scheduler;
+    private final AggregationService aggregationService;
 
-    public AggregationController(@Qualifier("apikeyManagerScheduler") Scheduler scheduler) {
+    public AggregationController(@Qualifier("apikeyManagerScheduler") Scheduler scheduler,
+                                 AggregationService aggregationService) {
         this.scheduler = scheduler;
+        this.aggregationService = aggregationService;
     }
 
     @Override
@@ -34,8 +34,8 @@ public class AggregationController implements AggregateApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<PaDetailDto>>> getAssociablePa(String id, ServerWebExchange exchange) {
-        return AggregateApi.super.getAssociablePa(id, exchange).publishOn(scheduler);
+    public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(ServerWebExchange exchange) {
+        return AggregateApi.super.getAssociablePa(exchange).publishOn(scheduler);
     }
 
     @Override
@@ -45,7 +45,9 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String id, ServerWebExchange exchange) {
-        return AggregateApi.super.deleteApiKeys(id, exchange);
+        return aggregationService.deleteAggregation(id)
+                .publishOn(scheduler)
+                .map(a -> ResponseEntity.ok().build());
     }
 
 }

@@ -15,8 +15,11 @@ public class ApiKeyAggregateModel {
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("aggregateId")}))
     private String aggregateId;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("aggregateName")}))
-    private String aggregateName;
+    @Getter(onMethod=@__({@DynamoDbAttribute("name")}))
+    private String name;
+    
+    @Getter(onMethod=@__(@DynamoDbAttribute("description")))
+    private String description;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("createdAt")}))
     private LocalDateTime createdAt;

@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.service;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
+import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +23,11 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(classes = {AggregationService.class})
 @ExtendWith(SpringExtension.class)
 class AggregationServiceTest {
+
     @MockBean
     private AggregateRepository aggregateRepository;
+    @MockBean
+    private PaAggregationRepository paAggregationRepository;
 
     @Autowired
     private AggregationService aggregationService;
@@ -73,10 +77,10 @@ class AggregationServiceTest {
     @Test
     void createNewAggregateTest(){
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
-        apikeyAggregateModel.setAggregateName("");
+        apikeyAggregateModel.setName("");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
         StepVerifier.create(aggregationService.createNewAggregate("paID"))
-                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getAggregateName().equalsIgnoreCase("")).verifyComplete();
+                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getName().equalsIgnoreCase("")).verifyComplete();
 
     }
 
