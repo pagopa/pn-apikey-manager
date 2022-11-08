@@ -4,6 +4,7 @@
     "UsagePlanBurstLimit": "",
     "UsagePlanApiId": "",
     "UsagePlanKeyType": "",
-    "UsagePlanStage": ""
+    "UsagePlanStage": "",
+    "ApiGatewayApikeysArn":""
   }
 }
