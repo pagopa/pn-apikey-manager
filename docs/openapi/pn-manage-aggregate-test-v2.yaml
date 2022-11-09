@@ -16,7 +16,7 @@ paths:
       tags:
         - Aggregate
       operationId: getAggregatesList
-      parameters:                
+      parameters:
         - name: name
           in: query
           required: false
@@ -129,7 +129,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-                
+
   "/aggregate/{id}":
     get:
       summary: Dettaglio Aggregato
@@ -292,6 +292,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/MovePaResponse'
         '400':
           description: Bad request
           content:
@@ -310,7 +314,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-                
+
   "/aggregate/associable-pa":
     get:
       summary: Lista PA associabili
@@ -319,6 +323,12 @@ paths:
       tags:
         - Aggregate
       operationId: getAssociablePa
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -347,19 +357,19 @@ paths:
 
   "/usage-plan":
     get:
-      summary: Lista usagePlan template
+      summary: Lista usagePlan
       description: >-
         servizio che restituisce la lista dei template per gli usage plan
       tags:
         - UsagePlan
-      operationId: getUsagePlanTemplate
+      operationId: getUsagePlan
       responses:
         '200':
           description: OK
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/UsagePlanTemplateResponse'
+                $ref: '#/components/schemas/UsagePlanResponse'
         '400':
           description: Bad request
           content:
@@ -389,7 +399,7 @@ components:
       required: true
       schema:
         type: string
-  
+
   schemas:
     AggregateRequest:
       type: object
@@ -528,9 +538,10 @@ components:
         name:
           type: string
         quota:
-          type: number
+          type: integer
         rate:
           type: number
+          format: double
         burst:
           type: integer
     PaDetail:
@@ -540,7 +551,7 @@ components:
           type: string
         name:
           type: string
-    UsagePlanTemplateResponse:
+    UsagePlanResponse:
       title: elenco usagePlan template
       description: >-
         Dto contenente la lista dei template per gli usagePlan
@@ -551,20 +562,15 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/UsagePlanTemplate'
-    UsagePlanTemplate:
+            $ref: '#/components/schemas/UsagePlanDetail'
+    MovePaResponse:
       type: object
       properties:
-        id:
-          type: string
-        name: 
-          type: string
-        quota:
-          type: number
-        rate:
-          type: number
-        burst:
+        processed:
           type: integer
-    
-
-
+        unprocessed:
+          type: integer
+        unprocessedPA:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaDetail'

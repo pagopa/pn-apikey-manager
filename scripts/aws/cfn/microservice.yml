@@ -58,21 +58,9 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
-  UsagePlanThrottle:
-    Type: Double
-    Description: 'throttle for new AWS usagePlan'
-
-  UsagePlanBurstLimit:
-    Type: Integer
-    Description: 'throttle burstLimit for new AWS usagePlan'
-
   UsagePlanApiId:
     Type: String
     Description: 'ApiId for new AWS usagePlan'
-
-  UsagePlanKeyType:
-    Type: String
-    Description: 'keyType for new AWS usagePlan'
 
   UsagePlanStage:
     Type: String
@@ -90,7 +78,63 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
+  ExternalRegistriesBasePath:
+    Type: String
+    Description: 'BasePath for interaction with pn-external-registries'
+
 Resources:
+
+  UsagePlanSmall:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      ApiStages:
+        - ApiId: !Ref UsagePlanApiId
+          Stage: !Ref UsagePlanStage
+      Tags:
+        - Key: scope
+          Value: pn-apikey-manager
+        - Key: size
+          Value: S
+      Description: small usage plan
+      Throttle:
+        BurstLimit: 1500
+        RateLimit: 5000
+      UsagePlanName: pn_usageplan_small
+
+  UsagePlanMedium:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      ApiStages:
+        - ApiId: !Ref UsagePlanApiId
+          Stage: !Ref UsagePlanStage
+      Tags:
+        - Key: scope
+          Value: pn-apikey-manager
+        - Key: size
+          Value: M
+      Description: medium usage plan
+      Throttle:
+        BurstLimit: 3000
+        RateLimit: 10000
+      UsagePlanName: pn_usageplan_medium
+
+  UsagePlanLarge:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      ApiStages:
+        - ApiId: !Ref UsagePlanApiId
+          Stage: !Ref UsagePlanStage
+      Tags:
+        - Key: scope
+          Value: pn-apikey-manager
+        - Key: size
+          Value: L
+      Description: large usage plan
+      Throttle:
+        BurstLimit: 6000
+        RateLimit: 20000
+      UsagePlanName: pn_usageplan_large
+
 
   # PN-National-Registry microservice
   ApikeyManagerMicroservice:
@@ -108,11 +152,10 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
-        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
-        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
-        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
-        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanApiStage}'
-        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
+        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
+        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
+        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=${ExternalRegistriesBasePath}'
         MappedPaths: '/apikey-manager/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
