@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.entity;
 
+import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import lombok.Data;
 import lombok.Getter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @DynamoDbBean
 public class ApiKeyAggregateModel {
 
-    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("aggregateId")}))
+    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(AggregationConstant.PK)}))
     private String aggregateId;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("name")}))

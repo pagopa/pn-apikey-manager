@@ -1,20 +1,29 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
+import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 
@@ -26,15 +35,35 @@ public class AggregationService {
     private final PaAggregationRepository paAggregationRepository;
     private final ApiGatewayAsyncClient apiGatewayAsyncClient;
     private final PnApikeyManagerConfig pnApikeyManagerConfig;
+    private final UsagePlanService usagePlanService;
+    private final AggregationConverter aggregationConverter;
 
     public AggregationService(AggregateRepository aggregateRepository,
                               PaAggregationRepository paAggregationRepository,
                               ApiGatewayAsyncClient apiGatewayAsyncClient,
-                              PnApikeyManagerConfig pnApikeyManagerConfig) {
+                              PnApikeyManagerConfig pnApikeyManagerConfig,
+                              UsagePlanService usagePlanService,
+                              AggregationConverter aggregationConverter) {
         this.aggregateRepository = aggregateRepository;
         this.paAggregationRepository = paAggregationRepository;
         this.apiGatewayAsyncClient = apiGatewayAsyncClient;
         this.pnApikeyManagerConfig = pnApikeyManagerConfig;
+        this.usagePlanService = usagePlanService;
+        this.aggregationConverter = aggregationConverter;
+    }
+
+    public Mono<AggregatesListResponseDto> getAggregation(String name, AggregatePageable pageable) {
+        log.info("filter by name {} - pageable: {}", name, pageable);
+        if (StringUtils.hasText(name)) {
+            return aggregateRepository.findByName(name, pageable)
+                    .doOnNext(page -> log.info("filter by name {} - size: {} - lastKey: {}", name, page.items().size(), page.lastEvaluatedKey()))
+                    .zipWhen(this::getUsagePlanFromAggregationPage)
+                    .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
+        }
+        return aggregateRepository.findAll(pageable)
+                .doOnNext(page -> log.info("get all {} - size: {} - lastKey: {}", name, page.items().size(), page.lastEvaluatedKey()))
+                .zipWhen(this::getUsagePlanFromAggregationPage)
+                .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
     }
 
     public Mono<Void> deleteAggregation(String aggregateId) {
@@ -117,6 +146,17 @@ public class AggregationService {
                 .keyType(pnApikeyManagerConfig.getKeyType())
                 .usagePlanId(createUsagePlanResponse.id())
                 .build();
+    }
+
+    private Mono<Map<String, UsagePlanDetailDto>> getUsagePlanFromAggregationPage(Page<ApiKeyAggregateModel> page) {
+        return Flux.fromStream(page.items().stream()
+                        .map(ApiKeyAggregateModel::getUsagePlanId)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .map(usagePlanService::getUsagePlan))
+                .flatMap(m -> m)
+                .collectList()
+                .map(dto -> dto.stream().collect(Collectors.toMap(UsagePlanDetailDto::getId, Function.identity())));
     }
 
 }

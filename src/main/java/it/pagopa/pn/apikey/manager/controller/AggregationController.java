@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.AggregateApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +30,18 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<AggregatesListResponseDto>> getAggregatesList(String name, Integer limit, String lastEvaluatedId, String lastEvaluatedName, ServerWebExchange exchange) {
-        return AggregateApi.super.getAggregatesList(name, limit, lastEvaluatedId, lastEvaluatedName, exchange)
+        AggregatePageable pageable = AggregatePageable.builder()
+                .limit(limit)
+                .lastEvaluatedId(lastEvaluatedId)
+                .build();
+        return aggregationService.getAggregation(name, pageable)
+                .map(dto -> ResponseEntity.ok().body(dto))
                 .publishOn(scheduler);
     }
 
     @Override
-    public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(ServerWebExchange exchange) {
-        return AggregateApi.super.getAssociablePa(exchange).publishOn(scheduler);
+    public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, ServerWebExchange exchange) {
+        return AggregateApi.super.getAssociablePa(name, exchange).publishOn(scheduler);
     }
 
     @Override

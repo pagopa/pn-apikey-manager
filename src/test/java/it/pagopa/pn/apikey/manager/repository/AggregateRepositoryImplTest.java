@@ -12,6 +12,7 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
+
 @ExtendWith(SpringExtension.class)
 class AggregateRepositoryImplTest {
 
@@ -23,21 +24,21 @@ class AggregateRepositoryImplTest {
 
     @Test
     void saveAggregation() {
-        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> null);
-        Mockito.when(dynamoDbAsyncTable.putItem((ApiKeyAggregateModel)any())).thenReturn(completableFuture);
+        Mockito.when(dynamoDbAsyncTable.putItem((ApiKeyAggregateModel) any())).thenReturn(completableFuture);
         StepVerifier.create(aggregateRepository.saveAggregation(apikeyAggregateModel))
                 .expectNext(apikeyAggregateModel).verifyComplete();
     }
 
     @Test
-    void getApiKeyAggregation(){
-        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn( dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+    void getApiKeyAggregation() {
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
 
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();

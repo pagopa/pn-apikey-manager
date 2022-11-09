@@ -7,9 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
+import software.amazon.awssdk.services.apigateway.model.GetUsagePlanRequest;
+import software.amazon.awssdk.services.apigateway.model.GetUsagePlanResponse;
 import software.amazon.awssdk.services.apigateway.model.UsagePlan;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,31 +32,53 @@ public class UsagePlanService {
                 .map(getUsagePlansResponse -> createUsagePlanResponseDto(getUsagePlansResponse.items()));
     }
 
+    public Mono<UsagePlanDetailDto> getUsagePlan(String usagePlanId) {
+        GetUsagePlanRequest usagePlanRequest = GetUsagePlanRequest.builder()
+                .usagePlanId(usagePlanId)
+                .build();
+        return Mono.fromFuture(apiGatewayAsyncClient.getUsagePlan(usagePlanRequest))
+                .map(this::convertToUsagePlanDto);
+    }
+
     private UsagePlanResponseDto createUsagePlanResponseDto(List<UsagePlan> items) {
         UsagePlanResponseDto dto = new UsagePlanResponseDto();
         List<UsagePlan> list = items.stream().filter(usagePlan ->
                         usagePlan.tags().get(pnApikeyManagerConfig.getTag()) != null &&
                                 usagePlan.tags().get(pnApikeyManagerConfig.getTag()).equalsIgnoreCase(pnApikeyManagerConfig.getScope()))
                 .collect(Collectors.toList());
-        dto.setItems(convertToUsagePlanTemplate(list));
+        dto.setItems(convertToUsagePlanDto(list));
         return dto;
     }
 
-    private List<UsagePlanDetailDto> convertToUsagePlanTemplate(List<UsagePlan> items) {
-        List<UsagePlanDetailDto> list = new ArrayList<>();
-        for (UsagePlan usagePlan : items) {
-            UsagePlanDetailDto dto = new UsagePlanDetailDto();
-            dto.setId(usagePlan.id());
-            dto.setName(usagePlan.name());
-            if(usagePlan.throttle()!=null) {
-                dto.setBurst(usagePlan.throttle().burstLimit());
-                dto.setRate(usagePlan.throttle().rateLimit());
-            }
-            if(usagePlan.quota()!=null) {
-                dto.setQuota(usagePlan.quota().limit());
-            }
-            list.add(dto);
+    private List<UsagePlanDetailDto> convertToUsagePlanDto(List<UsagePlan> items) {
+        return items.stream().map(this::convertToUsagePlanDto).collect(Collectors.toList());
+    }
+
+    private UsagePlanDetailDto convertToUsagePlanDto(UsagePlan usagePlan) {
+        UsagePlanDetailDto dto = new UsagePlanDetailDto();
+        dto.setId(usagePlan.id());
+        dto.setName(usagePlan.name());
+        if (usagePlan.throttle() != null) {
+            dto.setBurst(usagePlan.throttle().burstLimit());
+            dto.setRate(usagePlan.throttle().rateLimit());
         }
-        return list;
+        if (usagePlan.quota() != null) {
+            dto.setQuota(usagePlan.quota().limit());
+        }
+        return dto;
+    }
+
+    private UsagePlanDetailDto convertToUsagePlanDto(GetUsagePlanResponse usagePlan) {
+        UsagePlanDetailDto dto = new UsagePlanDetailDto();
+        dto.setId(usagePlan.id());
+        dto.setName(usagePlan.name());
+        if (usagePlan.throttle() != null) {
+            dto.setBurst(usagePlan.throttle().burstLimit());
+            dto.setRate(usagePlan.throttle().rateLimit());
+        }
+        if (usagePlan.quota() != null) {
+            dto.setQuota(usagePlan.quota().limit());
+        }
+        return dto;
     }
 }
