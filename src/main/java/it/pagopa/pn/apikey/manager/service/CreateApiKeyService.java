@@ -90,8 +90,10 @@ public class CreateApiKeyService {
             return groupsToAdd;
         } else if (groups.isEmpty()) {
             return groupsToAdd;
+        } else{
+            groups.removeIf(xPagopaPnCxGroups::contains);
+            throw new ApiKeyManagerException("User cannot add groups: " + groups, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        throw new ApiKeyManagerException("User cannot add groups: " + groups.iterator().next(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private ResponseNewApiKeyDto createResponseNewApiKey(ApiKeyModel apiKeyModel) {
