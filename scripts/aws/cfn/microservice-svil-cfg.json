@@ -1,6 +1,7 @@
 {
   "Parameters": {
     "UsagePlanApiId": "",
-    "UsagePlanStage": ""
+    "UsagePlanStage": "",
+    "ExternalRegistriesBasePath" : ""
   }
 }

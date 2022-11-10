@@ -27,7 +27,7 @@ tags:
 
 
 paths:
-  "/apikey-manager/api-keys":
+  "/api-keys":
     get:
       summary: Ricerca api keys
       description: >-
@@ -40,33 +40,11 @@ paths:
         - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
         - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: lastKey
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: lastUpdate
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: showVirtualKey
-          in: query
-          required: false
-          schema:
-            type: boolean
-            default: false
-
       responses:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ApiKeysResponse'
         '400':
@@ -119,7 +97,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/apikey-manager/api-keys/{id}":
+  "/api-keys/{id}":
     delete:
       summary: Rimozione api key
       description: >-
@@ -161,7 +139,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/apikey-manager/api-keys/{id}/status":
+  "/api-keys/{id}/status":
     put:
       summary: Cambia lo stato dell'api key
       description: >-
@@ -175,7 +153,12 @@ paths:
         - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/pathApiKey'
-        - $ref: '#/components/parameters/queryApiKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestChangeStatusApiKey"
+        required: true
       responses:
         '200':
           description: OK
@@ -230,18 +213,7 @@ components:
       required: true
       schema:
         type: string
-    queryApiKey:
-      description: >-
-        Action per il cambio stato di un'api key
-      name: status
-      in: query
-      required: true
-      schema:
-        type: string
-        enum:
-          - 'BLOCK'
-          - 'ENABLE'
-          - 'ROTATE'
+
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
@@ -258,10 +230,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiKeyRow'
-        lastKey:
-          type: string
-        lastUpdate:
-          type: string
 
     ApiKeyRow:
       type: object
@@ -343,6 +311,16 @@ components:
         api-key:
           type: string
           description: Valore dell'api key appena generata
+
+    RequestChangeStatusApiKey:
+      title: Request cambio stato api key
+      description: >-
+        Action per il cambio stato di un'api key
+      type: string
+      enum:
+        - 'BLOCK'
+        - 'ENABLE'
+        - 'ROTATE'
 
 #  securitySchemes:                                      # ONLY EXTERNAL
 #    bearerAuth:                                         # ONLY EXTERNAL

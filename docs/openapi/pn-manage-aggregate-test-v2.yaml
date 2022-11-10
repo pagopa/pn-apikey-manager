@@ -234,7 +234,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  
+
   "/aggregate/{id}/add-pa":
     post:
       summary: Associazione PA - Aggregato
@@ -254,6 +254,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/MovePaResponse'
         '400':
           description: Bad request
           content:
@@ -272,7 +276,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  
+
   "/aggregate/{id}/move-pa":
     post:
       summary: Spostamento PA
@@ -438,6 +442,8 @@ components:
     PaAggregateResponse:
       type: object
       properties:
+        total:
+          type: integer
         items:
           $ref: '#/components/schemas/AssociatedPa'
     AssociatedPa:
@@ -447,6 +453,8 @@ components:
     AssociablePaResponse:
       type: object
       properties:
+        total:
+          type: integer
         items:
           $ref: '#/components/schemas/AssociablePa'
     AssociablePa:
@@ -473,6 +481,8 @@ components:
       required:
         - items
       properties:
+        total:
+          type: integer
         items:
           type: array
           items:
@@ -568,9 +578,14 @@ components:
       properties:
         processed:
           type: integer
+          default: 0
         unprocessed:
           type: integer
+          default: 0
         unprocessedPA:
           type: array
+          default: []
           items:
             $ref: '#/components/schemas/PaDetail'
+
+
