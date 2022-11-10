@@ -2,8 +2,10 @@ package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.AggregateApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.service.PaService;
 import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,15 +14,19 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 @RestController
+@Slf4j
 public class AggregationController implements AggregateApi {
 
     private final Scheduler scheduler;
     private final AggregationService aggregationService;
+    private final PaService paService;
 
     public AggregationController(@Qualifier("apikeyManagerScheduler") Scheduler scheduler,
-                                 AggregationService aggregationService) {
+                                 AggregationService aggregationService,
+                                 PaService paService) {
         this.scheduler = scheduler;
         this.aggregationService = aggregationService;
+        this.paService = paService;
     }
 
     @Override
@@ -40,13 +46,15 @@ public class AggregationController implements AggregateApi {
     }
 
     @Override
-    public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, ServerWebExchange exchange) {
-        return AggregateApi.super.getAssociablePa(name, exchange).publishOn(scheduler);
+    public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
+        return AggregateApi.super.addPaListToAggregate(id, addPaListRequestDto, exchange).publishOn(scheduler);
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
-        return AggregateApi.super.addPaListToAggregate(id, addPaListRequestDto, exchange).publishOn(scheduler);
+    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto,  final ServerWebExchange exchange) {
+         return paService.movePa(id, addPaListRequestDto)
+                .publishOn(scheduler)
+                .map(a -> ResponseEntity.ok().body(a));
     }
 
     @Override
@@ -56,4 +64,11 @@ public class AggregationController implements AggregateApi {
                 .map(a -> ResponseEntity.ok().build());
     }
 
+    @Override
+    public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, final ServerWebExchange exchange) {
+        return paService.getAssociablePa(name)
+                .doOnNext(associablePaResponseDto -> log.info("getAssociablePA return list with size: {}",associablePaResponseDto.getItems().size()))
+                .map(s -> ResponseEntity.ok().body(s))
+                .publishOn(scheduler);
+    }
 }

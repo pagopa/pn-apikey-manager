@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -12,9 +13,11 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.BatchGetItemResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Slf4j
 @Component
@@ -48,19 +51,45 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
 
     @Override
     public Flux<BatchWriteResult> savePaAggregation(List<PaAggregationModel> toSave) {
+        log.info("List of PaAggreggationModel size: {}", toSave.size());
         return Flux.fromIterable(toSave)
                 .window(25)
+                .log()
                 .flatMap(chunk -> {
                     WriteBatch.Builder<PaAggregationModel> builder = WriteBatch.builder(PaAggregationModel.class)
                             .mappedTableResource(table);
                     Mono<BatchWriteResult> deferred = Mono.defer(() ->
                             Mono.fromFuture(dynamoDbEnhancedClient.batchWriteItem(BatchWriteItemEnhancedRequest.builder()
                                     .writeBatches(builder.build())
-                                    .build())));
+                                    .build()))).doOnNext(batchGetResultPage -> log.info("call to dynamoDbEnhancedClient.batchPutItem"));
                     return chunk
                             .doOnNext(builder::addPutItem)
                             .then(deferred);
                 });
+    }
+
+    @Override
+    public Flux<BatchGetResultPage>  batchGetItem(AddPaListRequestDto addPaListRequestDto) {
+        log.info("List of PaAggreggationModel in AddPaListRequestDto size: {}", addPaListRequestDto.getItems().size());
+        return Flux.fromIterable(addPaListRequestDto.getItems())
+                .window(25)
+                .log()
+                .flatMap(chunk -> {
+                    ReadBatch.Builder<PaAggregationModel> builder = ReadBatch.builder(PaAggregationModel.class)
+                            .mappedTableResource(table);
+                    Mono<BatchGetResultPage> deferred = Mono.defer(() ->
+                            Mono.from(dynamoDbEnhancedClient.batchGetItem(BatchGetItemEnhancedRequest.builder()
+                                    .readBatches(builder.build())
+                                    .build())).doOnNext(batchGetResultPage -> log.info("call to dynamoDbEnhancedClient.batchGetItem")));
+                    return chunk
+                            .doOnNext(paDetailDto -> builder.addGetItem(Key.builder().partitionValue(paDetailDto.getId()).build()))
+                            .then(deferred);
+                });
+    }
+
+    @Override
+    public Mono<Page<PaAggregationModel>> getAllPaAggregations() {
+        return Mono.from(table.scan());
     }
 
     @Override
