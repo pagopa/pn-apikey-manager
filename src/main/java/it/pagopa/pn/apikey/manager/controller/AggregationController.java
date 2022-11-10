@@ -30,6 +30,13 @@ public class AggregationController implements AggregateApi {
     }
 
     @Override
+    public Mono<ResponseEntity<AggregateResponseDto>> getAggregate(String id, ServerWebExchange exchange) {
+        return aggregationService.getAggregate(id)
+                .map(aggregateDto -> ResponseEntity.ok().body(aggregateDto))
+                .publishOn(scheduler);
+    }
+
+    @Override
     public Mono<ResponseEntity<AggregatesListResponseDto>> getAggregatesList(String name, Integer limit, String lastEvaluatedId, String lastEvaluatedName, ServerWebExchange exchange) {
         AggregatePageable pageable = AggregatePageable.builder()
                 .limit(limit)
@@ -45,6 +52,13 @@ public class AggregationController implements AggregateApi {
          return paService.movePa(id, addPaListRequestDto)
                 .publishOn(scheduler)
                 .map(a -> ResponseEntity.ok().body(a));
+    }
+
+    @Override
+    public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
+        return aggregationService.createNewPaAggregation(id,addPaListRequestDto)
+                .publishOn(scheduler)
+                .map(s -> ResponseEntity.ok().build());
     }
 
     @Override

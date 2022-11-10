@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

@@ -33,6 +33,7 @@ public class UsagePlanService {
     }
 
     public Mono<UsagePlanDetailDto> getUsagePlan(String usagePlanId) {
+        log.debug("get usage plan with id {}", usagePlanId);
         GetUsagePlanRequest usagePlanRequest = GetUsagePlanRequest.builder()
                 .usagePlanId(usagePlanId)
                 .build();

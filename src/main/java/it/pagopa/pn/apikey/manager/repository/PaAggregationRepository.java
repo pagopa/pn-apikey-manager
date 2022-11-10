@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPage;
@@ -16,7 +17,7 @@ public interface PaAggregationRepository {
 
     Mono<PaAggregationModel> savePaAggregation(PaAggregationModel toSave);
 
-    Flux<BatchWriteResult> savePaAggregation(List<PaAggregationModel> toSave);
+    Flux<BatchWriteResult> savePaAggregation(String aggregateId, List<PaDetailDto> toSave);
 
     Mono<Page<PaAggregationModel>> getAllPaAggregations();
 
