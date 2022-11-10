@@ -25,7 +25,9 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<AggregateResponseDto>> getAggregate(String id, ServerWebExchange exchange) {
-        return AggregateApi.super.getAggregate(id, exchange).publishOn(scheduler);
+        return aggregationService.getAggregate(id)
+                .map(aggregateDto -> ResponseEntity.ok().body(aggregateDto))
+                .publishOn(scheduler);
     }
 
     @Override
@@ -45,7 +47,7 @@ public class AggregationController implements AggregateApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
         return AggregateApi.super.addPaListToAggregate(id, addPaListRequestDto, exchange).publishOn(scheduler);
     }
 

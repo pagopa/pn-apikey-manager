@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
 import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
@@ -65,6 +66,20 @@ public class AggregationService {
                 .doOnNext(page -> log.info("get all - size: {} - lastKey: {}", page.items().size(), page.lastEvaluatedKey()))
                 .zipWhen(this::getUsagePlanFromAggregationPage)
                 .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
+    }
+
+    public Mono<AggregateResponseDto> getAggregate(String aggregationId) {
+        return aggregateRepository.getApiKeyAggregation(aggregationId)
+                .zipWhen(aggregate -> {
+                    if (StringUtils.hasText(aggregate.getUsagePlanId())) {
+                        return usagePlanService.getUsagePlan(aggregate.getUsagePlanId())
+                                .map(Optional::of)
+                                .defaultIfEmpty(Optional.empty());
+                    }
+                    return Mono.<UsagePlanDetailDto>empty().map(Optional::of).defaultIfEmpty(Optional.empty());
+                })
+                .map(t -> aggregationConverter.convertResponseDto(t.getT1(), t.getT2().orElse(null)))
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)));
     }
 
     public Mono<Void> deleteAggregation(String aggregateId) {

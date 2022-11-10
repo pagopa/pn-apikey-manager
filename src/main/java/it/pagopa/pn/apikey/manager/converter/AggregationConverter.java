@@ -7,6 +7,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.Aggre
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
@@ -32,9 +33,18 @@ public class AggregationConverter {
         return dto;
     }
 
-    public AggregateResponseDto convertResponseDto(@NonNull ApiKeyAggregateModel aggregation) {
+    public AggregateResponseDto convertResponseDto(@NonNull ApiKeyAggregateModel aggregation,
+                                                   @Nullable UsagePlanDetailDto usagePlanDto) {
         AggregateResponseDto dto = new AggregateResponseDto();
-        // TODO complete converter
+        dto.setId(aggregation.getAggregateId());
+        dto.setName(aggregation.getName());
+        dto.setUsagePlan(usagePlanDto);
+        if (aggregation.getCreatedAt() != null) {
+            dto.setCreatedAt(Date.from(aggregation.getCreatedAt().toInstant(ZoneOffset.UTC)));
+        }
+        if (aggregation.getLastUpdate() != null) {
+            dto.setLastUpdate(Date.from(aggregation.getLastUpdate().toInstant(ZoneOffset.UTC)));
+        }
         return dto;
     }
 
@@ -49,7 +59,7 @@ public class AggregationConverter {
             dto.setLastUpdate(Date.from(aggregation.getLastUpdate().toInstant(ZoneOffset.UTC)));
         }
         if (aggregation.getUsagePlanId() != null && usagePlans.containsKey(aggregation.getUsagePlanId())) {
-            dto.setUsagePlanTemplate(usagePlans.get(aggregation.getUsagePlanId()).getName());
+            dto.setUsagePlan(usagePlans.get(aggregation.getUsagePlanId()).getName());
         }
         return dto;
     }

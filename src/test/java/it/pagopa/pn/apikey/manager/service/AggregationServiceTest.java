@@ -67,7 +67,7 @@ class AggregationServiceTest {
                 .thenReturn(Mono.just(usagePlanDetailDto));
 
         AggregateRowDto aggregateRowDto = new AggregateRowDto();
-        aggregateRowDto.setUsagePlanTemplate("usagePlanId");
+        aggregateRowDto.setUsagePlan("usagePlanName");
         AggregatesListResponseDto result = new AggregatesListResponseDto();
         result.setLastEvaluatedId("id");
         result.addItemsItem(aggregateRowDto);
