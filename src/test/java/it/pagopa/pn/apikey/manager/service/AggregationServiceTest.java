@@ -1,7 +1,14 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateRowDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
+import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import org.junit.jupiter.api.Test;
@@ -12,9 +19,14 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -28,15 +40,96 @@ class AggregationServiceTest {
     private AggregateRepository aggregateRepository;
     @MockBean
     private PaAggregationRepository paAggregationRepository;
+    @MockBean
+    private UsagePlanService usagePlanService;
+    @MockBean
+    private ApiGatewayAsyncClient apiGatewayAsyncClient;
+    @MockBean
+    private PnApikeyManagerConfig pnApikeyManagerConfig;
+    @MockBean
+    private AggregationConverter aggregationConverter;
 
     @Autowired
     private AggregationService aggregationService;
 
-    @MockBean
-    private ApiGatewayAsyncClient apiGatewayAsyncClient;
+    @Test
+    void testGetAggregation() {
+        ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
+        apiKeyAggregateModel.setUsagePlanId("usagePlanId");
+        Map<String, AttributeValue> lastEvaluatedKey = Map.of("id", AttributeValue.builder().s("id").build());
+        Page<ApiKeyAggregateModel> page = Page.create(List.of(apiKeyAggregateModel), lastEvaluatedKey);
+        when(aggregateRepository.findAll(any()))
+                .thenReturn(Mono.just(page));
 
-    @MockBean
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
+        UsagePlanDetailDto usagePlanDetailDto = new UsagePlanDetailDto();
+        usagePlanDetailDto.setId("usagePlanId");
+        when(usagePlanService.getUsagePlan("usagePlanId"))
+                .thenReturn(Mono.just(usagePlanDetailDto));
+
+        AggregateRowDto aggregateRowDto = new AggregateRowDto();
+        aggregateRowDto.setUsagePlanTemplate("usagePlanId");
+        AggregatesListResponseDto result = new AggregatesListResponseDto();
+        result.setLastEvaluatedId("id");
+        result.addItemsItem(aggregateRowDto);
+
+        when(aggregationConverter.convertResponseDto(page, List.of(usagePlanDetailDto)))
+                .thenReturn(result);
+
+        StepVerifier.create(aggregationService.getAggregation(null, AggregatePageable.builder().build()))
+                .expectNext(result)
+                .verifyComplete();
+    }
+
+    @Test
+    void testGetAggregationByName() {
+        ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
+        Page<ApiKeyAggregateModel> page = Page.create(List.of(apiKeyAggregateModel));
+        when(aggregateRepository.findByName(eq("name"), any()))
+                .thenReturn(Mono.just(page));
+
+        AggregateRowDto aggregateRowDto = new AggregateRowDto();
+        AggregatesListResponseDto result = new AggregatesListResponseDto();
+        result.addItemsItem(aggregateRowDto);
+
+        when(aggregationConverter.convertResponseDto(page, Collections.emptyList()))
+                .thenReturn(result);
+
+        StepVerifier.create(aggregationService.getAggregation("name", AggregatePageable.builder().build()))
+                .expectNext(result)
+                .verifyComplete();
+    }
+
+    @Test
+    void testDeleteAggregation() {
+        when(paAggregationRepository.findByAggregateId(any(), any(), any()))
+                .thenReturn(Mono.just(Page.create(Collections.emptyList())));
+        ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
+        when(aggregateRepository.delete("aggregateId"))
+                .thenReturn(Mono.just(apiKeyAggregateModel));
+        StepVerifier.create(aggregationService.deleteAggregation("aggregateId"))
+                .verifyComplete();
+    }
+
+    @Test
+    void testDeleteAggregationNotFound() {
+        when(paAggregationRepository.findByAggregateId(any(), any(), any()))
+                .thenReturn(Mono.just(Page.create(Collections.emptyList())));
+        when(aggregateRepository.delete("aggregateId"))
+                .thenReturn(Mono.empty());
+        StepVerifier.create(aggregationService.deleteAggregation("aggregateId"))
+                .verifyError(ApiKeyManagerException.class);
+    }
+
+    @Test
+    void testDeleteAggregationFailure() {
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        Page<PaAggregationModel> page = Page.create(List.of(paAggregationModel));
+        when(paAggregationRepository.findByAggregateId("aggregateId", null, null))
+                .thenReturn(Mono.just(page));
+
+        StepVerifier.create(aggregationService.deleteAggregation("aggregateId"))
+                .verifyError(ApiKeyManagerException.class);
+    }
 
     /**
      * Method under test: {@link AggregationService#createNewAwsApiKey(String)}
@@ -63,9 +156,8 @@ class AggregationServiceTest {
                 .expectNext(CreateApiKeyResponse.builder().name("test").id("id").build()).verifyComplete();
     }
 
-
     @Test
-    void addAwsApiKeyToAggregateTest(){
+    void addAwsApiKeyToAggregateTest() {
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         apikeyAggregateModel.setAggregateId("id");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
@@ -75,7 +167,7 @@ class AggregationServiceTest {
     }
 
     @Test
-    void createNewAggregateTest(){
+    void createNewAggregateTest() {
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         apikeyAggregateModel.setName("");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
@@ -96,7 +188,7 @@ class AggregationServiceTest {
 
         when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture);
         when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
-        StepVerifier.create(aggregationService.createUsagePlan("42","id"))
+        StepVerifier.create(aggregationService.createUsagePlan("42", "id"))
                 .expectNext(createUsagePlanKeyResponse).verifyComplete();
     }
 
@@ -109,4 +201,3 @@ class AggregationServiceTest {
         StepVerifier.create(aggregationService.getApiKeyAggregation("42")).verifyComplete();
     }
 }
-

@@ -11,6 +11,8 @@ import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -23,7 +25,6 @@ import software.amazon.awssdk.services.apigateway.model.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 
@@ -52,8 +53,8 @@ public class AggregationService {
         this.aggregationConverter = aggregationConverter;
     }
 
-    public Mono<AggregatesListResponseDto> getAggregation(String name, AggregatePageable pageable) {
-        log.info("filter by name {} - pageable: {}", name, pageable);
+    public Mono<AggregatesListResponseDto> getAggregation(@Nullable String name, @NonNull AggregatePageable pageable) {
+        log.debug("get aggregation - name: {} - pageable: {}", name, pageable);
         if (StringUtils.hasText(name)) {
             return aggregateRepository.findByName(name, pageable)
                     .doOnNext(page -> log.info("filter by name {} - size: {} - lastKey: {}", name, page.items().size(), page.lastEvaluatedKey()))
@@ -61,7 +62,7 @@ public class AggregationService {
                     .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
         }
         return aggregateRepository.findAll(pageable)
-                .doOnNext(page -> log.info("get all {} - size: {} - lastKey: {}", name, page.items().size(), page.lastEvaluatedKey()))
+                .doOnNext(page -> log.info("get all - size: {} - lastKey: {}", page.items().size(), page.lastEvaluatedKey()))
                 .zipWhen(this::getUsagePlanFromAggregationPage)
                 .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
     }
@@ -148,15 +149,14 @@ public class AggregationService {
                 .build();
     }
 
-    private Mono<Map<String, UsagePlanDetailDto>> getUsagePlanFromAggregationPage(Page<ApiKeyAggregateModel> page) {
+    private Mono<List<UsagePlanDetailDto>> getUsagePlanFromAggregationPage(Page<ApiKeyAggregateModel> page) {
         return Flux.fromStream(page.items().stream()
                         .map(ApiKeyAggregateModel::getUsagePlanId)
                         .filter(Objects::nonNull)
                         .distinct()
                         .map(usagePlanService::getUsagePlan))
-                .flatMap(m -> m)
-                .collectList()
-                .map(dto -> dto.stream().collect(Collectors.toMap(UsagePlanDetailDto::getId, Function.identity())));
+                .flatMap(Function.identity())
+                .collectList();
     }
 
 }
