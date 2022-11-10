@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -47,7 +48,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public Flux<BatchWriteResult> savePaAggregation(List<PaAggregationModel> toSave) {
+    public Flux<BatchWriteResult> savePaAggregation(String aggregateId, List<PaDetailDto> toSave) {
         return Flux.fromIterable(toSave)
                 .window(25)
                 .flatMap(chunk -> {
@@ -58,7 +59,13 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                                     .writeBatches(builder.build())
                                     .build())));
                     return chunk
-                            .doOnNext(builder::addPutItem)
+                            .doOnNext(paDetailDto -> {
+                                PaAggregationModel pa = new PaAggregationModel();
+                                pa.setAggregateId(aggregateId);
+                                pa.setPaName(paDetailDto.getName());
+                                pa.setPaId(paDetailDto.getId());
+                                builder.addPutItem(pa);
+                            })
                             .then(deferred);
                 });
     }
