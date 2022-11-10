@@ -16,7 +16,7 @@ import reactor.test.StepVerifier;
 
 @ContextConfiguration(classes = {PaAggregationsService.class})
 @ExtendWith(SpringExtension.class)
-class PaAggregationsServiceTestModel {
+class PaAggregationsServiceTest {
     @MockBean
     private PaAggregationRepository paAggregationRepository;
 

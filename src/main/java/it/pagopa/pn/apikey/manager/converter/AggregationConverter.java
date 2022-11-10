@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateRowDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
@@ -18,18 +17,10 @@ public class AggregationConverter {
 
     public AggregatesListResponseDto convertResponseDto(Page<ApiKeyAggregateModel> page, Map<String, UsagePlanDetailDto> usagePlans) {
         AggregatesListResponseDto dto = new AggregatesListResponseDto();
-        if (page.lastEvaluatedKey() != null) {
-            if (page.lastEvaluatedKey().containsKey(AggregationConstant.PK)) {
-                dto.setLastEvaluatedId(page.lastEvaluatedKey().get(AggregationConstant.PK).s());
-            }
+        if (page.lastEvaluatedKey() != null && page.lastEvaluatedKey().containsKey(AggregationConstant.PK)) {
+            dto.setLastEvaluatedId(page.lastEvaluatedKey().get(AggregationConstant.PK).s());
         }
         page.items().forEach(item -> dto.addItemsItem(convertRowDto(item, usagePlans)));
-        return dto;
-    }
-
-    public AggregateResponseDto convertResponseDto(ApiKeyAggregateModel aggregation) {
-        AggregateResponseDto dto = new AggregateResponseDto();
-        // TODO complete converter
         return dto;
     }
 

@@ -60,6 +60,7 @@ public class PaService {
                 .doOnNext(batchGetResultPages -> log.info("BatchGetResultPageSize: {}",batchGetResultPages.size()))
                 .flatMap(batchGetResultPage -> {
                     MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
+                    movePaResponseDto.setUnprocessedPA(new ArrayList<>());
                     batchGetResultPage.forEach(result -> {
                         PnBatchGetItemResponse pnBatchGetItemResponse = dynamoBatchResponseUtils.convertPaAggregationsBatchGetItemResponse(result);
                         countAndConvertUnprocessedGetItem(movePaResponseDto, pnBatchGetItemResponse, addPaListRequestDto.getItems());
