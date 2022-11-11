@@ -75,7 +75,7 @@ class AggregationServiceTest {
 
         AggregateResponseDto aggregateResponseDto = new AggregateResponseDto();
         aggregateResponseDto.setId("id");
-        when(aggregationConverter.convertResponseDto((ApiKeyAggregateModel)any(),any())).thenReturn(aggregateResponseDto);
+        when(aggregationConverter.convertToResponseDto((ApiKeyAggregateModel)any(),any())).thenReturn(aggregateResponseDto);
         StepVerifier.create(aggregationService.getAggregate("id"))
                 .expectNext(aggregateResponseDto).verifyComplete();
     }
@@ -88,6 +88,7 @@ class AggregationServiceTest {
         Page<ApiKeyAggregateModel> page = Page.create(List.of(apiKeyAggregateModel), lastEvaluatedKey);
         when(aggregateRepository.findAll(any()))
                 .thenReturn(Mono.just(page));
+        when(aggregateRepository.count()).thenReturn(Mono.just(1));
 
         UsagePlanDetailDto usagePlanDetailDto = new UsagePlanDetailDto();
         usagePlanDetailDto.setId("usagePlanId");
@@ -100,7 +101,7 @@ class AggregationServiceTest {
         result.setLastEvaluatedId("id");
         result.addItemsItem(aggregateRowDto);
 
-        when(aggregationConverter.convertResponseDto(page, List.of(usagePlanDetailDto)))
+        when(aggregationConverter.convertToResponseDto(page, List.of(usagePlanDetailDto)))
                 .thenReturn(result);
 
         StepVerifier.create(aggregationService.getAggregation(null, AggregatePageable.builder().build()))
@@ -114,12 +115,13 @@ class AggregationServiceTest {
         Page<ApiKeyAggregateModel> page = Page.create(List.of(apiKeyAggregateModel));
         when(aggregateRepository.findByName(eq("name"), any()))
                 .thenReturn(Mono.just(page));
+        when(aggregateRepository.countByName("name")).thenReturn(Mono.just(1));
 
         AggregateRowDto aggregateRowDto = new AggregateRowDto();
         AggregatesListResponseDto result = new AggregatesListResponseDto();
         result.addItemsItem(aggregateRowDto);
 
-        when(aggregationConverter.convertResponseDto(page, Collections.emptyList()))
+        when(aggregationConverter.convertToResponseDto(page, Collections.emptyList()))
                 .thenReturn(result);
 
         StepVerifier.create(aggregationService.getAggregation("name", AggregatePageable.builder().build()))
@@ -129,22 +131,22 @@ class AggregationServiceTest {
 
     @Test
     void testDeleteAggregation() {
-        when(paAggregationRepository.findByAggregateId(any(), any(), any()))
+        when(paAggregationRepository.findByAggregateId(any(), any()))
                 .thenReturn(Mono.just(Page.create(Collections.emptyList())));
         ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
         when(aggregateRepository.delete("aggregateId"))
                 .thenReturn(Mono.just(apiKeyAggregateModel));
-        StepVerifier.create(aggregationService.deleteAggregation("aggregateId"))
+        StepVerifier.create(aggregationService.deleteAggregate("aggregateId"))
                 .verifyComplete();
     }
 
     @Test
     void testDeleteAggregationNotFound() {
-        when(paAggregationRepository.findByAggregateId(any(), any(), any()))
+        when(paAggregationRepository.findByAggregateId(any(), any()))
                 .thenReturn(Mono.just(Page.create(Collections.emptyList())));
         when(aggregateRepository.delete("aggregateId"))
                 .thenReturn(Mono.empty());
-        StepVerifier.create(aggregationService.deleteAggregation("aggregateId"))
+        StepVerifier.create(aggregationService.deleteAggregate("aggregateId"))
                 .verifyError(ApiKeyManagerException.class);
     }
 
@@ -152,10 +154,10 @@ class AggregationServiceTest {
     void testDeleteAggregationFailure() {
         PaAggregationModel paAggregationModel = new PaAggregationModel();
         Page<PaAggregationModel> page = Page.create(List.of(paAggregationModel));
-        when(paAggregationRepository.findByAggregateId("aggregateId", null, null))
+        when(paAggregationRepository.findByAggregateId(eq("aggregateId"), any()))
                 .thenReturn(Mono.just(page));
 
-        StepVerifier.create(aggregationService.deleteAggregation("aggregateId"))
+        StepVerifier.create(aggregationService.deleteAggregate("aggregateId"))
                 .verifyError(ApiKeyManagerException.class);
     }
 
@@ -224,15 +226,17 @@ class AggregationServiceTest {
                 .limit(10)
                 .build();
         when(aggregateRepository.findByName("name", aggregatePageable)).thenReturn(Mono.just(page));
+        when(aggregateRepository.countByName("name")).thenReturn(Mono.just(1));
         AggregatesListResponseDto aggregateListResponse = new AggregatesListResponseDto();
         List<AggregateRowDto> list = new ArrayList<>();
         AggregateRowDto aggregateRowDto = new AggregateRowDto();
         aggregateRowDto.setId("id");
         list.add(aggregateRowDto);
         aggregateListResponse.setItems(list);
-        when(aggregationConverter.convertResponseDto(any(),anyList())).thenReturn(aggregateListResponse);
+        when(aggregationConverter.convertToResponseDto(any(),anyList())).thenReturn(aggregateListResponse);
         StepVerifier.create(aggregationService.getAggregation("name", aggregatePageable))
-                .expectNext(aggregateListResponse).verifyComplete();
+                .expectNext(aggregateListResponse)
+                .verifyComplete();
     }
 
     @Test
@@ -246,15 +250,17 @@ class AggregationServiceTest {
                 .limit(10)
                 .build();
         when(aggregateRepository.findAll(aggregatePageable)).thenReturn(Mono.just(page));
+        when(aggregateRepository.count()).thenReturn(Mono.just(1));
         AggregatesListResponseDto aggregateListResponse = new AggregatesListResponseDto();
         List<AggregateRowDto> list = new ArrayList<>();
         AggregateRowDto aggregateRowDto = new AggregateRowDto();
         aggregateRowDto.setId("id");
         list.add(aggregateRowDto);
         aggregateListResponse.setItems(list);
-        when(aggregationConverter.convertResponseDto(any(),anyList())).thenReturn(aggregateListResponse);
+        when(aggregationConverter.convertToResponseDto(any(),anyList())).thenReturn(aggregateListResponse);
         StepVerifier.create(aggregationService.getAggregation(null, aggregatePageable))
-                .expectNext(aggregateListResponse).verifyComplete();
+                .expectNext(aggregateListResponse)
+                .verifyComplete();
     }
 
     @Test
@@ -264,9 +270,9 @@ class AggregationServiceTest {
         paAggregation.setPaId("paId");
         paAggregation.setAggregateId("id");
         Page<PaAggregationModel> page = Page.create(List.of(paAggregation));
-        when(paAggregationRepository.findByAggregateId("id", null, null))
+        when(paAggregationRepository.findByAggregateId(eq("id"), any()))
                 .thenReturn(Mono.just(page));
-        StepVerifier.create(aggregationService.deleteAggregation("id"))
+        StepVerifier.create(aggregationService.deleteAggregate("id"))
                 .expectError(ApiKeyManagerException.class).verify();
     }
 }

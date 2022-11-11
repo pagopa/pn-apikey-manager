@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.entity;
 
+import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import lombok.Data;
 import lombok.Getter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
@@ -8,10 +9,17 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 @DynamoDbBean
 public class PaAggregationModel {
 
-    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("x-pagopa-pn-cx-id"), @DynamoDbSecondarySortKey(indexNames = "paAggregates-aggregateId-index")}))
+    @Getter(onMethod=@__({
+            @DynamoDbPartitionKey,
+            @DynamoDbAttribute("x-pagopa-pn-cx-id"),
+            @DynamoDbSecondarySortKey(indexNames = PaAggregationConstant.GSI_AGGREGATE_ID)
+    }))
     private String paId;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("aggregateId"), @DynamoDbSecondaryPartitionKey(indexNames = "paAggregates-aggregateId-index")}))
+    @Getter(onMethod=@__({
+            @DynamoDbAttribute(PaAggregationConstant.AGGREGATE_ID),
+            @DynamoDbSecondaryPartitionKey(indexNames = PaAggregationConstant.GSI_AGGREGATE_ID)
+    }))
     private String aggregateId;
 
     @Getter(onMethod = @__({@DynamoDbAttribute("paName")}))

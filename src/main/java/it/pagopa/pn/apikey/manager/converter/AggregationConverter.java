@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.Aggre
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
@@ -21,20 +22,20 @@ import java.util.stream.Collectors;
 @Component
 public class AggregationConverter {
 
-    public AggregatesListResponseDto convertResponseDto(@NonNull Page<ApiKeyAggregateModel> page,
-                                                        @NonNull List<UsagePlanDetailDto> usagePlans) {
+    public AggregatesListResponseDto convertToResponseDto(@NonNull Page<ApiKeyAggregateModel> page,
+                                                          @NonNull List<UsagePlanDetailDto> usagePlans) {
         Map<String, UsagePlanDetailDto> usagePlanMap = usagePlans.stream()
                 .collect(Collectors.toMap(UsagePlanDetailDto::getId, Function.identity(), (v1, v2) -> v1));
         AggregatesListResponseDto dto = new AggregatesListResponseDto();
         if (page.lastEvaluatedKey() != null && page.lastEvaluatedKey().containsKey(AggregationConstant.PK)) {
             dto.setLastEvaluatedId(page.lastEvaluatedKey().get(AggregationConstant.PK).s());
         }
-        page.items().forEach(item -> dto.addItemsItem(convertRowDto(item, usagePlanMap)));
+        page.items().forEach(item -> dto.addItemsItem(convertToResponseDto(item, usagePlanMap)));
         return dto;
     }
 
-    public AggregateResponseDto convertResponseDto(@NonNull ApiKeyAggregateModel aggregation,
-                                                   @Nullable UsagePlanDetailDto usagePlanDto) {
+    public AggregateResponseDto convertToResponseDto(@NonNull ApiKeyAggregateModel aggregation,
+                                                     @Nullable UsagePlanDetailDto usagePlanDto) {
         AggregateResponseDto dto = new AggregateResponseDto();
         dto.setId(aggregation.getAggregateId());
         dto.setName(aggregation.getName());
@@ -48,7 +49,14 @@ public class AggregationConverter {
         return dto;
     }
 
-    private AggregateRowDto convertRowDto(ApiKeyAggregateModel aggregation, Map<String, UsagePlanDetailDto> usagePlans) {
+    public PaAggregateResponseDto convertToResponseDto(@NonNull Page<PaAggregationModel> page) {
+        PaAggregateResponseDto dto = new PaAggregateResponseDto();
+        dto.setTotal(page.items().size());
+        page.items().forEach(item -> dto.addItemsItem(convertToResponseDto(item)));
+        return dto;
+    }
+
+    private AggregateRowDto convertToResponseDto(ApiKeyAggregateModel aggregation, Map<String, UsagePlanDetailDto> usagePlans) {
         AggregateRowDto dto = new AggregateRowDto();
         dto.setId(aggregation.getAggregateId());
         dto.setName(aggregation.getName());
@@ -61,6 +69,13 @@ public class AggregationConverter {
         if (aggregation.getUsagePlanId() != null && usagePlans.containsKey(aggregation.getUsagePlanId())) {
             dto.setUsagePlan(usagePlans.get(aggregation.getUsagePlanId()).getName());
         }
+        return dto;
+    }
+
+    private PaDetailDto convertToResponseDto(PaAggregationModel paAggregation) {
+        PaDetailDto dto = new PaDetailDto();
+        dto.setId(paAggregation.getPaId());
+        dto.setName(paAggregation.getPaName());
         return dto;
     }
 }

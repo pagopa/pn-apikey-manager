@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
+import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +15,10 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -24,6 +27,8 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     private final DynamoDbAsyncTable<PaAggregationModel> table;
     private final DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient;
     private final String gsiAggregateId;
+
+    public static final int MAX_BATCH_SIZE = 25;
 
     public PaAggregationRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                        @Value("${pn.apikey.manager.dynamodb.pa-aggregations.gsi-name.aggregate-id}") String gsiAggregateId,
@@ -39,7 +44,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                 .partitionValue(xPagopaPnCxId)
                 .build();
         return Mono.fromFuture(table.getItem(key))
-                .doOnNext(s -> log.info("aggregation found: {}",s.toString()));
+                .doOnNext(s -> log.info("aggregation found: {}", s.toString()));
     }
 
     @Override
@@ -51,7 +56,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     public Flux<BatchWriteResult> savePaAggregation(List<PaAggregationModel> toSave) {
         log.info("List of PaAggreggationModel size: {}", toSave.size());
         return Flux.fromIterable(toSave)
-                .window(25)
+                .window(MAX_BATCH_SIZE)
                 .log()
                 .flatMap(chunk -> {
                     WriteBatch.Builder<PaAggregationModel> builder = WriteBatch.builder(PaAggregationModel.class)
@@ -72,17 +77,45 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public Mono<Page<PaAggregationModel>> findByAggregateId(String aggregateId, Integer limit, String lastKey) {
+    public Mono<Page<PaAggregationModel>> findByAggregateId(String aggregateId, PaAggregationPageable pageable) {
+        Map<String, AttributeValue> attributeValue = null;
+        if (pageable.isPage()) {
+            attributeValue = new HashMap<>();
+            attributeValue.put(PaAggregationConstant.AGGREGATE_ID, AttributeValue.builder().s(pageable.getLastEvaluatedKey()).build());
+        }
         Key key = Key.builder()
                 .partitionValue(aggregateId)
                 .build();
         QueryConditional queryConditional = QueryConditional.keyEqualTo(key);
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
-                .exclusiveStartKey(lastKey != null ? Map.of("aggregateId", AttributeValue.builder().s(lastKey).build()) : null)
-                .limit(limit)
+                .exclusiveStartKey(attributeValue)
+                .limit(pageable.getLimit())
                 .build();
-        return Mono.from(table.index(gsiAggregateId).query(queryEnhancedRequest));
+        if (pageable.isPage()) {
+            return Mono.from(table.index(gsiAggregateId).query(queryEnhancedRequest));
+        } else {
+            log.debug("executing non paged query");
+            return Flux.from(table.index(gsiAggregateId).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                    .collectList()
+                    .map(Page::create);
+        }
+    }
+
+    @Override
+    public Mono<Integer> countByAggregateId(String aggregateId) {
+        Key key = Key.builder()
+                .partitionValue(aggregateId)
+                .build();
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(key);
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .build();
+
+        AtomicInteger counter = new AtomicInteger(0);
+        return Flux.from(table.index(gsiAggregateId).query(queryEnhancedRequest))
+                .doOnNext(page -> counter.getAndAdd(page.items().size()))
+                .then(Mono.defer(() -> Mono.just(counter.get())));
     }
 
     @Override

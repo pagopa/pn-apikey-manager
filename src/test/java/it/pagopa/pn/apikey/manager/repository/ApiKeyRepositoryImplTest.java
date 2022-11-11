@@ -98,7 +98,12 @@ class ApiKeyRepositoryImplTest {
         Mockito.when(dynamoDbAsyncTable.index("")).thenReturn(index);
         Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
-        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId", list, 10, "id", ""))
+        ApiKeyPageable pageable = ApiKeyPageable.builder()
+                .limit(10)
+                .lastEvaluatedKey("id")
+                .lastEvaluatedLastUpdate("")
+                .build();
+        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId", list, pageable))
                 .expectNext(Page.create(apiKeyModelList));
     }
 }

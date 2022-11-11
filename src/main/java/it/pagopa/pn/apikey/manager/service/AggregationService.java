@@ -3,14 +3,13 @@ package it.pagopa.pn.apikey.manager.service;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
-import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
+import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -19,9 +18,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
@@ -29,7 +26,6 @@ import software.amazon.awssdk.services.apigateway.model.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 
@@ -64,16 +60,23 @@ public class AggregationService {
             return aggregateRepository.findByName(name, pageable)
                     .doOnNext(page -> log.info("filter by name {} - size: {} - lastKey: {}", name, page.items().size(), page.lastEvaluatedKey()))
                     .zipWhen(this::getUsagePlanFromAggregationPage)
-                    .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
+                    .map(tuple -> aggregationConverter.convertToResponseDto(tuple.getT1(), tuple.getT2()))
+                    .zipWhen(dto -> aggregateRepository.countByName(name))
+                    .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
+                    .map(Tuple2::getT1);
         }
         return aggregateRepository.findAll(pageable)
                 .doOnNext(page -> log.info("get all - size: {} - lastKey: {}", page.items().size(), page.lastEvaluatedKey()))
                 .zipWhen(this::getUsagePlanFromAggregationPage)
-                .map(tuple -> aggregationConverter.convertResponseDto(tuple.getT1(), tuple.getT2()));
+                .map(tuple -> aggregationConverter.convertToResponseDto(tuple.getT1(), tuple.getT2()))
+                .zipWhen(dto -> aggregateRepository.count())
+                .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
+                .map(Tuple2::getT1);
     }
 
-    public Mono<AggregateResponseDto> getAggregate(String aggregationId) {
-        return aggregateRepository.getApiKeyAggregation(aggregationId)
+    public Mono<AggregateResponseDto> getAggregate(String aggregateId) {
+        log.debug("get aggregate with id: {}", aggregateId);
+        return aggregateRepository.getApiKeyAggregation(aggregateId)
                 .zipWhen(aggregate -> {
                     if (StringUtils.hasText(aggregate.getUsagePlanId())) {
                         return usagePlanService.getUsagePlan(aggregate.getUsagePlanId())
@@ -82,13 +85,19 @@ public class AggregationService {
                     }
                     return Mono.<UsagePlanDetailDto>empty().map(Optional::of).defaultIfEmpty(Optional.empty());
                 })
-                .map(t -> aggregationConverter.convertResponseDto(t.getT1(), t.getT2().orElse(null)))
+                .map(t -> aggregationConverter.convertToResponseDto(t.getT1(), t.getT2().orElse(null)))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)));
     }
 
-    public Mono<Void> deleteAggregation(String aggregateId) {
+    public Mono<PaAggregateResponseDto> getPaOfAggregate(String aggregateId) {
+        log.debug("get pa of aggregate with id: {}", aggregateId);
+        return paAggregationRepository.findByAggregateId(aggregateId, PaAggregationPageable.createEmpty())
+                .map(aggregationConverter::convertToResponseDto);
+    }
+
+    public Mono<Void> deleteAggregate(String aggregateId) {
         log.debug("deleting aggregation with id {}", aggregateId);
-        return paAggregationRepository.findByAggregateId(aggregateId, null, null)
+        return paAggregationRepository.findByAggregateId(aggregateId, PaAggregationPageable.createWithLimit(1))
                 .flatMap(page -> CollectionUtils.isEmpty(page.items()) ? Mono.just(page) : Mono.error(new ApiKeyManagerException(AGGREGATE_INVALID_STATUS, HttpStatus.BAD_REQUEST)))
                 .flatMap(page -> aggregateRepository.delete(aggregateId))
                 .doOnNext(aggregate -> log.info("aggregate {} deleted", aggregate.getAggregateId()))

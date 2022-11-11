@@ -8,7 +8,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.Usage
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -18,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.services.apigateway.model.UsagePlan;
 
 @ContextConfiguration(classes = {AggregationConverter.class})
 @ExtendWith(SpringExtension.class)
@@ -44,7 +42,7 @@ class AggregationConverterTest {
         usagePlanDetailDto.setId("id");
         usagePlanDetailDto.setName("name");
         map.add(usagePlanDetailDto);
-        AggregatesListResponseDto aggregatesListResponseDto = aggregationConverter.convertResponseDto(page, map);
+        AggregatesListResponseDto aggregatesListResponseDto = aggregationConverter.convertToResponseDto(page, map);
         Assertions.assertEquals(1,aggregatesListResponseDto.getItems().size());
     }
 
@@ -58,8 +56,7 @@ class AggregationConverterTest {
 
         UsagePlanDetailDto usagePlanDetailDto = new UsagePlanDetailDto();
         usagePlanDetailDto.setId("id");
-        AggregateResponseDto aggregatesResponseDto = aggregationConverter.convertResponseDto(apiKeyAggregateModel, usagePlanDetailDto);
+        AggregateResponseDto aggregatesResponseDto = aggregationConverter.convertToResponseDto(apiKeyAggregateModel, usagePlanDetailDto);
         Assertions.assertEquals("id",aggregatesResponseDto.getId());
     }
 }
-

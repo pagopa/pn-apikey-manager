@@ -8,7 +8,11 @@ public interface AggregateRepository {
 
     Mono<Page<ApiKeyAggregateModel>> findAll(AggregatePageable pageable);
 
+    Mono<Integer> count();
+
     Mono<Page<ApiKeyAggregateModel>> findByName(String name, AggregatePageable pageable);
+
+    Mono<Integer> countByName(String name);
 
     Mono<ApiKeyAggregateModel> saveAggregation(ApiKeyAggregateModel aggregate);
 

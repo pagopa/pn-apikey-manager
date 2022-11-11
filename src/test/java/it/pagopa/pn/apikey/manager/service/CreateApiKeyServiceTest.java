@@ -1,9 +1,11 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
@@ -54,6 +56,9 @@ class CreateApiKeyServiceTest {
     @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
+    @MockBean
+    private ExternalRegistriesClient externalRegistriesClient;
+
     @Test
     void testCreateApiKey1() {
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
@@ -74,7 +79,6 @@ class CreateApiKeyServiceTest {
         paAggregationModel.setAggregateId("1");
         when(paAggregationsService.createNewPaAggregation(any())).thenReturn(Mono.just(paAggregationModel));
 
-
         when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apikeyAggregateModel));
         when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().name("name").id("id").build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
@@ -84,11 +88,15 @@ class CreateApiKeyServiceTest {
         apiKeyModel.setId("idtest");
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
 
+        when(externalRegistriesClient.getPaById("42"))
+                .thenReturn(Mono.just(new PaDetailDto()));
+
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setId("idtest");
 
         StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, stringList))
-                .expectNext(responseNewApiKeyDto).verifyComplete();
+                .expectNext(responseNewApiKeyDto)
+                .verifyComplete();
     }
 
     @Test

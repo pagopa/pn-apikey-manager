@@ -7,12 +7,11 @@ import org.junit.jupiter.api.Test;
 
 class AggregatePageableTest {
     /**
-     * Method under test: {@link AggregatePageable#isPageable()}
+     * Method under test: {@link AggregatePageable#isPage()}
      */
     @Test
     void testIsPageable() {
-        assertTrue((new AggregatePageable(1, "42")).isPageable());
-        assertFalse((new AggregatePageable(1, "")).isPageable());
+        assertTrue((new AggregatePageable(1, "42")).isPage());
+        assertFalse((new AggregatePageable(1, "")).isPage());
     }
 }
-

@@ -1,14 +1,10 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AssociablePaResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.MovePaResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
-import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
-import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import it.pagopa.pn.apikey.manager.service.PaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +39,6 @@ class AggregationControllerTest {
 
     @Autowired
     private AggregationController aggregationController;
-
 
     @MockBean
     private AggregationService aggregationService;
@@ -109,7 +104,7 @@ class AggregationControllerTest {
         when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
         MockServerHttpResponse response = new MockServerHttpResponse();
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
-        when(aggregationService.deleteAggregation(any())).thenReturn(Mono.empty());
+        when(aggregationService.deleteAggregate(any())).thenReturn(Mono.empty());
         StepVerifier.create(aggregationController.deleteApiKeys("id",
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
@@ -134,4 +129,3 @@ class AggregationControllerTest {
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }
 }
-

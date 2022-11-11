@@ -154,7 +154,8 @@ class ApiKeysControllerTest {
         apiKeysResponseDto.setItems(apiKeyRowDtos);
         apiKeysResponseDto.setLastKey(lastKey);
         apiKeysResponseDto.setLastUpdate(lastUpdate);
-        when(manageApiKeyService.getApiKeyList(anyString(), any(), anyInt(), anyString(), anyString(), anyBoolean())).thenReturn(Mono.just(apiKeysResponseDto));
+        when(manageApiKeyService.getApiKeyList(anyString(), any(), any(), anyBoolean()))
+                .thenReturn(Mono.just(apiKeysResponseDto));
         StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, serverWebExchange))
                 .expectNext(ResponseEntity.ok().body(apiKeysResponseDto));
     }

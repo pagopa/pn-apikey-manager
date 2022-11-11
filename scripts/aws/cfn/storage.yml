@@ -65,9 +65,20 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "aggregateId"
           AttributeType: "S"
+        - AttributeName: "name"
+          AttributeType: "S"
+        - AttributeName: "pageable"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "aggregateId"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "aggregations-aggregateName-index"
+          KeySchema:
+            - AttributeName: pageable
+              KeyType: HASH
+            - AttributeName: name
+              KeyType: RANGE
       BillingMode: "PAY_PER_REQUEST"
 
   PaAggregationsTable:

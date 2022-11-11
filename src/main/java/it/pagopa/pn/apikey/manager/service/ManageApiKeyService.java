@@ -6,11 +6,13 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
+import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,10 +69,13 @@ public class ManageApiKeyService {
                 });
     }
 
-    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
-        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, lastUpdate)
-                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id{}: and size apiKey:{}", xPagopaPnCxId, apiKeyModelPage.items().size()))
-                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey));
+    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable, Boolean showVirtualKey) {
+        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
+                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id: {} and size: {}", xPagopaPnCxId, apiKeyModelPage.items().size()))
+                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
+                .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
+                // TODO set total -> .doOnNext()
+                .map(Tuple2::getT1);
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, String status, String xPagopaPnUid) {

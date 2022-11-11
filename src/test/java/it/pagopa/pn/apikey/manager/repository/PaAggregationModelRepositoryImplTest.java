@@ -1,8 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -12,9 +10,6 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -103,7 +98,7 @@ class PaAggregationModelRepositoryImplTest {
 
     @Test
     void findByAggregateId() {
-        when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
@@ -111,7 +106,11 @@ class PaAggregationModelRepositoryImplTest {
         Mockito.when(dynamoDbAsyncTable.index(any())).thenReturn(index);
         when(index.query((QueryEnhancedRequest)any())).thenReturn(pagePublisher);
 
-        StepVerifier.create(paRepository.findByAggregateId("id",10,"id"))
+        PaAggregationPageable pageable = PaAggregationPageable.builder()
+                .limit(10)
+                .lastEvaluatedKey("id")
+                .build();
+        StepVerifier.create(paRepository.findByAggregateId("id", pageable))
                 .expectNextCount(0);
     }
 }

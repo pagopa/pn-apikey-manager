@@ -48,6 +48,13 @@ public class AggregationController implements AggregateApi {
     }
 
     @Override
+    public Mono<ResponseEntity<PaAggregateResponseDto>> getPaAggregation(String id, ServerWebExchange exchange) {
+        return aggregationService.getPaOfAggregate(id)
+                .map(dto -> ResponseEntity.ok().body(dto))
+                .publishOn(scheduler);
+    }
+
+    @Override
     public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto,  final ServerWebExchange exchange) {
          return paService.movePa(id, addPaListRequestDto)
                 .publishOn(scheduler)
@@ -63,7 +70,7 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String id, ServerWebExchange exchange) {
-        return aggregationService.deleteAggregation(id)
+        return aggregationService.deleteAggregate(id)
                 .publishOn(scheduler)
                 .map(a -> ResponseEntity.ok().build());
     }

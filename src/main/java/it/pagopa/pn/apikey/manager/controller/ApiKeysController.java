@@ -5,6 +5,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponse
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -45,7 +46,12 @@ public class ApiKeysController implements ApiKeysApi {
 
     @Override
     public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey, final ServerWebExchange exchange) {
-        return manageApiKeyService.getApiKeyList(xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey)
+        ApiKeyPageable pageable = ApiKeyPageable.builder()
+                .limit(limit)
+                .lastEvaluatedKey(lastKey)
+                .lastEvaluatedLastUpdate(lastUpdate)
+                .build();
+        return manageApiKeyService.getApiKeyList(xPagopaPnCxId, xPagopaPnCxGroups, pageable, showVirtualKey)
                 .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos)).publishOn(scheduler);
     }
 

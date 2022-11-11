@@ -8,14 +8,15 @@ import org.springframework.util.StringUtils;
 @Getter
 @ToString
 @Builder
-public class AggregatePageable implements Pageable {
+public class ApiKeyPageable implements Pageable {
 
     private Integer limit;
-    private String lastEvaluatedId;
+    private String lastEvaluatedKey;
+    private String lastEvaluatedLastUpdate;
 
     @Override
     public boolean isPage() {
-        return StringUtils.hasText(lastEvaluatedId);
+        return StringUtils.hasText(lastEvaluatedKey) && StringUtils.hasText(lastEvaluatedLastUpdate);
     }
 
     @Override
