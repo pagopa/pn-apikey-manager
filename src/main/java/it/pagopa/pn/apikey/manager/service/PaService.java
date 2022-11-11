@@ -12,6 +12,7 @@ import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import it.pagopa.pn.apikey.manager.utils.DynamoBatchResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 
@@ -47,8 +48,8 @@ public class PaService {
                 .map(paAggregationModels -> {
                     AssociablePaResponseDto dto = new AssociablePaResponseDto();
                     dto.setItems(list.stream().filter(paDetailDto ->
-                            paAggregationModels.items().stream().anyMatch(paAggregationModel ->
-                                    paAggregationModel.getAggregateId().equalsIgnoreCase(paDetailDto.getId())
+                            paAggregationModels.items().stream().noneMatch(paAggregationModel ->
+                                    paAggregationModel.getPaId().equalsIgnoreCase(paDetailDto.getId())
                             )).collect(Collectors.toList()));
                     return dto;
                 });
@@ -64,7 +65,7 @@ public class PaService {
 
     public Mono<MovePaResponseDto> movePa(String id, AddPaListRequestDto addPaListRequestDto) {
         log.debug("start movePa for {} PA to aggregate: {}",addPaListRequestDto.getItems().size(),id);
-        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream().distinct().filter(paDetailDto -> paDetailDto.getId()!=null).collect(Collectors.toList()));
+        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream().distinct().filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId())).collect(Collectors.toList()));
         return paAggregationRepository.batchGetItem(addPaListRequestDto).collectList()
                 .doOnNext(batchGetResultPages -> log.info("BatchGetResultPageSize: {}",batchGetResultPages.size()))
                 .flatMap(batchGetResultPage -> {

@@ -11,4 +11,6 @@ public class ApiKeyManagerExceptionError {
     public static final String AGGREGATE_INVALID_STATUS = "Aggregate cannot be eliminated because there are some associated PA";
     public static final String AGGREGATE_NOT_FOUND = "Aggregate not found";
 
+    public static final String INVALID_NAME_LENGTH = "PA name must be at least 3 characters long";
+
 }

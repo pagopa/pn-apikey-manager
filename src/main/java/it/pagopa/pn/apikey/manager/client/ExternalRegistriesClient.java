@@ -27,7 +27,7 @@ public class ExternalRegistriesClient {
     public Mono<List<PaDetailDto>> getAllPa(String name) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .queryParamIfPresent("paNameFilter", Optional.of(name))
+                        .queryParamIfPresent("paNameFilter", Optional.ofNullable(name))
                         .path("/ext-registry/pa/v1/activated-on-pn")
                         .build())
                 .headers(httpHeaders -> httpHeaders.setContentType(MediaType.APPLICATION_JSON))

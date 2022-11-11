@@ -9,6 +9,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDet
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.Test;
@@ -89,7 +90,7 @@ class CreateApiKeyServiceTest {
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
 
         when(externalRegistriesClient.getPaById("42"))
-                .thenReturn(Mono.just(new PaDetailDto()));
+                .thenReturn(Mono.just(new InternalPaDetailDto()));
 
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setId("idtest");
