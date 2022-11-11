@@ -12,10 +12,15 @@ public class AggregatePageable implements Pageable {
 
     private Integer limit;
     private String lastEvaluatedId;
+    private String lastEvaluatedName;
 
     @Override
     public boolean isPage() {
         return StringUtils.hasText(lastEvaluatedId);
+    }
+
+    public boolean isPageByName() {
+        return isPage() && StringUtils.hasText(lastEvaluatedName);
     }
 
     @Override

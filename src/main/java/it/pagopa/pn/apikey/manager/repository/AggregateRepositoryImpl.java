@@ -64,9 +64,10 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     @Override
     public Mono<Page<ApiKeyAggregateModel>> findByName(String name, AggregatePageable pageable) {
         Map<String, AttributeValue> attributeValue = null;
-        if (pageable.isPage()) {
+        if (pageable.isPageByName()) {
             attributeValue = new HashMap<>();
             attributeValue.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            attributeValue.put(AggregationConstant.NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
         }
 
         QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()

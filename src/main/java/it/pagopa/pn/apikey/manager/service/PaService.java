@@ -2,15 +2,18 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AssociablePaResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.MovePaResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PnBatchGetItemResponse;
 import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
+import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import it.pagopa.pn.apikey.manager.utils.DynamoBatchResponseUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -20,18 +23,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.AGGREGATE_NOT_FOUND;
+
 @Slf4j
 @Service
 public class PaService {
 
+    private final AggregateRepository aggregateRepository;
     private final PaAggregationRepository paAggregationRepository;
     private final ExternalRegistriesClient externalRegistriesClient;
     private final DynamoBatchResponseUtils dynamoBatchResponseUtils;
 
-    public PaService(PaAggregationRepository paAggregationRepository,
+    public PaService(AggregateRepository aggregateRepository,
+                     PaAggregationRepository paAggregationRepository,
                      ExternalRegistriesClient externalRegistriesClient,
                      DynamoBatchResponseUtils dynamoBatchResponseUtils) {
         this.dynamoBatchResponseUtils = dynamoBatchResponseUtils;
+        this.aggregateRepository = aggregateRepository;
         this.paAggregationRepository = paAggregationRepository;
         this.externalRegistriesClient = externalRegistriesClient;
     }
@@ -55,17 +63,23 @@ public class PaService {
                 });
     }
 
-    public Mono<MovePaResponseDto> createNewPaAggregation(String id, AddPaListRequestDto addPaListRequestDto){
+    public Mono<MovePaResponseDto> createNewPaAggregation(String id, AddPaListRequestDto addPaListRequestDto) {
         log.debug("creating aggregation with id {}", id);
-        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream().distinct().filter(paDetailDto -> paDetailDto.getId()!=null).collect(Collectors.toList()));
+        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
+                .distinct()
+                .filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId()))
+                .collect(Collectors.toList()));
         MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
-        return savePaAggregation(createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
+        return savePaAggregation(id, createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
     }
 
     public Mono<MovePaResponseDto> movePa(String id, AddPaListRequestDto addPaListRequestDto) {
         log.debug("start movePa for {} PA to aggregate: {}",addPaListRequestDto.getItems().size(),id);
-        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream().distinct().filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId())).collect(Collectors.toList()));
+        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
+                .distinct()
+                .filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId()))
+                .collect(Collectors.toList()));
         return paAggregationRepository.batchGetItem(addPaListRequestDto).collectList()
                 .doOnNext(batchGetResultPages -> log.info("BatchGetResultPageSize: {}",batchGetResultPages.size()))
                 .flatMap(batchGetResultPage -> {
@@ -76,12 +90,14 @@ public class PaService {
                         countAndConvertUnprocessedGetItem(movePaResponseDto, pnBatchGetItemResponse, addPaListRequestDto.getItems());
                     });
                     addPaListRequestDto.getItems().removeIf(paDetailDto -> movePaResponseDto.getUnprocessedPA().contains(paDetailDto));
-                    return savePaAggregation(createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
+                    return savePaAggregation(id, createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
                 });
     }
 
-    private Mono<MovePaResponseDto> savePaAggregation(List<PaAggregationModel> items, MovePaResponseDto movePaResponseDto) {
-        return paAggregationRepository.savePaAggregation(items).collectList()
+    private Mono<MovePaResponseDto> savePaAggregation(String aggregateId, List<PaAggregationModel> items, MovePaResponseDto movePaResponseDto) {
+        return aggregateRepository.getApiKeyAggregation(aggregateId)
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .flatMap(aggregate -> paAggregationRepository.savePaAggregation(items).collectList())
                 .doOnNext(batchWriteResults -> log.info("BatchWriteResult list size: {}", batchWriteResults.size()))
                 .map(batchWriteResult -> {
                     batchWriteResult.forEach(result -> {

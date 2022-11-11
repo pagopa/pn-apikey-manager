@@ -91,7 +91,9 @@ public class AggregationService {
 
     public Mono<PaAggregateResponseDto> getPaOfAggregate(String aggregateId) {
         log.debug("get pa of aggregate with id: {}", aggregateId);
-        return paAggregationRepository.findByAggregateId(aggregateId, PaAggregationPageable.createEmpty())
+        return aggregateRepository.getApiKeyAggregation(aggregateId)
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .flatMap(aggregate -> paAggregationRepository.findByAggregateId(aggregateId, PaAggregationPageable.createEmpty()))
                 .map(aggregationConverter::convertToResponseDto);
     }
 
