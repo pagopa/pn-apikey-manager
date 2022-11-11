@@ -119,5 +119,55 @@ class PaServiceTest {
         StepVerifier.create(paService.movePa("foo", addPaListRequestDto))
                 .expectNext(movePaResponseDto).verifyComplete();
     }
+
+
+    @Test
+    void testCreateNewPaAggregation(){
+        List<PaAggregationModel> paAggregationModels = new ArrayList<>();
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId("id");
+        paAggregationModel.setPaName("name");
+        paAggregationModel.setPaId("id");
+        paAggregationModels.add(paAggregationModel);
+
+        PnBatchGetItemResponse pnBatchGetItemResponse = new PnBatchGetItemResponse();
+        pnBatchGetItemResponse.setUnprocessed(new ArrayList<>());
+        pnBatchGetItemResponse.setFounded(paAggregationModels);
+        when(dynamoBatchResponseUtils.convertPaAggregationsBatchGetItemResponse(any()))
+                .thenReturn(pnBatchGetItemResponse);
+
+        PnBatchPutItemResponse pnBatchPutItemResponse = new PnBatchPutItemResponse();
+        pnBatchPutItemResponse.setUnprocessed(new ArrayList<>());
+        when(dynamoBatchResponseUtils.convertPaAggregationsBatchPutItemResponse(any()))
+                .thenReturn(pnBatchPutItemResponse);
+
+        BatchGetResultPage batchGetResultPage = BatchGetResultPage.builder()
+                .batchGetItemResponse(BatchGetItemResponse.builder()
+                        .responses(new HashMap<>())
+                        .unprocessedKeys(new HashMap<>())
+                        .build()).build();
+        when(paAggregationRepository.batchGetItem(any())).thenReturn(Flux.just(batchGetResultPage));
+
+        BatchWriteResult batchWriteResult = BatchWriteResult.builder()
+                .unprocessedRequests(new HashMap<>())
+                .build();
+        when(paAggregationRepository.savePaAggregation(anyList())).thenReturn(Flux.just(batchWriteResult));
+
+        AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
+        List<PaDetailDto> list = new ArrayList<>();
+        PaDetailDto paDetailDto = new PaDetailDto();
+        paDetailDto.setId("id");
+        paDetailDto.setName("name");
+        list.add(paDetailDto);
+        addPaListRequestDto.setItems(list);
+
+        MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
+        movePaResponseDto.setUnprocessedPA(new ArrayList<>());
+        movePaResponseDto.setProcessed(1);
+
+        StepVerifier.create(paService.createNewPaAggregation("foo", addPaListRequestDto))
+                .expectNext(movePaResponseDto).verifyComplete();
+
+    }
 }
 
