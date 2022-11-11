@@ -21,7 +21,7 @@ public class PaAggregationsService {
                 .map(PaAggregationModel::getAggregateId);
     }
 
-    public Mono<PaAggregationModel> createNewPaAggregation(PaAggregationModel paAggregationModel) {
-        return paAggregationRepository.savePaAggregation(paAggregationModel);
+    public Mono<PaAggregationModel> createNewPaAggregation(Mono<PaAggregationModel> paAggregationModel) {
+        return paAggregationModel.flatMap(paAggregationRepository::savePaAggregation);
     }
 }

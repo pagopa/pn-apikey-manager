@@ -37,4 +37,6 @@ public class ApiKeyAggregateModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("usagePlanId")}))
     private String usagePlanId;
 
+    @Getter(onMethod = @__({@DynamoDbAttribute("pageable")}))
+    private String pageable = "Y";
 }

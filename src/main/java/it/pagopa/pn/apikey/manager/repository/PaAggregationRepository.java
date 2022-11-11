@@ -19,8 +19,6 @@ public interface PaAggregationRepository {
 
     Flux<BatchWriteResult> savePaAggregation(List<PaAggregationModel> toSave);
 
-    Flux<BatchWriteResult> savePaAggregation(String aggregateId, List<PaDetailDto> toSave);
-
     Mono<Page<PaAggregationModel>> getAllPaAggregations();
 
     Mono<Page<PaAggregationModel>> findByAggregateId(String aggregateId, Integer limit, String lastKey);

@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import com.amazonaws.util.StringUtils;
+import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
@@ -29,12 +30,14 @@ public class CreateApiKeyService {
     private final AggregationService aggregationService;
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
+    private final ExternalRegistriesClient externalRegistriesClient;
 
-    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaAggregationsService paAggregationsService, ManageApiKeyService manageApiKeyService) {
+    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaAggregationsService paAggregationsService, ManageApiKeyService manageApiKeyService, ExternalRegistriesClient externalRegistriesClient) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
+        this.externalRegistriesClient = externalRegistriesClient;
     }
 
     public Mono<ResponseNewApiKeyDto> createApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
@@ -118,10 +121,15 @@ public class CreateApiKeyService {
         return apiKeyModel;
     }
 
-    private PaAggregationModel constructPaAggregationModel(String aggregateId, String paId) {
-        PaAggregationModel paAggregationModel = new PaAggregationModel();
-        paAggregationModel.setAggregateId(aggregateId);
-        paAggregationModel.setPaId(paId);
-        return paAggregationModel;
+    private Mono<PaAggregationModel> constructPaAggregationModel(String aggregateId, String paId) {
+        return externalRegistriesClient.getPaById(paId)
+                .doOnNext(paDetailDto -> log.info("founded PA name: {}",paDetailDto.getName()))
+                .map(paDetailDto -> {
+                    PaAggregationModel paAggregationModel = new PaAggregationModel();
+                    paAggregationModel.setAggregateId(aggregateId);
+                    paAggregationModel.setPaId(paId);
+                    paAggregationModel.setPaName(paDetailDto.getName());
+                    return paAggregationModel;
+                });
     }
 }

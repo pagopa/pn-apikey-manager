@@ -14,7 +14,6 @@ import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -203,22 +202,6 @@ class AggregationServiceTest {
         StepVerifier.create(aggregationService.createNewAggregate("paID"))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getName().equalsIgnoreCase("")).verifyComplete();
 
-    }
-
-    @Test
-    void testCreateUsagePlan() {
-        CreateUsagePlanResponse createUsagePlanResponse = CreateUsagePlanResponse.builder().id("id").build();
-        CompletableFuture<CreateUsagePlanResponse> completableFuture = new CompletableFuture<>();
-        completableFuture.completeAsync(() -> createUsagePlanResponse);
-
-        CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().id("id").build();
-        CompletableFuture<CreateUsagePlanKeyResponse> completableFuture2 = new CompletableFuture<>();
-        completableFuture2.completeAsync(() -> createUsagePlanKeyResponse);
-
-        when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture);
-        when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
-        StepVerifier.create(aggregationService.createUsagePlan("42", "id"))
-                .expectNext(createUsagePlanKeyResponse).verifyComplete();
     }
 
     /**
