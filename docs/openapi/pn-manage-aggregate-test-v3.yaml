@@ -558,21 +558,6 @@ components:
           type: string
         name:
           type: string
-        taxId:
-          type: string
-        generalContacts:
-          $ref: '#/components/schemas/PaContacts'
-    PaContacts:
-      type: object
-      properties:
-        pec:
-          type: string
-        email:
-          type: string
-        tel:
-          type: string
-        web:
-          type: string
     UsagePlanResponse:
       title: elenco usagePlan template
       description: >-
