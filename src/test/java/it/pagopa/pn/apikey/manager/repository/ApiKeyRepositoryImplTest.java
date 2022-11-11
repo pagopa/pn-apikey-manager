@@ -85,7 +85,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void getAllWithFilter() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
