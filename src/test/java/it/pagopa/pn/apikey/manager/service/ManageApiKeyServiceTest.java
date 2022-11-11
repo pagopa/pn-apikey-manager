@@ -147,11 +147,11 @@ class ManageApiKeyServiceTest {
     void testDelete2() {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("42");
-        apiKeyModel.setStatus("ENABLED");
+        apiKeyModel.setStatus("BLOCKED");
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
-        when(apiKeyRepository.delete(any())).thenReturn(Mono.just("id"));
-        StepVerifier.create(apiKeyService.deleteApiKey("42")).expectNext("id").verifyComplete();
+        when(apiKeyRepository.delete(any())).thenReturn(Mono.just("42"));
+        StepVerifier.create(apiKeyService.deleteApiKey("42")).expectNext("42").verifyComplete();
     }
 
     @Test
@@ -159,7 +159,6 @@ class ManageApiKeyServiceTest {
         String xPagopaPnUid = "cxId";
         List<String> xPagopaPnCxGroups = new ArrayList<>();
         xPagopaPnCxGroups.add("RECLAMI");
-        int limit = 10;
         Boolean showVirtualKey = true;
         String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
         String lastUpdate = "2022-10-25T16:25:58.334862500";
@@ -177,8 +176,7 @@ class ManageApiKeyServiceTest {
         when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyInt(), anyString(), anyString()))
                 .thenReturn(Mono.just(page));
         when(apiKeyConverter.convertResponsetoDto(any(),anyBoolean())).thenReturn(apiKeysResponseDto);
-        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey)).expectNext(apiKeysResponseDto).verifyComplete();
-
+        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey)).expectNext(apiKeysResponseDto).verifyComplete();
     }
 
 }

@@ -2,6 +2,8 @@
   "Parameters": {
     "UsagePlanApiId": "",
     "UsagePlanStage": "",
-    "ExternalRegistriesBasePath" : ""
+    "ExternalRegistriesBasePath" : "",
+    "ApiGatewayApikeysArn":"",
+    "ApiGatewayUsagePlanArn":""
   }
 }

@@ -27,7 +27,7 @@ tags:
 
 
 paths:
-  "/api-keys":
+  "/apikey-manager/api-keys":
     get:
       summary: Ricerca api keys
       description: >-
@@ -97,7 +97,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-keys/{id}":
+  "/apikey-manager/api-keys/{id}":
     delete:
       summary: Rimozione api key
       description: >-
@@ -139,7 +139,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-keys/{id}/status":
+  "/apikey-manager/api-keys/{id}/status":
     put:
       summary: Cambia lo stato dell'api key
       description: >-

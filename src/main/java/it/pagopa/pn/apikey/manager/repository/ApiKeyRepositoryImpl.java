@@ -19,7 +19,7 @@ import java.util.Map;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_DOES_NOT_EXISTS;
 
 @Component
-public class ApiKeyRepositoryImpl implements ApiKeyRepository{
+public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
     private final DynamoDbAsyncTable<ApiKeyModel> table;
     private final String gsiLastUpdate;
@@ -52,7 +52,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
-    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate) {
+    @Override
+    public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate) {
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
@@ -93,6 +94,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository{
                 .build();
 
         return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest)
-                .map(apiKeyModelPage -> apiKeyModelPage));
+                .map(apiKeyModelPage -> apiKeyModelPage)); // TODO capire se serve il map
     }
 }

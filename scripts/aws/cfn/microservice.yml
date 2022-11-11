@@ -82,6 +82,14 @@ Parameters:
     Type: String
     Description: 'BasePath for interaction with pn-external-registries'
 
+  ApiGatewayApikeysArn:
+    Type: String
+    Description: 'Arn of apiGateway apiKeys'
+
+  ApiGatewayUsagePlanArn:
+    Type: String
+    Description: 'Arn of apiGateway usagePlans'
+
 Resources:
 
   UsagePlanSmall:
@@ -176,6 +184,14 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - apigateway:POST
+              - apigateway:GET
+            Resource:
+              - !Ref ApiGatewayApikeysArn
+              - !Ref ApiGatewayUsagePlanArn
+              - !Sub '${ApiGatewayUsagePlanArn}/*/keys'
+          - Effect: Allow
+            Action:
               - dynamodb:BatchGetItem
               - dynamodb:BatchWriteItem
               - dynamodb:ExecuteTransaction
@@ -191,6 +207,7 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Sub '${ApiKeyTableArn}/index/*'
 
 #  ApiKeyManagerCognitoUserPool:
 #    Type: AWS::Cognito::UserPool

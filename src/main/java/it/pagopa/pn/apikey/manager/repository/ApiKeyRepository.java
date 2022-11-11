@@ -14,6 +14,6 @@ public interface ApiKeyRepository {
 
     Mono<ApiKeyModel> findById(String id);
 
-    Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate);
+    Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate);
 
 }

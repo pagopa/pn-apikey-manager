@@ -49,7 +49,7 @@ public class ManageApiKeyService {
                         return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException(String.format(INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
                     }
                 });
     }
@@ -59,17 +59,18 @@ public class ManageApiKeyService {
                 .doOnNext(apiKeyModels -> log.info("founded ApiKey for id: {}", id))
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
-                        return apiKeyRepository.delete(apiKeyModel.getVirtualKey()).doOnNext(s -> log.info("Deleted ApiKey: {}", id));
+                        return apiKeyRepository.delete(id)
+                                .doOnNext(s -> log.info("Deleted ApiKey: {}", id));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(INVALID_STATUS, HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException(String.format(CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
                     }
                 });
     }
 
-    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, int limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
-        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId,xPagopaPnCxGroups,limit,lastKey,lastUpdate)
-                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id{}: and size apiKey:{}",xPagopaPnCxId,apiKeyModelPage.items().size()))
-                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage,showVirtualKey));
+    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
+        return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, lastUpdate)
+                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id{}: and size apiKey:{}", xPagopaPnCxId, apiKeyModelPage.items().size()))
+                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey));
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, String status, String xPagopaPnUid) {
@@ -112,17 +113,21 @@ public class ManageApiKeyService {
     private boolean isOperationAllowed(ApiKeyModel apiKeyModel, String newStatus) {
         log.info("Verify if status can change from: {}, to: {}", apiKeyModel.getStatus(), newStatus);
         ApiKeyStatusDto status = ApiKeyStatusDto.fromValue(apiKeyModel.getStatus());
-        if (newStatus.equals(DELETE))
-            return status.equals(BLOCKED) || status.equals(ENABLED);
-        if (newStatus.equals(ROTATE))
-            return status.equals(ENABLED);
-        if (newStatus.equals(BLOCK))
-            return status.equals(ENABLED) || status.equals(ROTATED);
-        if (newStatus.equals(ENABLE) &&
-                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistoryModel -> apiKeyHistoryModel.getStatus().equals(ROTATED.getValue())))
+        if (newStatus.equals(DELETE)) {
             return status.equals(BLOCKED);
-        else
+        }
+        if (newStatus.equals(ROTATE)) {
+            return status.equals(ENABLED);
+        }
+        if (newStatus.equals(BLOCK)) {
+            return status.equals(ENABLED) || status.equals(ROTATED);
+        }
+        if (newStatus.equals(ENABLE) &&
+                apiKeyModel.getStatusHistory().stream().noneMatch(apiKeyHistoryModel -> apiKeyHistoryModel.getStatus().equals(ROTATED.getValue()))) {
+            return status.equals(BLOCKED);
+        } else {
             return false;
+        }
     }
 
     private ApiKeyStatusDto decodeStatus(String body, boolean history) {
