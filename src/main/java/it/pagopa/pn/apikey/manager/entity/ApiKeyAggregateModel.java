@@ -39,9 +39,9 @@ public class ApiKeyAggregateModel {
     private String usagePlanId;
 
     @Getter(onMethod = @__({
-            @DynamoDbAttribute("pageable"),
+            @DynamoDbAttribute(AggregationConstant.PAGEABLE),
             @DynamoDbSecondaryPartitionKey(indexNames = AggregationConstant.GSI_NAME)
     }))
-    private String pageable = AggregationConstant.PAGEABLE;
+    private String pageable = AggregationConstant.PAGEABLE_VALUE;
 
 }

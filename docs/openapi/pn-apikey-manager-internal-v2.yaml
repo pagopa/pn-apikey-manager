@@ -262,6 +262,8 @@ components:
           type: string
         lastUpdate:
           type: string
+        total:
+          type: integer
 
     ApiKeyRow:
       type: object

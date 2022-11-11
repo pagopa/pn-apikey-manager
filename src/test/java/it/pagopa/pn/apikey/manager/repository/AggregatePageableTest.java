@@ -11,7 +11,8 @@ class AggregatePageableTest {
      */
     @Test
     void testIsPageable() {
-        assertTrue((new AggregatePageable(1, "42")).isPage());
-        assertFalse((new AggregatePageable(1, "")).isPage());
+        assertTrue(new AggregatePageable(1, "42", "name").isPage());
+        assertTrue(new AggregatePageable(1, "42", "name").isPageByName());
+        assertFalse(new AggregatePageable(1, "", "name").isPage());
     }
 }

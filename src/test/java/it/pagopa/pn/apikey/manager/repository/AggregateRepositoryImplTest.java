@@ -73,7 +73,7 @@ class AggregateRepositoryImplTest {
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
         when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
-        StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(10,"id")))
+        StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(10,"id", "")))
                 .expectNextCount(0);
     }
 
@@ -86,7 +86,7 @@ class AggregateRepositoryImplTest {
         DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
         when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
         when(dynamoDbAsyncTable.index(any())).thenReturn(index);
-        StepVerifier.create(aggregateRepository.findByName("name", new AggregatePageable(10,"id")))
+        StepVerifier.create(aggregateRepository.findByName("name", new AggregatePageable(10,"id", "")))
                 .expectNextCount(0);
     }
 

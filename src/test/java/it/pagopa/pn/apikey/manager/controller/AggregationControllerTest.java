@@ -124,7 +124,7 @@ class AggregationControllerTest {
         AssociablePaResponseDto associablePaResponseDto = new AssociablePaResponseDto();
         associablePaResponseDto.setItems(new ArrayList<>());
         when(paService.getAssociablePa(any())).thenReturn(Mono.just(associablePaResponseDto));
-        StepVerifier.create(aggregationController.getAssociablePa("id",
+        StepVerifier.create(aggregationController.getAssociablePa("name",
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

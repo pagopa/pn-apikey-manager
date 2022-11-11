@@ -68,10 +68,11 @@ public class AggregateRepositoryImpl implements AggregateRepository {
             attributeValue = new HashMap<>();
             attributeValue.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
             attributeValue.put(AggregationConstant.NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
+            attributeValue.put(AggregationConstant.PAGEABLE, AttributeValue.builder().s(AggregationConstant.PAGEABLE_VALUE).build());
         }
 
         QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
-                .partitionValue(AggregationConstant.PAGEABLE)
+                .partitionValue(AggregationConstant.PAGEABLE_VALUE)
                 .sortValue(name)
                 .build());
 
@@ -93,7 +94,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     @Override
     public Mono<Integer> countByName(String name) {
         QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
-                .partitionValue(AggregationConstant.PAGEABLE)
+                .partitionValue(AggregationConstant.PAGEABLE_VALUE)
                 .sortValue(name)
                 .build());
 

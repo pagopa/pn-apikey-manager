@@ -45,6 +45,7 @@ public class AggregationController implements AggregateApi {
         AggregatePageable pageable = AggregatePageable.builder()
                 .limit(limit)
                 .lastEvaluatedId(lastEvaluatedId)
+                .lastEvaluatedName(lastEvaluatedName)
                 .build();
         return aggregationService.getAggregation(name, pageable)
                 .map(dto -> ResponseEntity.ok().body(dto))

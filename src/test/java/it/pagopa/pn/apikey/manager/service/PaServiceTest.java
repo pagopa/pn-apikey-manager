@@ -5,6 +5,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AssociablePaResponseDto;
@@ -12,6 +13,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.MoveP
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PnBatchGetItemResponse;
 import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
+import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import it.pagopa.pn.apikey.manager.utils.DynamoBatchResponseUtils;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.BatchGetItemResponse;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -48,6 +51,9 @@ class PaServiceTest {
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
 
+    @MockBean
+    private AggregateRepository aggregateRepository;
+
     @Test
     void testGetAssociablePa() {
         AssociablePaResponseDto associablePaResponseDto = new AssociablePaResponseDto();
@@ -58,16 +64,10 @@ class PaServiceTest {
         list.add(paDetailDto);
         associablePaResponseDto.setItems(list);
         when(externalRegistriesClient.getAllPa(any())).thenReturn(Mono.just(list));
-        List<PaAggregationModel> models = new ArrayList<>();
-        PaAggregationModel paAggregationModel = new PaAggregationModel();
-        paAggregationModel.setPaId("id");
-        paAggregationModel.setAggregateId("id");
-        paAggregationModel.setPaName("name");
-        models.add(paAggregationModel);
-        Page<PaAggregationModel> page = Page.create(models);
-        when(paAggregationRepository.getAllPaAggregations()).thenReturn(Mono.just(page));
+        when(paAggregationRepository.getAllPaAggregations()).thenReturn(Mono.just(Page.create(Collections.emptyList())));
         StepVerifier.create(paService.getAssociablePa("name"))
-                .expectNext(associablePaResponseDto).verifyComplete();
+                .expectNext(associablePaResponseDto)
+                .verifyComplete();
     }
 
     /**
@@ -105,6 +105,9 @@ class PaServiceTest {
                 .build();
         when(paAggregationRepository.savePaAggregation(anyList())).thenReturn(Flux.just(batchWriteResult));
 
+        when(aggregateRepository.getApiKeyAggregation(any()))
+                .thenReturn(Mono.just(new ApiKeyAggregateModel()));
+
         AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
         List<PaDetailDto> list = new ArrayList<>();
         PaDetailDto paDetailDto = new PaDetailDto();
@@ -117,7 +120,8 @@ class PaServiceTest {
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
         movePaResponseDto.setProcessed(1);
         StepVerifier.create(paService.movePa("foo", addPaListRequestDto))
-                .expectNext(movePaResponseDto).verifyComplete();
+                .expectNext(movePaResponseDto)
+                .verifyComplete();
     }
 
 
@@ -152,6 +156,9 @@ class PaServiceTest {
                 .unprocessedRequests(new HashMap<>())
                 .build();
         when(paAggregationRepository.savePaAggregation(anyList())).thenReturn(Flux.just(batchWriteResult));
+
+        when(aggregateRepository.getApiKeyAggregation(any()))
+                .thenReturn(Mono.just(new ApiKeyAggregateModel()));
 
         AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
         List<PaDetailDto> list = new ArrayList<>();

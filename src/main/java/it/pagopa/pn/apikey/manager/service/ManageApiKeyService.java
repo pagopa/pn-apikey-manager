@@ -74,7 +74,7 @@ public class ManageApiKeyService {
                 .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id: {} and size: {}", xPagopaPnCxId, apiKeyModelPage.items().size()))
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
                 .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
-                // TODO set total -> .doOnNext()
+                .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
                 .map(Tuple2::getT1);
     }
 
