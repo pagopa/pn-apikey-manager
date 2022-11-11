@@ -75,6 +75,7 @@ public class AggregationConverter {
                 paDetailDto.setId(paAggregationModel.getPaId());
                 unprocessedPA.add(paDetailDto);
             }
+            unprocessedSize = unprocessedSize + listUnprocessed.size();
         }
 
         if(listToUnprocessed.size()!=0){
