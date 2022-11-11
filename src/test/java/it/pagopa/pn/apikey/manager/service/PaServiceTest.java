@@ -57,7 +57,7 @@ class PaServiceTest {
         paDetailDto.setId("id");
         list.add(paDetailDto);
         associablePaResponseDto.setItems(list);
-        when(externalRegistriesClient.callExternalRegistries(any())).thenReturn(Mono.just(list));
+        when(externalRegistriesClient.getAllPa(any())).thenReturn(Mono.just(list));
         List<PaAggregationModel> models = new ArrayList<>();
         PaAggregationModel paAggregationModel = new PaAggregationModel();
         paAggregationModel.setPaId("id");

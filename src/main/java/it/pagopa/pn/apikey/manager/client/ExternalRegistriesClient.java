@@ -23,7 +23,7 @@ public class ExternalRegistriesClient {
         this.webClient = externalRegistriesWebClient.init();
     }
 
-    public Mono<List<PaDetailDto>> callExternalRegistries(String name) {
+    public Mono<List<PaDetailDto>> getAllPa(String name) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .queryParamIfPresent("paNameFilter", Optional.of(name))
@@ -32,6 +32,22 @@ public class ExternalRegistriesClient {
                 .headers(httpHeaders -> httpHeaders.setContentType(MediaType.APPLICATION_JSON))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<PaDetailDto>>() {})
+                .doOnError(throwable -> {
+                    if (throwable instanceof WebClientResponseException) {
+                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                        throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
+                    }
+                });
+    }
+
+    public Mono<PaDetailDto> getPaById(String id) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/ext-registry-private/pa/v1/activated-on-pn/{id}")
+                        .build(id))
+                .headers(httpHeaders -> httpHeaders.setContentType(MediaType.APPLICATION_JSON))
+                .retrieve()
+                .bodyToMono(PaDetailDto.class)
                 .doOnError(throwable -> {
                     if (throwable instanceof WebClientResponseException) {
                         WebClientResponseException ex = (WebClientResponseException) throwable;

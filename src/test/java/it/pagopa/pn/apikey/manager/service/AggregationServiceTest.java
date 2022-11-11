@@ -179,6 +179,7 @@ class AggregationServiceTest {
 
         when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture1);
         when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
+
         StepVerifier.create(aggregationService.createNewAwsApiKey("Pa"))
                 .expectNext(CreateApiKeyResponse.builder().name("test").id("id").build()).verifyComplete();
     }
@@ -201,21 +202,6 @@ class AggregationServiceTest {
         StepVerifier.create(aggregationService.createNewAggregate("paID"))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getName().equalsIgnoreCase("")).verifyComplete();
 
-    }
-
-    @Test
-    void testCreateUsagePlan() {
-        CreateUsagePlanResponse createUsagePlanResponse = CreateUsagePlanResponse.builder().id("id").build();
-        CompletableFuture<CreateUsagePlanResponse> completableFuture = new CompletableFuture<>();
-        completableFuture.completeAsync(() -> createUsagePlanResponse);
-
-        CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().id("id").build();
-        CompletableFuture<CreateUsagePlanKeyResponse> completableFuture2 = new CompletableFuture<>();
-        completableFuture2.completeAsync(() -> createUsagePlanKeyResponse);
-        when(apiGatewayAsyncClient.createUsagePlan((CreateUsagePlanRequest) any())).thenReturn(completableFuture);
-        when(apiGatewayAsyncClient.createUsagePlanKey((CreateUsagePlanKeyRequest) any())).thenReturn(completableFuture2);
-        StepVerifier.create(aggregationService.createUsagePlan("42", "id"))
-                .expectNext(createUsagePlanKeyResponse).verifyComplete();
     }
 
     /**
