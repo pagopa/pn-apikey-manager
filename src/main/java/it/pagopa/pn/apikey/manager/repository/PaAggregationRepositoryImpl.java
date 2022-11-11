@@ -68,22 +68,8 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public Flux<BatchGetResultPage>  batchGetItem(AddPaListRequestDto addPaListRequestDto) {
-        log.info("List of PaAggreggationModel in AddPaListRequestDto size: {}", addPaListRequestDto.getItems().size());
-        return Flux.fromIterable(addPaListRequestDto.getItems())
-                .window(25)
-                .log()
-                .flatMap(chunk -> {
-                    ReadBatch.Builder<PaAggregationModel> builder = ReadBatch.builder(PaAggregationModel.class)
-                            .mappedTableResource(table);
-                    Mono<BatchGetResultPage> deferred = Mono.defer(() ->
-                            Mono.from(dynamoDbEnhancedClient.batchGetItem(BatchGetItemEnhancedRequest.builder()
-                                    .readBatches(builder.build())
-                                    .build())).doOnNext(batchGetResultPage -> log.info("call to dynamoDbEnhancedClient.batchGetItem")));
-                    return chunk
-                            .doOnNext(paDetailDto -> builder.addGetItem(Key.builder().partitionValue(paDetailDto.getId()).build()))
-                            .then(deferred);
-                });
+    public Flux<BatchWriteResult> savePaAggregation(String aggregateId, List<PaDetailDto> toSave) {
+        return null;
     }
 
     @Override
@@ -103,5 +89,10 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                 .limit(limit)
                 .build();
         return Mono.from(table.index(gsiAggregateId).query(queryEnhancedRequest));
+    }
+
+    @Override
+    public Flux<BatchGetResultPage> batchGetItem(AddPaListRequestDto addPaListRequestDto) {
+        return null;
     }
 }

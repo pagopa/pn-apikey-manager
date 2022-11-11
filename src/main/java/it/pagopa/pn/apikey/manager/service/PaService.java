@@ -54,7 +54,16 @@ public class PaService {
                 });
     }
 
+    public Mono<MovePaResponseDto> createNewPaAggregation(String id, AddPaListRequestDto addPaListRequestDto){
+        log.debug("creating aggregation with id {}", id);
+        addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream().distinct().filter(paDetailDto -> paDetailDto.getId()!=null).collect(Collectors.toList()));
+        MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
+        movePaResponseDto.setUnprocessedPA(new ArrayList<>());
+        return savePaAggregation(createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
+    }
+
     public Mono<MovePaResponseDto> movePa(String id, AddPaListRequestDto addPaListRequestDto) {
+        log.debug("start movePa for {} PA to aggregate: {}",addPaListRequestDto.getItems().size(),id);
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream().distinct().filter(paDetailDto -> paDetailDto.getId()!=null).collect(Collectors.toList()));
         return paAggregationRepository.batchGetItem(addPaListRequestDto).collectList()
                 .doOnNext(batchGetResultPages -> log.info("BatchGetResultPageSize: {}",batchGetResultPages.size()))
@@ -72,6 +81,7 @@ public class PaService {
 
     private Mono<MovePaResponseDto> savePaAggregation(List<PaAggregationModel> items, MovePaResponseDto movePaResponseDto) {
         return paAggregationRepository.savePaAggregation(items).collectList()
+                .doOnNext(batchWriteResults -> log.info("BatchWriteResult list size: {}", batchWriteResults.size()))
                 .map(batchWriteResult -> {
                     batchWriteResult.forEach(result -> {
                         PnBatchPutItemResponse pnBatchPutItemResponse = dynamoBatchResponseUtils.convertPaAggregationsBatchPutItemResponse(result);

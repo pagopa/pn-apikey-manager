@@ -17,6 +17,8 @@ public interface PaAggregationRepository {
 
     Mono<PaAggregationModel> savePaAggregation(PaAggregationModel toSave);
 
+    Flux<BatchWriteResult> savePaAggregation(List<PaAggregationModel> toSave);
+
     Flux<BatchWriteResult> savePaAggregation(String aggregateId, List<PaDetailDto> toSave);
 
     Mono<Page<PaAggregationModel>> getAllPaAggregations();

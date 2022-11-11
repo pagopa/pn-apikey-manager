@@ -63,32 +63,6 @@ public class AggregationService {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PaAggregationModel.class));
     }
 
-
-    public Mono<MovePaResponseDto> createNewPaAggregation(String aggregateId, AddPaListRequestDto addPaListRequestDto){
-        log.debug("creating aggregation with id {}", aggregateId);
-
-        List<PaDetailDto> list = addPaListRequestDto.getItems();
-
-        List<PaDetailDto> listToProcessed = list.stream()
-                .distinct()
-                .filter(paDetailDto -> paDetailDto.getId()!=null && paDetailDto.getName()!=null)
-                .collect(Collectors.toList());
-
-        List<PaDetailDto> listToUnprocessed = list.stream()
-                .filter(paDetailDto -> paDetailDto.getId()==null || paDetailDto.getName()==null || (Collections.frequency(list,paDetailDto)>1))
-                .distinct()
-                .collect(Collectors.toList());
-
-        int sizeProcessed = listToProcessed.size();
-        int sizeUnprocessed = listToUnprocessed.size();
-
-        return paAggregationRepository.savePaAggregation(aggregateId, listToProcessed)
-                .doOnNext(batchWriteResult -> log.info("aggregates created with id {}",aggregateId))
-                .doOnError(throwable -> log.error("Error creating aggregation with id {}",aggregateId))
-                .map(batchWriteResult -> aggregationConverter.convertBatchWriteResultToPaResponseDto(sizeProcessed, sizeUnprocessed, listToUnprocessed, batchWriteResult.unprocessedPutItemsForTable(table)))
-                .next();
-    }
-
     public Mono<AggregatesListResponseDto> getAggregation(@Nullable String name, @NonNull AggregatePageable pageable) {
         log.debug("get aggregation - name: {} - pageable: {}", name, pageable);
         if (StringUtils.hasText(name)) {

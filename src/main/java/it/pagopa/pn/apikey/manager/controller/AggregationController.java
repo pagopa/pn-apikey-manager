@@ -56,7 +56,7 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
-        return aggregationService.createNewPaAggregation(id,addPaListRequestDto)
+        return paService.createNewPaAggregation(id,addPaListRequestDto)
                 .publishOn(scheduler)
                 .map(s -> ResponseEntity.ok().build());
     }

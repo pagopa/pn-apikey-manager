@@ -1,11 +1,13 @@
 package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
 
 import java.time.LocalDateTime;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.services.apigateway.model.UsagePlan;
 
 @ContextConfiguration(classes = {AggregationConverter.class})
 @ExtendWith(SpringExtension.class)
@@ -36,15 +39,27 @@ class AggregationConverterTest {
         apiKeyAggregateModel.setName("Name");
         apiKeyAggregateModel.setUsagePlanId("id");
         Page<ApiKeyAggregateModel> page = Page.create(List.of(apiKeyAggregateModel));
-        HashMap<String,UsagePlanDetailDto> map = new HashMap<>();
+        List<UsagePlanDetailDto> map = new ArrayList<>();
         UsagePlanDetailDto usagePlanDetailDto = new UsagePlanDetailDto();
         usagePlanDetailDto.setId("id");
         usagePlanDetailDto.setName("name");
-        map.put("id",usagePlanDetailDto);
-        AggregatesListResponseDto aggregatesListResponseDto = aggregationConverter.convertResponseDto(page,map);
+        map.add(usagePlanDetailDto);
+        AggregatesListResponseDto aggregatesListResponseDto = aggregationConverter.convertResponseDto(page, map);
         Assertions.assertEquals(1,aggregatesListResponseDto.getItems().size());
+    }
 
+    @Test
+    void converResponseDto2(){
+        ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
+        apiKeyAggregateModel.setAggregateId("id");
+        apiKeyAggregateModel.setUsagePlanId("id");
+        apiKeyAggregateModel.setCreatedAt(LocalDateTime.now());
+        apiKeyAggregateModel.setLastUpdate(LocalDateTime.now());
 
+        UsagePlanDetailDto usagePlanDetailDto = new UsagePlanDetailDto();
+        usagePlanDetailDto.setId("id");
+        AggregateResponseDto aggregatesResponseDto = aggregationConverter.convertResponseDto(apiKeyAggregateModel, usagePlanDetailDto);
+        Assertions.assertEquals("id",aggregatesResponseDto.getId());
     }
 }
 
