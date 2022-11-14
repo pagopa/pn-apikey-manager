@@ -20,7 +20,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
 
 import java.time.LocalDateTime;
@@ -35,23 +34,21 @@ public class AggregationService {
 
     private final AggregateRepository aggregateRepository;
     private final PaAggregationRepository paAggregationRepository;
-    private final ApiGatewayAsyncClient apiGatewayAsyncClient;
-    private final PnApikeyManagerConfig pnApikeyManagerConfig;
     private final UsagePlanService usagePlanService;
+    private final PnApikeyManagerConfig pnApikeyManagerConfig;
     private final AggregationConverter aggregationConverter;
+    private final ApiGatewayService apiGatewayService;
 
     public AggregationService(AggregateRepository aggregateRepository,
                               PaAggregationRepository paAggregationRepository,
-                              ApiGatewayAsyncClient apiGatewayAsyncClient,
-                              PnApikeyManagerConfig pnApikeyManagerConfig,
                               UsagePlanService usagePlanService,
-                              AggregationConverter aggregationConverter) {
+                              PnApikeyManagerConfig pnApikeyManagerConfig, AggregationConverter aggregationConverter, ApiGatewayService apiGatewayService) {
         this.aggregateRepository = aggregateRepository;
         this.paAggregationRepository = paAggregationRepository;
-        this.apiGatewayAsyncClient = apiGatewayAsyncClient;
-        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
         this.usagePlanService = usagePlanService;
+        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
         this.aggregationConverter = aggregationConverter;
+        this.apiGatewayService = apiGatewayService;
     }
 
     public Mono<AggregatesListResponseDto> getAggregation(@Nullable String name, @NonNull AggregatePageable pageable) {
@@ -107,24 +104,6 @@ public class AggregationService {
                 .then();
     }
 
-    public Mono<CreateApiKeyResponse> createNewAwsApiKey(String aggregateName) {
-        CreateApiKeyRequest createApiKeyRequest = constructApiKeyRequest(aggregateName);
-        return Mono.fromFuture(apiGatewayAsyncClient.createApiKey(createApiKeyRequest))
-                .doOnNext(createApiKeyResponse -> log.info("Created AWS ApiKey with name: {}", createApiKeyResponse.name()))
-                .flatMap(createApiKeyResponse -> createUsagePlanKey(pnApikeyManagerConfig.getDefaultPlan(), createApiKeyResponse.id())
-                        .map(createUsagePlanKeyResponse -> createApiKeyResponse));
-    }
-
-    private Mono<CreateUsagePlanKeyResponse> createUsagePlanKey(String usagePlanId, String id) {
-        CreateUsagePlanKeyRequest createUsagePlanKeyRequest = constructUsagePlanKeyRequest(usagePlanId, id);
-        log.debug("CreateUsagePlanKeyRequest with KeyType: {}, usagePlanId: {}",
-                createUsagePlanKeyRequest.keyType(), createUsagePlanKeyRequest.usagePlanId());
-
-        return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
-                .doOnNext(createUsagePlanKeyResponse -> log.info("Created AWS usagePlanKey with id: {}, keyId: {}",
-                        createUsagePlanKeyRequest.usagePlanId(), createUsagePlanKeyRequest.keyId()));
-    }
-
     public Mono<ApiKeyAggregateModel> getApiKeyAggregation(String aggregationId) {
         return aggregateRepository.getApiKeyAggregation(aggregationId);
     }
@@ -139,26 +118,11 @@ public class AggregationService {
     public Mono<ApiKeyAggregateModel> createNewAggregate(String paId) {
         ApiKeyAggregateModel newApiKeyAggregateModel = new ApiKeyAggregateModel();
         newApiKeyAggregateModel.setAggregateId(UUID.randomUUID().toString());
-        newApiKeyAggregateModel.setName("AGG_"+paId);
+        newApiKeyAggregateModel.setName("AGG_" + paId);
         newApiKeyAggregateModel.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
         newApiKeyAggregateModel.setLastUpdate(LocalDateTime.now());
         newApiKeyAggregateModel.setCreatedAt(LocalDateTime.now());
         return aggregateRepository.saveAggregation(newApiKeyAggregateModel);
-    }
-
-    private CreateApiKeyRequest constructApiKeyRequest(String aggregateName) {
-        return CreateApiKeyRequest.builder()
-                .name("pn_" + aggregateName + "_apikey")
-                .enabled(true)
-                .build();
-    }
-
-    private CreateUsagePlanKeyRequest constructUsagePlanKeyRequest(String usagePlanId, String id) {
-        return CreateUsagePlanKeyRequest.builder()
-                .keyId(id)
-                .keyType(pnApikeyManagerConfig.getKeyType())
-                .usagePlanId(usagePlanId)
-                .build();
     }
 
     private Mono<List<UsagePlanDetailDto>> getUsagePlanFromAggregationPage(Page<ApiKeyAggregateModel> page) {
@@ -169,6 +133,31 @@ public class AggregationService {
                         .map(usagePlanService::getUsagePlan))
                 .flatMap(Function.identity())
                 .collectList();
+    }
+
+    public Mono<SaveAggregateResponseDto> updateAggregate(String id, AggregateRequestDto aggregateRequestDto) {
+        return aggregateRepository.findById(id)
+                .flatMap(apiKeyAggregateModel -> updateAggregateModel(apiKeyAggregateModel, aggregateRequestDto));
+    }
+
+    private Mono<SaveAggregateResponseDto> updateAggregateModel(ApiKeyAggregateModel apiKeyAggregateModel, AggregateRequestDto aggregateRequestDto) {
+        apiKeyAggregateModel.setName(aggregateRequestDto.getName());
+        apiKeyAggregateModel.setDescription(aggregateRequestDto.getDescription());
+        return aggregateRepository.saveAggregation(apiKeyAggregateModel)
+                .doOnNext(apiKeyAggregateModel1 -> log.info("save ApiKeyAggregateModel for aggregateId: {}", apiKeyAggregateModel.getAggregateId()))
+                .flatMap(apiKeyAggregateModel1 -> {
+                    if (StringUtils.hasText(aggregateRequestDto.getUsagePlanId())) {
+                        return apiGatewayService.moveApiKeyToNewUsagePlan(apiKeyAggregateModel, aggregateRequestDto)
+                                .flatMap(createUsagePlanKeyResponse -> convertToAggregateResponseDto(apiKeyAggregateModel.getAggregateId()));
+                    }
+                    return convertToAggregateResponseDto(apiKeyAggregateModel.getAggregateId());
+                });
+    }
+
+    private Mono<SaveAggregateResponseDto> convertToAggregateResponseDto(String aggregateId) {
+        SaveAggregateResponseDto saveAggregateResponseDto = new SaveAggregateResponseDto();
+        saveAggregateResponseDto.setId(aggregateId);
+        return Mono.just(saveAggregateResponseDto);
     }
 
 }

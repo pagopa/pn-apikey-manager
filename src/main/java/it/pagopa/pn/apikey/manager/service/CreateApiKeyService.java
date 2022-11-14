@@ -31,13 +31,15 @@ public class CreateApiKeyService {
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
     private final ExternalRegistriesClient externalRegistriesClient;
+    private final ApiGatewayService apiGatewayService;
 
-    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaAggregationsService paAggregationsService, ManageApiKeyService manageApiKeyService, ExternalRegistriesClient externalRegistriesClient) {
+    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaAggregationsService paAggregationsService, ManageApiKeyService manageApiKeyService, ExternalRegistriesClient externalRegistriesClient, ApiGatewayService apiGatewayService) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
         this.externalRegistriesClient = externalRegistriesClient;
+        this.apiGatewayService = apiGatewayService;
     }
 
     public Mono<ResponseNewApiKeyDto> createApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
@@ -56,7 +58,7 @@ public class CreateApiKeyService {
     }
 
     private Mono<String> createNewApiKey(ApiKeyAggregateModel apikeyAggregateModel) {
-        return aggregationService.createNewAwsApiKey(apikeyAggregateModel.getName())
+        return apiGatewayService.createNewAwsApiKey(apikeyAggregateModel.getName())
                 .flatMap(createApiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apikeyAggregateModel)
                         .doOnNext(s1 -> log.info("Updated aggregate: {} with AWS apiKey",s1)));
     }

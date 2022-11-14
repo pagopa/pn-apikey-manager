@@ -90,4 +90,36 @@ class AggregateRepositoryImplTest {
                 .expectNextCount(0);
     }
 
+    @Test
+    void findById() {
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
+        ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
+        apiKeyAggregateModel.setAggregateId("id");
+        completableFuture.completeAsync(() -> apiKeyAggregateModel);
+        when(dynamoDbAsyncTable.getItem((Key) any())).thenReturn(completableFuture);
+        StepVerifier.create(aggregateRepository.findById("id")).expectNext(apiKeyAggregateModel).verifyComplete();
+    }
+
+    @Test
+    void testCount(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
+        StepVerifier.create(aggregateRepository.count()).expectNext(0);
+    }
+
+    @Test
+    void testCountByName(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        StepVerifier.create(aggregateRepository.countByName("name")).expectNext(0);
+    }
 }

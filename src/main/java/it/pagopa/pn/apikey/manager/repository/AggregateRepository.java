@@ -20,4 +20,5 @@ public interface AggregateRepository {
 
     Mono<ApiKeyAggregateModel> delete(String aggregateId);
 
+    Mono<ApiKeyAggregateModel> findById(String id);
 }

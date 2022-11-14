@@ -5,7 +5,6 @@ import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
@@ -60,6 +59,9 @@ class CreateApiKeyServiceTest {
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
 
+    @MockBean
+    private ApiGatewayService apiGatewayService;
+
     @Test
     void testCreateApiKey1() {
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
@@ -81,7 +83,7 @@ class CreateApiKeyServiceTest {
         when(paAggregationsService.createNewPaAggregation(any())).thenReturn(Mono.just(paAggregationModel));
 
         when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apikeyAggregateModel));
-        when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().name("name").id("id").build()));
+        when(apiGatewayService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().name("name").id("id").build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apikeyAggregateModel));
 
@@ -115,7 +117,7 @@ class CreateApiKeyServiceTest {
         apikeyAggregateModel.setApiKeyId("1");
         apikeyAggregateModel.setAggregateId("1");
         when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apikeyAggregateModel));
-        when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
+        when(apiGatewayService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("1"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apikeyAggregateModel));
         ApiKeyModel apiKeyModel = new ApiKeyModel();
@@ -141,7 +143,7 @@ class CreateApiKeyServiceTest {
         apikeyAggregateModel.setAggregateId("1");
         apikeyAggregateModel.setApiKeyId("id");
         when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apikeyAggregateModel));
-        when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
+        when(apiGatewayService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apikeyAggregateModel));
         ApiKeyModel apiKeyModel = new ApiKeyModel();
@@ -167,7 +169,7 @@ class CreateApiKeyServiceTest {
         apikeyAggregateModel.setAggregateId("1");
         apikeyAggregateModel.setApiKeyId("id");
         when(aggregationService.getApiKeyAggregation("1")).thenReturn(Mono.just(apikeyAggregateModel));
-        when(aggregationService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
+        when(apiGatewayService.createNewAwsApiKey("1")).thenReturn(Mono.just(CreateApiKeyResponse.builder().build()));
         when(aggregationService.addAwsApiKeyToAggregate(any(), any())).thenReturn(Mono.just("apiKey"));
         when(aggregationService.createNewAggregate(any())).thenReturn(Mono.just(apikeyAggregateModel));
         ApiKeyModel apiKeyModel = new ApiKeyModel();

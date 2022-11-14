@@ -129,4 +129,12 @@ public class AggregateRepositoryImpl implements AggregateRepository {
                 .build();
         return Mono.fromFuture(table.deleteItem(key));
     }
+
+    @Override
+    public Mono<ApiKeyAggregateModel> findById(String id){
+        Key key = Key.builder()
+                .partitionValue(id)
+                .build();
+        return Mono.fromFuture(table.getItem(key));
+    }
 }

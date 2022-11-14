@@ -1,9 +1,6 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AssociablePaResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.MovePaResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
 import it.pagopa.pn.apikey.manager.service.PaService;
 import org.junit.jupiter.api.Test;
@@ -147,5 +144,65 @@ class AggregationControllerTest {
         StepVerifier.create(aggregationController.addPaListToAggregate("id",new AddPaListRequestDto(),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
+    }
+
+    @Test
+    void testGetAggregate(){
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+        MockServerHttpResponse response = new MockServerHttpResponse();
+        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+        AggregateResponseDto dto = new AggregateResponseDto();
+        dto.setId("id");
+        when(aggregationService.getAggregate(any())).thenReturn(Mono.just(dto));
+        StepVerifier.create(aggregationController.getAggregate("id",
+                new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
+                        new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
+    }
+
+    @Test
+    void testGetPaAggregation(){
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+        MockServerHttpResponse response = new MockServerHttpResponse();
+        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+        PaAggregateResponseDto dto = new PaAggregateResponseDto();
+        dto.setTotal(0);
+        dto.setItems(new ArrayList<>());
+        when(aggregationService.getPaOfAggregate(any())).thenReturn(Mono.just(dto));
+        StepVerifier.create(aggregationController.getPaAggregation("id",
+                new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
+                        new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
+    }
+
+
+    @Test
+    void testUpdateAggregate(){
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+        MockServerHttpResponse response = new MockServerHttpResponse();
+        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+        SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
+        dto.setId("id");
+        AggregateRequestDto requestDto = new AggregateRequestDto();
+        when(aggregationService.updateAggregate(any(), any())).thenReturn(Mono.just(dto));
+        StepVerifier.create(aggregationController.updateAggregate("id", requestDto,
+                        new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
+                                new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
 }

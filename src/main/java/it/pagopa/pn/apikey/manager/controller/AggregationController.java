@@ -90,4 +90,11 @@ public class AggregationController implements AggregateApi {
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }
+
+    @Override
+    public Mono<ResponseEntity<SaveAggregateResponseDto>> updateAggregate(String id, AggregateRequestDto aggregateRequestDto,  final ServerWebExchange exchange){
+        return aggregationService.updateAggregate(id, aggregateRequestDto)
+                .map(s -> ResponseEntity.ok().body(s))
+                .publishOn(scheduler);
+    }
 }

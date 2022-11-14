@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.client;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -30,7 +31,7 @@ class ExternalRegistriesClientTest {
     ExternalRegistriesWebClient externalRegistriesWebClient;
 
     @Test
-    void callEService() {
+    void callEService1() {
         when(externalRegistriesWebClient.init()).thenReturn(webClient);
         ExternalRegistriesClient externalRegistriesClient = new ExternalRegistriesClient(externalRegistriesWebClient);
 
@@ -46,6 +47,28 @@ class ExternalRegistriesClientTest {
 
         StepVerifier.create(externalRegistriesClient.getAllPa("name"))
                 .expectNext(new ArrayList<>())
+                .verifyComplete();
+
+    }
+
+    @Test
+    void callEService2() {
+        when(externalRegistriesWebClient.init()).thenReturn(webClient);
+        ExternalRegistriesClient externalRegistriesClient = new ExternalRegistriesClient(externalRegistriesWebClient);
+
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.headers(any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        InternalPaDetailDto internalPaDetailDto = new InternalPaDetailDto();
+        when(responseSpec.bodyToMono(InternalPaDetailDto.class)).thenReturn(Mono.just(internalPaDetailDto));
+
+        StepVerifier.create(externalRegistriesClient.getPaById("id"))
+                .expectNext(internalPaDetailDto)
                 .verifyComplete();
 
     }

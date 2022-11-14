@@ -1,8 +1,10 @@
 package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
+import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaAggregateResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
 
 import java.time.LocalDateTime;
@@ -58,5 +60,18 @@ class AggregationConverterTest {
         usagePlanDetailDto.setId("id");
         AggregateResponseDto aggregatesResponseDto = aggregationConverter.convertToResponseDto(apiKeyAggregateModel, usagePlanDetailDto);
         Assertions.assertEquals("id",aggregatesResponseDto.getId());
+    }
+
+    @Test
+    void converResponseDto3(){
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId("id");
+        paAggregationModel.setPaName("name");
+        paAggregationModel.setPaId("paId");
+
+        Page<PaAggregationModel> page = Page.create(List.of(paAggregationModel));
+
+        PaAggregateResponseDto paAggregateResponseDto = aggregationConverter.convertToResponseDto(page);
+        Assertions.assertEquals(1,paAggregateResponseDto.getItems().size());
     }
 }
