@@ -42,13 +42,13 @@ public class ManageApiKeyService {
 
     public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid) {
         return apiKeyRepository.findById(id)
-                .doOnNext(apiKeyModels -> log.info("founded ApiKey with id: {}", id))
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, status)) {
+                        ApiKeyModel oldApiKey = new ApiKeyModel(apiKeyModel);
                         apiKeyModel.setStatus(decodeStatus(status, false).getValue());
                         apiKeyModel.setLastUpdate(LocalDateTime.now());
                         apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
-                        return saveAndCheckIfRotate(apiKeyModel, status, xPagopaPnUid)
+                        return saveAndCheckIfRotate(apiKeyModel, oldApiKey, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
                     } else {
                         return Mono.error(new ApiKeyManagerException(String.format(INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
@@ -58,11 +58,9 @@ public class ManageApiKeyService {
 
     public Mono<String> deleteApiKey(String id) {
         return apiKeyRepository.findById(id)
-                .doOnNext(apiKeyModels -> log.info("founded ApiKey for id: {}", id))
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
-                        return apiKeyRepository.delete(id)
-                                .doOnNext(s -> log.info("Deleted ApiKey: {}", id));
+                        return apiKeyRepository.delete(id);
                     } else {
                         return Mono.error(new ApiKeyManagerException(String.format(CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
                     }
@@ -71,20 +69,21 @@ public class ManageApiKeyService {
 
     public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable, Boolean showVirtualKey) {
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
-                .doOnNext(apiKeyModelPage -> log.info("founded apiKey for id: {} and size: {}", xPagopaPnCxId, apiKeyModelPage.items().size()))
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
                 .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
                 .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
                 .map(Tuple2::getT1);
     }
 
-    private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, String status, String xPagopaPnUid) {
+    private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, ApiKeyModel oldApiKey, String status, String xPagopaPnUid) {
         return apiKeyRepository.save(apiKeyModel)
-                .doOnNext(apiKeyModel1 -> log.info("saved ApiKey: {}", apiKeyModel1.getId()))
                 .flatMap(resp -> {
                     if (status.equalsIgnoreCase(ROTATE)) {
                         return apiKeyRepository.save(constructApiKeyModelForRotate(apiKeyModel, xPagopaPnUid))
-                                .doOnNext(apiKeyModel1 -> log.info("Created new Apikey with correlationId: {}", apiKeyModel1.getCorrelationId()));
+                                .doOnNext(newApiKey -> log.info("ApiKey {} rotated with correlationId: {}", apiKeyModel.getId(), apiKeyModel.getCorrelationId()))
+                                .onErrorResume(e -> apiKeyRepository.save(oldApiKey)
+                                        .doOnNext(ak -> log.info("rollback ApiKey {} done", ak.getId()))
+                                        .then(Mono.error(e)));
                     }
                     return Mono.just(resp);
                 });
@@ -114,7 +113,6 @@ public class ManageApiKeyService {
         return apiKeyHistoryModel;
     }
 
-
     private boolean isOperationAllowed(ApiKeyModel apiKeyModel, String newStatus) {
         log.info("Verify if status can change from: {}, to: {}", apiKeyModel.getStatus(), newStatus);
         ApiKeyStatusDto status = ApiKeyStatusDto.fromValue(apiKeyModel.getStatus());
@@ -135,9 +133,9 @@ public class ManageApiKeyService {
         }
     }
 
-    private ApiKeyStatusDto decodeStatus(String body, boolean history) {
-        log.debug("Requested operation: {}", body);
-        switch (body) {
+    private ApiKeyStatusDto decodeStatus(String status, boolean history) {
+        log.debug("Requested operation: {}", status);
+        switch (status) {
             case BLOCK:
                 return BLOCKED;
             case ENABLE:

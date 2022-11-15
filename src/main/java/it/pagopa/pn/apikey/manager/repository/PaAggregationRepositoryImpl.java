@@ -57,7 +57,6 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
         log.info("List of PaAggreggationModel size: {}", toSave.size());
         return Flux.fromIterable(toSave)
                 .window(MAX_BATCH_SIZE)
-                .log()
                 .flatMap(chunk -> {
                     WriteBatch.Builder<PaAggregationModel> builder = WriteBatch.builder(PaAggregationModel.class)
                             .mappedTableResource(table);
@@ -123,7 +122,6 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
         log.info("List of PaAggreggationModel in AddPaListRequestDto size: {}", addPaListRequestDto.getItems().size());
         return Flux.fromIterable(addPaListRequestDto.getItems())
                 .window(25)
-                .log()
                 .flatMap(chunk -> {
                     ReadBatch.Builder<PaAggregationModel> builder = ReadBatch.builder(PaAggregationModel.class)
                             .mappedTableResource(table);

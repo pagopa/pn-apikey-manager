@@ -122,10 +122,8 @@ public class AggregationService {
         log.debug("creating aggregate request: {}", requestDto);
         ApiKeyAggregateModel model = aggregationConverter.convertToModel(requestDto);
         return aggregateRepository.saveAggregation(model)
-                .doOnNext(aggregate -> log.info("saved aggregate {}", aggregate))
                 .zipWhen(this::createAwsApiKey)
                 .flatMap(tuple -> addAwsApiKeyToAggregate(tuple.getT2(), tuple.getT1()))
-                .doOnNext(aggregate -> log.info("saved aggregate {}", aggregate))
                 .flatMap(aggregate -> addUsagePlanToKey(aggregate).map(response -> aggregate))
                 .doOnEach(signal -> log.info("{} - create aggregate: {}", signal.getType(), signal.get(), signal.getThrowable()))
                 .map(aggregate -> {
@@ -154,7 +152,6 @@ public class AggregationService {
                     return Mono.just(aggregate);
                 })
                 .flatMap(aggregate -> aggregateRepository.delete(aggregateId))
-                .doOnNext(aggregate -> log.info("aggregate {} deleted", aggregate.getAggregateId()))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)))
                 .then();
     }
@@ -179,32 +176,26 @@ public class AggregationService {
     /**
      * Creazione di un aggregato dato l'id della PA. Questo metodo provvede solo alla creazione dell'aggregato e non
      * alla creazione dell'API Key con relativa associazione dello Usage Plan.
-     * @param internalPaDetailDto
+     * @param internalPaDetailDto DTO della PA da associare all'aggregato
      * @return L'aggregato salvato
      */
-    public Mono<ApiKeyAggregateModel> createNewAggregate(InternalPaDetailDto internalPaDetailDto) {
-        ApiKeyAggregateModel newApiKeyAggregateModel = new ApiKeyAggregateModel();
-        newApiKeyAggregateModel.setAggregateId(UUID.randomUUID().toString());
-        newApiKeyAggregateModel.setName("AGG_" + internalPaDetailDto.getName());
-        newApiKeyAggregateModel.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
-        newApiKeyAggregateModel.setLastUpdate(LocalDateTime.now());
-        newApiKeyAggregateModel.setCreatedAt(LocalDateTime.now());
-        return aggregateRepository.saveAggregation(newApiKeyAggregateModel);
+    public Mono<String> createNewAggregate(InternalPaDetailDto internalPaDetailDto) {
+        AggregateRequestDto dto = new AggregateRequestDto();
+        dto.setName("AGG_" + internalPaDetailDto.getName());
+        dto.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
+        return createAggregate(dto).map(SaveAggregateResponseDto::getId);
     }
 
     private Mono<CreateApiKeyResponse> createAwsApiKey(ApiKeyAggregateModel aggregate) {
         return apiGatewayService.createNewAwsApiKey(aggregate.getName())
-                .switchIfEmpty(Mono.error(new ApiKeyManagerException("AWS Api Key can not be empty", HttpStatus.INTERNAL_SERVER_ERROR)))
                 .doOnNext(response -> log.info("AWS Api Key {} with name {} for aggregate {}", response.id(), response.name(), aggregate.getAggregateId()))
                 .onErrorResume(e -> deleteAggregate(aggregate.getAggregateId())
                         .doOnError(re -> log.error("can not execute rollback", re))
-                        // .onErrorMap(re -> e) mask error from delete aggregate
                         .then(Mono.error(e)));
     }
 
     private Mono<CreateUsagePlanKeyResponse> addUsagePlanToKey(ApiKeyAggregateModel aggregate) {
         return apiGatewayService.addUsagePlanToApiKey(aggregate.getUsagePlanId(), aggregate.getApiKeyId())
-                .switchIfEmpty(Mono.error(new ApiKeyManagerException("UsagePlan-ApiKey can not be empty", HttpStatus.INTERNAL_SERVER_ERROR)))
                 .doOnNext(signal -> log.info("AWS Usage Plan {} to Api Key {} for aggregate {}", aggregate.getUsagePlanId(), aggregate.getApiKeyId(), aggregate.getAggregateId()))
                 .onErrorResume(e -> deleteAggregate(aggregate.getAggregateId())
                         .doOnError(re -> log.error("can not execute rollback", re))
@@ -223,8 +214,8 @@ public class AggregationService {
 
     /**
      * Modifica di un aggregato. I parametri modificabili sono nome, descrizione e usagePlan
-     * @param id
-     * @param aggregateRequestDto
+     * @param id id dell'aggregato da modificare
+     * @param aggregateRequestDto DTO della richiesta
      * @return Risposta del servizio dell'sdk dell'apiGateway al metodo addUsagePlanToApiKey
      */
     public Mono<SaveAggregateResponseDto> updateAggregate(String id, AggregateRequestDto aggregateRequestDto) {
@@ -234,19 +225,22 @@ public class AggregationService {
     }
 
     private Mono<SaveAggregateResponseDto> updateAggregateModel(ApiKeyAggregateModel apiKeyAggregateModel, AggregateRequestDto aggregateRequestDto) {
-        if(StringUtils.hasText(aggregateRequestDto.getName()))
+        ApiKeyAggregateModel oldApiKeyAggregate = new ApiKeyAggregateModel(apiKeyAggregateModel);
+        if (StringUtils.hasText(aggregateRequestDto.getName()))
             apiKeyAggregateModel.setName(aggregateRequestDto.getName());
-        if(StringUtils.hasText(aggregateRequestDto.getDescription()))
+        if (StringUtils.hasText(aggregateRequestDto.getDescription()))
             apiKeyAggregateModel.setDescription(aggregateRequestDto.getDescription());
-        if(StringUtils.hasText(aggregateRequestDto.getUsagePlanId()) &&
-                !apiKeyAggregateModel.getUsagePlanId().equalsIgnoreCase(aggregateRequestDto.getUsagePlanId()))
+        if (StringUtils.hasText(aggregateRequestDto.getUsagePlanId())
+                && !apiKeyAggregateModel.getUsagePlanId().equalsIgnoreCase(aggregateRequestDto.getUsagePlanId()))
             apiKeyAggregateModel.setUsagePlanId(aggregateRequestDto.getUsagePlanId());
         return aggregateRepository.saveAggregation(apiKeyAggregateModel)
-                .doOnNext(apiKeyAggregateModel1 -> log.info("save ApiKeyAggregateModel for aggregateId: {}", apiKeyAggregateModel.getAggregateId()))
                 .flatMap(apiKeyAggregateModel1 -> {
                     if (StringUtils.hasText(aggregateRequestDto.getUsagePlanId())
-                    && !apiKeyAggregateModel.getUsagePlanId().equalsIgnoreCase(aggregateRequestDto.getUsagePlanId())) {
+                            && !apiKeyAggregateModel.getUsagePlanId().equalsIgnoreCase(aggregateRequestDto.getUsagePlanId())) {
                         return apiGatewayService.moveApiKeyToNewUsagePlan(apiKeyAggregateModel, aggregateRequestDto)
+                                .onErrorResume(e -> aggregateRepository.saveAggregation(oldApiKeyAggregate)
+                                        .doOnNext(a -> log.info("rollback aggregate {} done", a.getAggregateId()))
+                                        .then(Mono.error(e)))
                                 .flatMap(createUsagePlanKeyResponse -> convertToAggregateResponseDto(apiKeyAggregateModel.getAggregateId()));
                     }
                     return convertToAggregateResponseDto(apiKeyAggregateModel.getAggregateId());

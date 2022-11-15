@@ -1,9 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import com.amazonaws.util.StringUtils;
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -20,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,76 +31,48 @@ public class CreateApiKeyService {
     private final AggregationService aggregationService;
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
-    private final PnApikeyManagerConfig pnApikeyManagerConfig;
     private final ExternalRegistriesClient externalRegistriesClient;
-    private final ApiGatewayService apiGatewayService;
 
     public CreateApiKeyService(ApiKeyRepository apiKeyRepository,
                                AggregationService aggregationService,
                                PaAggregationsService paAggregationsService,
                                ManageApiKeyService manageApiKeyService,
-                               PnApikeyManagerConfig pnApikeyManagerConfig,
-                               ExternalRegistriesClient externalRegistriesClient,
-                               ApiGatewayService apiGatewayService) {
+                               ExternalRegistriesClient externalRegistriesClient) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
-        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
         this.externalRegistriesClient = externalRegistriesClient;
-        this.apiGatewayService = apiGatewayService;
     }
 
     public Mono<ResponseNewApiKeyDto> createApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                    RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups) {
-
         List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
         log.debug("list groupsToAdd size: {}", groupToAdd.size());
         return paAggregationsService.searchAggregationId(xPagopaPnCxId)
                 .switchIfEmpty(Mono.defer(() -> createNewAggregate(xPagopaPnCxId)))
-                .doOnNext(aggregateId -> log.info("founded Pa AggregationId: {}", aggregateId))
+                .doOnNext(aggregateId -> log.info("PA {} to aggregate {}", xPagopaPnCxId, aggregateId))
                 .flatMap(aggregateId -> {
                     requestNewApiKeyDto.setGroups(groupToAdd);
                     ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
-                    return checkIfApikeyExists(aggregateId, apiKeyModel);
+                    return apiKeyRepository.save(apiKeyModel)
+                            .map(this::createResponseNewApiKey);
                 });
-    }
-
-    private Mono<String> createNewApiKey(ApiKeyAggregateModel aggregate) {
-        return apiGatewayService.createNewAwsApiKey(aggregate.getName())
-                .flatMap(apiKeyResponse -> apiGatewayService.addUsagePlanToApiKey(pnApikeyManagerConfig.getDefaultPlan(), apiKeyResponse.id())
-                        .map(usagePlanKeyResponse -> apiKeyResponse))
-                .flatMap(apiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(apiKeyResponse, aggregate)
-                        .map(ApiKeyAggregateModel::getAggregateId)
-                        .doOnNext(aggregateId -> log.info("Updated aggregate {} with AWS Api Key", aggregateId)));
     }
 
     private Mono<String> createNewAggregate(String xPagopaPnCxId) {
         return getPaById(xPagopaPnCxId)
                 .flatMap(internalPaDetailDto -> aggregationService.createNewAggregate(internalPaDetailDto)
-                        .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}", apiKeyAggregation.getAggregateId()))
-                        .flatMap(apiKeyAggregation -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), internalPaDetailDto))
-                                .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
+                        .flatMap(aggregateId -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(aggregateId, internalPaDetailDto))
+                                .onErrorResume(e -> aggregationService.deleteAggregate(aggregateId)
+                                        .doOnNext(a -> log.info("rollback aggregate {} done", aggregateId))
+                                        .then(Mono.error(e)))
                                 .map(PaAggregationModel::getAggregateId)));
-    }
-
-    private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String aggregateId, ApiKeyModel apiKeyModel) {
-        return aggregationService.getApiKeyAggregation(aggregateId)
-                .doOnNext(next -> log.info("Founded aggregate: {}", aggregateId))
-                .flatMap(apiKeyAggregation -> {
-                    if (StringUtils.isNullOrEmpty(apiKeyAggregation.getApiKeyId())) {
-                        return createNewApiKey(apiKeyAggregation);
-                    }
-                    return Mono.just(apiKeyAggregation.getAggregateId());
-                })
-                .flatMap(resp -> apiKeyRepository.save(apiKeyModel)
-                        .doOnNext(apiKeyModel1 -> log.info("created new apiKey with id: {}", apiKeyModel1.getId()))
-                        .map(this::createResponseNewApiKey));
     }
 
     private List<String> checkGroups(List<String> groups, List<String> xPagopaPnCxGroups) {
         List<String> groupsToAdd = new ArrayList<>();
-        if (!groups.isEmpty() && (xPagopaPnCxGroups.containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
+        if (!groups.isEmpty() && (new HashSet<>(xPagopaPnCxGroups).containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
             groupsToAdd.addAll(groups);
             return groupsToAdd;
         } else if (groups.isEmpty() && !xPagopaPnCxGroups.isEmpty()) {
@@ -141,8 +111,7 @@ public class CreateApiKeyService {
     }
 
     private Mono<InternalPaDetailDto> getPaById(String paId) {
-        return externalRegistriesClient.getPaById(paId)
-                .doOnNext(internalPaDetailDto -> log.info("founded Pa with name: {}",internalPaDetailDto.getName()));
+        return externalRegistriesClient.getPaById(paId);
     }
 
     private PaAggregationModel constructPaAggregationModel(String aggregateId, InternalPaDetailDto internalPaDetailDto) {

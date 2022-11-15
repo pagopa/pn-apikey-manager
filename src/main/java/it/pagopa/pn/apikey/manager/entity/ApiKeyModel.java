@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.entity;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 @DynamoDbBean
 public class ApiKeyModel {
 
@@ -61,5 +63,24 @@ public class ApiKeyModel {
 
     @Getter(onMethod = @__({@DynamoDbAttribute("correlationId")}))
     private String correlationId;
+
+    public ApiKeyModel(ApiKeyModel apiKeyModel) {
+        id = apiKeyModel.id;
+        virtualKey = apiKeyModel.virtualKey;
+        name = apiKeyModel.name;
+        lastUpdate = apiKeyModel.lastUpdate;
+        status = apiKeyModel.status;
+        if (apiKeyModel.groups != null) {
+            groups = new ArrayList<>(apiKeyModel.groups);
+        }
+        if (apiKeyModel.statusHistory != null) {
+            statusHistory = new ArrayList<>(apiKeyModel.statusHistory);
+        }
+        uid = apiKeyModel.uid;
+        cxId = apiKeyModel.cxId;
+        cxType = apiKeyModel.cxType;
+        cxGroup = apiKeyModel.cxGroup;
+        correlationId = apiKeyModel.correlationId;
+    }
 
 }

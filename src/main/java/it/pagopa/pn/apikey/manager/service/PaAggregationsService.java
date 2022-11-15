@@ -16,7 +16,7 @@ public class PaAggregationsService {
         this.paAggregationRepository = paAggregationRepository;
     }
 
-    public Mono<String> searchAggregationId(String xPagoPaPnCxId){
+    public Mono<String> searchAggregationId(String xPagoPaPnCxId) {
         return paAggregationRepository.searchAggregation(xPagoPaPnCxId)
                 .map(PaAggregationModel::getAggregateId);
     }

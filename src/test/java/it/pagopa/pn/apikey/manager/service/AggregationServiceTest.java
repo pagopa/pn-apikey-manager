@@ -192,11 +192,19 @@ class AggregationServiceTest {
     @Test
     void createNewAggregateTest() {
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
+        apikeyAggregateModel.setAggregateId("aggregateId");
         apikeyAggregateModel.setName("");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
+        CreateApiKeyResponse createApiKeyResponse = CreateApiKeyResponse.builder().build();
+        when(apiGatewayService.createNewAwsApiKey(any()))
+                .thenReturn(Mono.just(createApiKeyResponse));
+        CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().build();
+        when(apiGatewayService.addUsagePlanToApiKey(any(), any()))
+                .thenReturn(Mono.just(createUsagePlanKeyResponse));
+        when(aggregationConverter.convertToModel(any())).thenReturn(apikeyAggregateModel);
         StepVerifier.create(aggregationService.createNewAggregate(new InternalPaDetailDto()))
-                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getName().equalsIgnoreCase("")).verifyComplete();
-
+                .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.equalsIgnoreCase("aggregateId"))
+                .verifyComplete();
     }
 
     /**
@@ -281,6 +289,7 @@ class AggregationServiceTest {
 
         ApiKeyAggregateModel model = new ApiKeyAggregateModel();
         model.setAggregateId("id");
+        model.setUsagePlanId("usagePlanId");
 
         CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().build();
         when(aggregateRepository.saveAggregation(model)).thenReturn(Mono.just(model));
@@ -288,6 +297,7 @@ class AggregationServiceTest {
         when(apiGatewayService.moveApiKeyToNewUsagePlan(model,dto))
                 .thenReturn(Mono.just(createUsagePlanKeyResponse));
         StepVerifier.create(aggregationService.updateAggregate("id",dto))
-                .expectNext(saveAggregateResponseDto).verifyComplete();
+                .expectNext(saveAggregateResponseDto)
+                .verifyComplete();
     }
 }

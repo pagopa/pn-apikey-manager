@@ -20,6 +20,8 @@ import java.util.Objects;
 @Component
 public class ResponseExchangeFilter implements ExchangeFilterFunction {
 
+    private static final int MAX_LOGGED_BODY_SIZE = 400;
+
     @Override
     public @NotNull Mono<ClientResponse> filter(@NotNull ClientRequest request, ExchangeFunction next) {
         long start = System.currentTimeMillis();
@@ -41,7 +43,7 @@ public class ResponseExchangeFilter implements ExchangeFilterFunction {
                 request.url(),
                 response.statusCode().value(),
                 Objects.requireNonNull(response.statusCode().name()),
-                MaskDataUtils.maskInformation(dataBuffer.toString(StandardCharsets.UTF_8)),
+                MaskDataUtils.maskInformation(String.format("%1."+MAX_LOGGED_BODY_SIZE+"s", dataBuffer.toString(StandardCharsets.UTF_8))),
                 duration);
     }
 

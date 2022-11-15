@@ -3,11 +3,13 @@ package it.pagopa.pn.apikey.manager.entity;
 import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
 @DynamoDbBean
 public class ApiKeyAggregateModel {
 
@@ -44,4 +46,15 @@ public class ApiKeyAggregateModel {
     }))
     private String pageable = AggregationConstant.PAGEABLE_VALUE;
 
+    public ApiKeyAggregateModel(ApiKeyAggregateModel model) {
+        aggregateId = model.aggregateId;
+        name = model.name;
+        description = model.description;
+        createdAt =  model.createdAt;
+        lastUpdate = model.lastUpdate;
+        apiKey = model.apiKey;
+        apiKeyId = model.apiKeyId;
+        usagePlanId = model.usagePlanId;
+        pageable = model.pageable;
+    }
 }

@@ -30,7 +30,7 @@ public class ApiGatewayService {
         CreateApiKeyRequest createApiKeyRequest = constructApiKeyRequest(aggregateName);
         log.debug("create AWS Api Key request: {}", createApiKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.createApiKey(createApiKeyRequest))
-                .doOnEach(signal -> log.info("{} - create AWS Api Key response: {}", signal.getType(), signal.get(), signal.getThrowable()));
+                .doOnNext(response -> log.info("Create AWS Api Key response: {}", response));
     }
 
     /**
@@ -42,7 +42,7 @@ public class ApiGatewayService {
         DeleteApiKeyRequest deleteApiKeyRequest = DeleteApiKeyRequest.builder().apiKey(apiKeyId).build();
         log.debug("delete AWS Api Key {} request: {}", apiKeyId, deleteApiKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.deleteApiKey(deleteApiKeyRequest))
-                .doOnEach(signal -> log.info("{} - delete AWS Api Key {} response: {}", signal.getType(), apiKeyId, signal.get()));
+                .doOnNext(response -> log.info("Delete AWS Api Key {} response: {}", apiKeyId, response));
     }
 
     /**
@@ -55,7 +55,7 @@ public class ApiGatewayService {
         CreateUsagePlanKeyRequest createUsagePlanKeyRequest = constructUsagePlanKeyRequest(usagePlanId, apiKeyId);
         log.debug("create AWS UsagePlan-ApiKey request: {}", createUsagePlanKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
-                .doOnEach(signal -> log.info("{} - create AWS UsagePlan-ApiKey response: {}", signal.getType(), signal.get(), signal.getThrowable()));
+                .doOnNext(response -> log.info("Create AWS UsagePlan-ApiKey response: {}", response));
     }
 
     public Mono<CreateUsagePlanKeyResponse> moveApiKeyToNewUsagePlan(ApiKeyAggregateModel apiKeyAggregateModel, AggregateRequestDto aggregateRequestDto) {
@@ -65,7 +65,7 @@ public class ApiGatewayService {
                 .build();
         log.debug("DeleteUsagePlanKeyRequest for usagePlanId: {}, ApiKeyId: {}", apiKeyAggregateModel.getUsagePlanId(), apiKeyAggregateModel.getApiKeyId());
         return Mono.fromFuture(apiGatewayAsyncClient.deleteUsagePlanKey(deleteUsagePlanKeyRequest))
-                .doOnEach(signal -> log.info("{} - delete AWS UsagePlan-ApiKey response: {}", signal.getType(), signal.get(), signal.getThrowable()))
+                .doOnNext(response -> log.info("Delete AWS UsagePlan-ApiKey response: {}", response))
                 .flatMap(response -> addUsagePlanToApiKey(aggregateRequestDto.getUsagePlanId(), apiKeyAggregateModel.getApiKeyId()));
     }
 

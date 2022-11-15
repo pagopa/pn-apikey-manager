@@ -29,6 +29,7 @@ public class UsagePlanService {
 
     public Mono<UsagePlanResponseDto> getUsagePlanList() {
         return Mono.fromFuture(apiGatewayAsyncClient.getUsagePlans())
+                .doOnNext(response -> log.info("usage plan size: {}", response.items().size()))
                 .map(getUsagePlansResponse -> createUsagePlanResponseDto(getUsagePlansResponse.items()));
     }
 
@@ -38,6 +39,7 @@ public class UsagePlanService {
                 .usagePlanId(usagePlanId)
                 .build();
         return Mono.fromFuture(apiGatewayAsyncClient.getUsagePlan(usagePlanRequest))
+                .doOnNext(response -> log.info("usage plan: {}", response))
                 .map(this::convertToUsagePlanDto);
     }
 

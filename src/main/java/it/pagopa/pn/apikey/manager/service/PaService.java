@@ -46,13 +46,12 @@ public class PaService {
 
     public Mono<AssociablePaResponseDto> getAssociablePa(String name) {
         return externalRegistriesClient.getAllPa(name)
-                .doOnNext(paDetailDtos -> log.info("list of onboardingPa size: {}", paDetailDtos.size()))
+                .doOnNext(paDetailDtos -> log.info("list of onboarded Pa size: {}", paDetailDtos.size()))
                 .flatMap(this::filterForResponse);
     }
 
     private Mono<AssociablePaResponseDto> filterForResponse(List<PaDetailDto> list) {
         return paAggregationRepository.getAllPaAggregations()
-                .doOnNext(s -> log.info("getAllPaAggregation return list with size: {}", s.items().size()))
                 .map(paAggregationModels -> {
                     AssociablePaResponseDto dto = new AssociablePaResponseDto();
                     dto.setItems(list.stream().filter(paDetailDto ->
@@ -63,25 +62,25 @@ public class PaService {
                 });
     }
 
-    public Mono<MovePaResponseDto> createNewPaAggregation(String id, AddPaListRequestDto addPaListRequestDto) {
-        log.debug("creating aggregation with id {}", id);
+    public Mono<MovePaResponseDto> createNewPaAggregation(String aggregateId, AddPaListRequestDto addPaListRequestDto) {
+        log.debug("creating PaAggregation for aggregate {}", aggregateId);
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
                 .distinct()
                 .filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId()))
                 .collect(Collectors.toList()));
         MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
-        return savePaAggregation(id, createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
+        return savePaAggregation(aggregateId, createPaAggregationModel(aggregateId, addPaListRequestDto.getItems()), movePaResponseDto);
     }
 
     public Mono<MovePaResponseDto> movePa(String id, AddPaListRequestDto addPaListRequestDto) {
-        log.debug("start movePa for {} PA to aggregate: {}",addPaListRequestDto.getItems().size(),id);
+        log.debug("start movePa for {} PA to aggregate: {}", addPaListRequestDto.getItems().size(), id);
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
                 .distinct()
                 .filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId()))
                 .collect(Collectors.toList()));
         return paAggregationRepository.batchGetItem(addPaListRequestDto).collectList()
-                .doOnNext(batchGetResultPages -> log.info("BatchGetResultPageSize: {}",batchGetResultPages.size()))
+                .doOnNext(batchGetResultPages -> log.info("BatchGetResultPage size: {}", batchGetResultPages.size()))
                 .flatMap(batchGetResultPage -> {
                     MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
                     movePaResponseDto.setUnprocessedPA(new ArrayList<>());
@@ -98,7 +97,7 @@ public class PaService {
         return aggregateRepository.getApiKeyAggregation(aggregateId)
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)))
                 .flatMap(aggregate -> paAggregationRepository.savePaAggregation(items).collectList())
-                .doOnNext(batchWriteResults -> log.info("BatchWriteResult list size: {}", batchWriteResults.size()))
+                .doOnNext(batchWriteResults -> log.info("BatchWriteResult size: {}", batchWriteResults.size()))
                 .map(batchWriteResult -> {
                     batchWriteResult.forEach(result -> {
                         PnBatchPutItemResponse pnBatchPutItemResponse = dynamoBatchResponseUtils.convertPaAggregationsBatchPutItemResponse(result);
@@ -114,7 +113,7 @@ public class PaService {
                 .addAll(convertUnprocessedModel(pnBatchPutItemResponse.getUnprocessed(), movePaResponseDto.getUnprocessedPA()));
         movePaResponseDto.setUnprocessed(movePaResponseDto.getUnprocessed() + pnBatchPutItemResponse.getUnprocessed().size());
         movePaResponseDto.setProcessed(items.size() - pnBatchPutItemResponse.getUnprocessed().size());
-        log.info("MovePaResponseDto after countAndConvertUnprocessedPutItem: {}",movePaResponseDto);
+        log.info("MovePaResponseDto after countAndConvertUnprocessedPutItem: {}", movePaResponseDto);
     }
 
     private void countAndConvertUnprocessedGetItem(MovePaResponseDto movePaResponseDto, PnBatchGetItemResponse pnBatchGetItemResponse, List<PaDetailDto> items) {
@@ -124,7 +123,7 @@ public class PaService {
         movePaResponseDto.getUnprocessedPA().addAll(unprocessedList);
         movePaResponseDto.getUnprocessedPA().addAll(convertUnprocessedKey(pnBatchGetItemResponse.getUnprocessed(), items));
         movePaResponseDto.setUnprocessed(pnBatchGetItemResponse.getUnprocessed().size() + unprocessedList.size());
-        log.info("MovePaResponseDto after countAndConvertUnprocessedGetItem: {}",movePaResponseDto);
+        log.info("MovePaResponseDto after countAndConvertUnprocessedGetItem: {}", movePaResponseDto);
     }
 
     private List<PaDetailDto> convertUnprocessedKey(List<Key> unprocessedKeysForTable, List<PaDetailDto> list) {
