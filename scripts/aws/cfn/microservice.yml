@@ -66,6 +66,10 @@ Parameters:
     Type: String
     Description: 'stage for new AWS usagePlan'
 
+  CorsAllowedDomains:
+    Type: String
+    Description: 'Comma separated list of domains allowed to make cross origin request'
+
   PaAggregationsTableArn:
     Type: String
     Description: 'Arn of dynamodb table containing PaAggregations information'
@@ -164,6 +168,7 @@ Resources:
         ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry7: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         MappedPaths: '/apikey-manager/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
