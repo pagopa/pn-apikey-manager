@@ -40,7 +40,7 @@ class PaAggregationsServiceTest {
         PaAggregationModel paAggregationModel = new PaAggregationModel();
         paAggregationModel.setAggregateId("id");
         when(paAggregationRepository.savePaAggregation(paAggregationModel)).thenReturn(Mono.just(paAggregationModel));
-        StepVerifier.create(paAggregationsService.createNewPaAggregation(Mono.just(paAggregationModel)))
+        StepVerifier.create(paAggregationsService.createNewPaAggregation(paAggregationModel))
                 .expectNext(paAggregationModel).verifyComplete();
     }
 }

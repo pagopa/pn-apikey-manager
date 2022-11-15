@@ -11,11 +11,13 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,11 +78,12 @@ public class CreateApiKeyService {
     }
 
     private Mono<String> createNewAggregate(String xPagopaPnCxId) {
-        return aggregationService.createNewAggregate(xPagopaPnCxId)
-                .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}",apiKeyAggregation.getAggregateId()))
-                .flatMap(apiKeyAggregation -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), xPagopaPnCxId))
-                        .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
-                        .map(PaAggregationModel::getAggregateId));
+        return getPaById(xPagopaPnCxId)
+                .flatMap(internalPaDetailDto -> aggregationService.createNewAggregate(internalPaDetailDto)
+                        .doOnNext(apiKeyAggregation -> log.info("Created new Aggregate: {}", apiKeyAggregation.getAggregateId()))
+                        .flatMap(apiKeyAggregation -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(apiKeyAggregation.getAggregateId(), internalPaDetailDto))
+                                .doOnNext(paAggregation -> log.info("created new PaAggregation: {}", paAggregation))
+                                .map(PaAggregationModel::getAggregateId)));
     }
 
     private Mono<ResponseNewApiKeyDto> checkIfApikeyExists(String aggregateId, ApiKeyModel apiKeyModel) {
@@ -137,15 +140,16 @@ public class CreateApiKeyService {
         return apiKeyModel;
     }
 
-    private Mono<PaAggregationModel> constructPaAggregationModel(String aggregateId, String paId) {
+    private Mono<InternalPaDetailDto> getPaById(String paId) {
         return externalRegistriesClient.getPaById(paId)
-                .doOnNext(paDetailDto -> log.info("founded PA name: {}",paDetailDto.getName()))
-                .map(paDetailDto -> {
-                    PaAggregationModel paAggregationModel = new PaAggregationModel();
-                    paAggregationModel.setAggregateId(aggregateId);
-                    paAggregationModel.setPaId(paId);
-                    paAggregationModel.setPaName(paDetailDto.getName());
-                    return paAggregationModel;
-                });
+                .doOnNext(internalPaDetailDto -> log.info("founded Pa with name: {}",internalPaDetailDto.getName()));
+    }
+
+    private PaAggregationModel constructPaAggregationModel(String aggregateId, InternalPaDetailDto internalPaDetailDto) {
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        paAggregationModel.setAggregateId(aggregateId);
+        paAggregationModel.setPaId(internalPaDetailDto.getId());
+        paAggregationModel.setPaName(internalPaDetailDto.getName());
+        return paAggregationModel;
     }
 }

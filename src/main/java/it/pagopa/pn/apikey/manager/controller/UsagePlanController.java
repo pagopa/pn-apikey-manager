@@ -17,6 +17,15 @@ public class UsagePlanController implements UsagePlanApi {
         this.usagePlanService = usagePlanService;
     }
 
+    /**
+     * GET /usage-plan : Lista usagePlan
+     * servizio che restituisce la lista dei template per gli usage plan
+     *
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<UsagePlanResponseDto>> getUsagePlan(final ServerWebExchange exchange) {
         return usagePlanService.getUsagePlanList().map(s -> ResponseEntity.ok().body(s));

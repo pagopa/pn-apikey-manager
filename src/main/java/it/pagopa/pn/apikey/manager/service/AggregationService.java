@@ -5,6 +5,7 @@ import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
@@ -178,13 +179,13 @@ public class AggregationService {
     /**
      * Creazione di un aggregato dato l'id della PA. Questo metodo provvede solo alla creazione dell'aggregato e non
      * alla creazione dell'API Key con relativa associazione dello Usage Plan.
-     * @param paId id della PA
+     * @param internalPaDetailDto
      * @return L'aggregato salvato
      */
-    public Mono<ApiKeyAggregateModel> createNewAggregate(String paId) {
+    public Mono<ApiKeyAggregateModel> createNewAggregate(InternalPaDetailDto internalPaDetailDto) {
         ApiKeyAggregateModel newApiKeyAggregateModel = new ApiKeyAggregateModel();
         newApiKeyAggregateModel.setAggregateId(UUID.randomUUID().toString());
-        newApiKeyAggregateModel.setName("AGG_" + paId);
+        newApiKeyAggregateModel.setName("AGG_" + internalPaDetailDto.getName());
         newApiKeyAggregateModel.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
         newApiKeyAggregateModel.setLastUpdate(LocalDateTime.now());
         newApiKeyAggregateModel.setCreatedAt(LocalDateTime.now());
@@ -220,18 +221,31 @@ public class AggregationService {
                 .collectList();
     }
 
+    /**
+     * Modifica di un aggregato. I parametri modificabili sono nome, descrizione e usagePlan
+     * @param id
+     * @param aggregateRequestDto
+     * @return Risposta del servizio dell'sdk dell'apiGateway al metodo addUsagePlanToApiKey
+     */
     public Mono<SaveAggregateResponseDto> updateAggregate(String id, AggregateRequestDto aggregateRequestDto) {
         return aggregateRepository.findById(id)
+                .doOnNext(apiKeyAggregateModel -> log.info("founded aggregate: {}", apiKeyAggregateModel.toString()))
                 .flatMap(apiKeyAggregateModel -> updateAggregateModel(apiKeyAggregateModel, aggregateRequestDto));
     }
 
     private Mono<SaveAggregateResponseDto> updateAggregateModel(ApiKeyAggregateModel apiKeyAggregateModel, AggregateRequestDto aggregateRequestDto) {
-        apiKeyAggregateModel.setName(aggregateRequestDto.getName());
-        apiKeyAggregateModel.setDescription(aggregateRequestDto.getDescription());
+        if(StringUtils.hasText(aggregateRequestDto.getName()))
+            apiKeyAggregateModel.setName(aggregateRequestDto.getName());
+        if(StringUtils.hasText(aggregateRequestDto.getDescription()))
+            apiKeyAggregateModel.setDescription(aggregateRequestDto.getDescription());
+        if(StringUtils.hasText(aggregateRequestDto.getUsagePlanId()) &&
+                !apiKeyAggregateModel.getUsagePlanId().equalsIgnoreCase(aggregateRequestDto.getUsagePlanId()))
+            apiKeyAggregateModel.setUsagePlanId(aggregateRequestDto.getUsagePlanId());
         return aggregateRepository.saveAggregation(apiKeyAggregateModel)
                 .doOnNext(apiKeyAggregateModel1 -> log.info("save ApiKeyAggregateModel for aggregateId: {}", apiKeyAggregateModel.getAggregateId()))
                 .flatMap(apiKeyAggregateModel1 -> {
-                    if (StringUtils.hasText(aggregateRequestDto.getUsagePlanId())) {
+                    if (StringUtils.hasText(aggregateRequestDto.getUsagePlanId())
+                    && !apiKeyAggregateModel.getUsagePlanId().equalsIgnoreCase(aggregateRequestDto.getUsagePlanId())) {
                         return apiGatewayService.moveApiKeyToNewUsagePlan(apiKeyAggregateModel, aggregateRequestDto)
                                 .flatMap(createUsagePlanKeyResponse -> convertToAggregateResponseDto(apiKeyAggregateModel.getAggregateId()));
                     }

@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
@@ -193,7 +194,7 @@ class AggregationServiceTest {
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         apikeyAggregateModel.setName("");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
-        StepVerifier.create(aggregationService.createNewAggregate("paID"))
+        StepVerifier.create(aggregationService.createNewAggregate(new InternalPaDetailDto()))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.getName().equalsIgnoreCase("")).verifyComplete();
 
     }

@@ -33,6 +33,16 @@ public class AggregationController implements AggregateApi {
         this.paService = paService;
     }
 
+    /**
+     * GET /aggregate/{id} : Dettaglio Aggregato
+     * servizio per il dettaglio dell&#39;Aggregato
+     *
+     * @param id Identificativo univoco dell&#39;aggregato (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<AggregateResponseDto>> getAggregate(String id, ServerWebExchange exchange) {
         return aggregationService.getAggregate(id)
@@ -40,6 +50,18 @@ public class AggregationController implements AggregateApi {
                 .publishOn(scheduler);
     }
 
+    /**
+     * GET /aggregate : Ricerca aggregati
+     * servizio di consultazione della lista degli aggregati
+     *
+     * @param name  (optional)
+     * @param limit  (optional)
+     * @param lastEvaluatedId  (optional)
+     * @param lastEvaluatedName  (optional)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<AggregatesListResponseDto>> getAggregatesList(String name, Integer limit, String lastEvaluatedId, String lastEvaluatedName, ServerWebExchange exchange) {
         AggregatePageable pageable = AggregatePageable.builder()
@@ -52,6 +74,16 @@ public class AggregationController implements AggregateApi {
                 .publishOn(scheduler);
     }
 
+    /**
+     * GET /aggregate/{id}/associated-pa : Lista PA associate
+     * servizio per la lista delle PA associate all&#39;aggregato
+     *
+     * @param id Identificativo univoco dell&#39;aggregato (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<PaAggregateResponseDto>> getPaAggregation(String id, ServerWebExchange exchange) {
         return aggregationService.getPaOfAggregate(id)
@@ -59,6 +91,17 @@ public class AggregationController implements AggregateApi {
                 .publishOn(scheduler);
     }
 
+    /**
+     * POST /aggregate/{id}/move-pa : Spostamento PA
+     * servizio che si occupa dello spostamento di una PA da un aggregato a un altro
+     *
+     * @param id Identificativo univoco dell&#39;aggregato (required)
+     * @param addPaListRequestDto  (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto, final ServerWebExchange exchange) {
         return paService.movePa(id, addPaListRequestDto)
@@ -66,6 +109,17 @@ public class AggregationController implements AggregateApi {
                 .map(a -> ResponseEntity.ok().body(a));
     }
 
+    /**
+     * POST /aggregate/{id}/add-pa : Associazione PA - Aggregato
+     * servizio che associa una lista di PA a un determinato aggregato
+     *
+     * @param id Identificativo univoco dell&#39;aggregato (required)
+     * @param addPaListRequestDto  (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
         return paService.createNewPaAggregation(id, addPaListRequestDto)
@@ -80,6 +134,16 @@ public class AggregationController implements AggregateApi {
                 .map(dto -> ResponseEntity.ok().body(dto));
     }
 
+    /**
+     * DELETE /aggregate/{id} : Rimozione aggregato
+     * servizio di rimozione dell&#39;aggregato
+     *
+     * @param id Identificativo univoco dell&#39;aggregato (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String id, ServerWebExchange exchange) {
         return aggregationService.deleteAggregate(id)
@@ -87,6 +151,16 @@ public class AggregationController implements AggregateApi {
                 .map(a -> ResponseEntity.ok().build());
     }
 
+    /**
+     * GET /aggregate/associable-pa : Lista PA associabili
+     * servizio che restituisce la lista della PA associabili all&#39;aggregato
+     *
+     * @param name  (optional)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, final ServerWebExchange exchange) {
         if (name != null && name.length() < 3) {
@@ -98,6 +172,17 @@ public class AggregationController implements AggregateApi {
                 .publishOn(scheduler);
     }
 
+    /**
+     * PUT /aggregate/{id} : Modifica Aggregato
+     * Servizio per la modifica di un aggregato
+     *
+     * @param id Identificativo univoco dell&#39;aggregato (required)
+     * @param aggregateRequestDto  (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<SaveAggregateResponseDto>> updateAggregate(String id, AggregateRequestDto aggregateRequestDto, final ServerWebExchange exchange) {
         return aggregationService.updateAggregate(id, aggregateRequestDto)
