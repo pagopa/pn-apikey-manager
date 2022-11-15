@@ -34,23 +34,31 @@ public class AggregationService {
 
     private final AggregateRepository aggregateRepository;
     private final PaAggregationRepository paAggregationRepository;
-    private final UsagePlanService usagePlanService;
     private final PnApikeyManagerConfig pnApikeyManagerConfig;
+    private final UsagePlanService usagePlanService;
     private final AggregationConverter aggregationConverter;
     private final ApiGatewayService apiGatewayService;
 
     public AggregationService(AggregateRepository aggregateRepository,
                               PaAggregationRepository paAggregationRepository,
+                              PnApikeyManagerConfig pnApikeyManagerConfig,
                               UsagePlanService usagePlanService,
-                              PnApikeyManagerConfig pnApikeyManagerConfig, AggregationConverter aggregationConverter, ApiGatewayService apiGatewayService) {
+                              AggregationConverter aggregationConverter,
+                              ApiGatewayService apiGatewayService) {
         this.aggregateRepository = aggregateRepository;
         this.paAggregationRepository = paAggregationRepository;
-        this.usagePlanService = usagePlanService;
         this.pnApikeyManagerConfig = pnApikeyManagerConfig;
+        this.usagePlanService = usagePlanService;
         this.aggregationConverter = aggregationConverter;
         this.apiGatewayService = apiGatewayService;
     }
 
+    /**
+     * Ottiene la lista degli aggregati, disponibile la paginazione e il filtro per name.
+     * @param name filtro per nome (opzionale)
+     * @param pageable informazioni per la paginazione
+     * @return Lista degli aggregati
+     */
     public Mono<AggregatesListResponseDto> getAggregation(@Nullable String name, @NonNull AggregatePageable pageable) {
         log.debug("get aggregation - name: {} - pageable: {}", name, pageable);
         if (StringUtils.hasText(name)) {
@@ -71,6 +79,11 @@ public class AggregationService {
                 .map(Tuple2::getT1);
     }
 
+    /**
+     * Ottiene il dettaglio di un aggregato. Include le informazioni dello Usage Plan associato alla sua AWS API Key.
+     * @param aggregateId id dell'aggregato
+     * @return Il dettaglio dell'aggregato
+     */
     public Mono<AggregateResponseDto> getAggregate(String aggregateId) {
         log.debug("get aggregate with id: {}", aggregateId);
         return aggregateRepository.getApiKeyAggregation(aggregateId)
@@ -86,6 +99,11 @@ public class AggregationService {
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)));
     }
 
+    /**
+     * Ottiene la lista delle PA associate a un aggregato.
+     * @param aggregateId id dell'aggregato
+     * @return La lista delle PA associate
+     */
     public Mono<PaAggregateResponseDto> getPaOfAggregate(String aggregateId) {
         log.debug("get pa of aggregate with id: {}", aggregateId);
         return aggregateRepository.getApiKeyAggregation(aggregateId)
@@ -94,11 +112,47 @@ public class AggregationService {
                 .map(aggregationConverter::convertToResponseDto);
     }
 
+    /**
+     * Creazione di un nuovo aggregato, che comprende la generazione di una API Key fisica e associazione allo usage plan.
+     * @param requestDto modello della richiesta
+     * @return La risposta contiene l'id del nuovo aggregato creato
+     */
+    public Mono<SaveAggregateResponseDto> createAggregate(AggregateRequestDto requestDto) {
+        log.debug("creating aggregate request: {}", requestDto);
+        ApiKeyAggregateModel model = aggregationConverter.convertToModel(requestDto);
+        return aggregateRepository.saveAggregation(model)
+                .doOnNext(aggregate -> log.info("saved aggregate {}", aggregate))
+                .zipWhen(this::createAwsApiKey)
+                .flatMap(tuple -> addAwsApiKeyToAggregate(tuple.getT2(), tuple.getT1()))
+                .doOnNext(aggregate -> log.info("saved aggregate {}", aggregate))
+                .flatMap(aggregate -> addUsagePlanToKey(aggregate).map(response -> aggregate))
+                .doOnEach(signal -> log.info("{} - create aggregate: {}", signal.getType(), signal.get(), signal.getThrowable()))
+                .map(aggregate -> {
+                    SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
+                    dto.setId(aggregate.getAggregateId());
+                    return dto;
+                });
+    }
+
+    /**
+     * Cancellazione di un aggregato, che comprende la cancellazione dell'eventuale API Key fisica associata.
+     * Per cancellare un aggregato, questo non deve avere PA associate.
+     * @param aggregateId id dell'aggregato da eliminare
+     * @return Un Mono
+     */
     public Mono<Void> deleteAggregate(String aggregateId) {
-        log.debug("deleting aggregation with id {}", aggregateId);
+        log.debug("deleting aggregate with id {}", aggregateId);
         return paAggregationRepository.findByAggregateId(aggregateId, PaAggregationPageable.createWithLimit(1))
                 .flatMap(page -> CollectionUtils.isEmpty(page.items()) ? Mono.just(page) : Mono.error(new ApiKeyManagerException(AGGREGATE_INVALID_STATUS, HttpStatus.BAD_REQUEST)))
-                .flatMap(page -> aggregateRepository.delete(aggregateId))
+                .flatMap(page -> aggregateRepository.getApiKeyAggregation(aggregateId))
+                .flatMap(aggregate -> {
+                    if (StringUtils.hasText(aggregate.getApiKeyId())) {
+                        return apiGatewayService.deleteAwsApiKey(aggregate.getApiKeyId()).map(response -> aggregate);
+                    }
+                    log.warn("deleting aggregate {} without AWS Api Key", aggregateId);
+                    return Mono.just(aggregate);
+                })
+                .flatMap(aggregate -> aggregateRepository.delete(aggregateId))
                 .doOnNext(aggregate -> log.info("aggregate {} deleted", aggregate.getAggregateId()))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(AGGREGATE_NOT_FOUND, HttpStatus.NOT_FOUND)))
                 .then();
@@ -108,13 +162,25 @@ public class AggregationService {
         return aggregateRepository.getApiKeyAggregation(aggregationId);
     }
 
-    public Mono<String> addAwsApiKeyToAggregate(CreateApiKeyResponse createApiKeyResponse, ApiKeyAggregateModel aggregate) {
+    /**
+     * Associa una AWS API Key all'aggregato, salvando l'aggregato aggiornato sul DB.
+     * @param createApiKeyResponse informazioni sull'API Key
+     * @param aggregate aggregato
+     * @return L'aggregato salvato
+     */
+    public Mono<ApiKeyAggregateModel> addAwsApiKeyToAggregate(CreateApiKeyResponse createApiKeyResponse, ApiKeyAggregateModel aggregate) {
         aggregate.setLastUpdate(LocalDateTime.now());
         aggregate.setApiKeyId(createApiKeyResponse.id());
         aggregate.setApiKey(createApiKeyResponse.value());
-        return aggregateRepository.saveAggregation(aggregate).map(ApiKeyAggregateModel::getAggregateId);
+        return aggregateRepository.saveAggregation(aggregate);
     }
 
+    /**
+     * Creazione di un aggregato dato l'id della PA. Questo metodo provvede solo alla creazione dell'aggregato e non
+     * alla creazione dell'API Key con relativa associazione dello Usage Plan.
+     * @param paId id della PA
+     * @return L'aggregato salvato
+     */
     public Mono<ApiKeyAggregateModel> createNewAggregate(String paId) {
         ApiKeyAggregateModel newApiKeyAggregateModel = new ApiKeyAggregateModel();
         newApiKeyAggregateModel.setAggregateId(UUID.randomUUID().toString());
@@ -123,6 +189,25 @@ public class AggregationService {
         newApiKeyAggregateModel.setLastUpdate(LocalDateTime.now());
         newApiKeyAggregateModel.setCreatedAt(LocalDateTime.now());
         return aggregateRepository.saveAggregation(newApiKeyAggregateModel);
+    }
+
+    private Mono<CreateApiKeyResponse> createAwsApiKey(ApiKeyAggregateModel aggregate) {
+        return apiGatewayService.createNewAwsApiKey(aggregate.getName())
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException("AWS Api Key can not be empty", HttpStatus.INTERNAL_SERVER_ERROR)))
+                .doOnNext(response -> log.info("AWS Api Key {} with name {} for aggregate {}", response.id(), response.name(), aggregate.getAggregateId()))
+                .onErrorResume(e -> deleteAggregate(aggregate.getAggregateId())
+                        .doOnError(re -> log.error("can not execute rollback", re))
+                        // .onErrorMap(re -> e) mask error from delete aggregate
+                        .then(Mono.error(e)));
+    }
+
+    private Mono<CreateUsagePlanKeyResponse> addUsagePlanToKey(ApiKeyAggregateModel aggregate) {
+        return apiGatewayService.addUsagePlanToApiKey(aggregate.getUsagePlanId(), aggregate.getApiKeyId())
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException("UsagePlan-ApiKey can not be empty", HttpStatus.INTERNAL_SERVER_ERROR)))
+                .doOnNext(signal -> log.info("AWS Usage Plan {} to Api Key {} for aggregate {}", aggregate.getUsagePlanId(), aggregate.getApiKeyId(), aggregate.getAggregateId()))
+                .onErrorResume(e -> deleteAggregate(aggregate.getAggregateId())
+                        .doOnError(re -> log.error("can not execute rollback", re))
+                        .then(Mono.error(e)));
     }
 
     private Mono<List<UsagePlanDetailDto>> getUsagePlanFromAggregationPage(Page<ApiKeyAggregateModel> page) {

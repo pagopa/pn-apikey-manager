@@ -60,15 +60,22 @@ public class AggregationController implements AggregateApi {
     }
 
     @Override
-    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto,  final ServerWebExchange exchange) {
-         return paService.movePa(id, addPaListRequestDto)
+    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto, final ServerWebExchange exchange) {
+        return paService.movePa(id, addPaListRequestDto)
                 .publishOn(scheduler)
                 .map(a -> ResponseEntity.ok().body(a));
     }
 
     @Override
     public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
-        return paService.createNewPaAggregation(id,addPaListRequestDto)
+        return paService.createNewPaAggregation(id, addPaListRequestDto)
+                .publishOn(scheduler)
+                .map(dto -> ResponseEntity.ok().body(dto));
+    }
+
+    @Override
+    public Mono<ResponseEntity<SaveAggregateResponseDto>> createAggregate(AggregateRequestDto aggregateRequestDto, ServerWebExchange exchange) {
+        return aggregationService.createAggregate(aggregateRequestDto)
                 .publishOn(scheduler)
                 .map(dto -> ResponseEntity.ok().body(dto));
     }
@@ -82,17 +89,17 @@ public class AggregationController implements AggregateApi {
 
     @Override
     public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, final ServerWebExchange exchange) {
-        if(name!=null && name.length()<3){
+        if (name != null && name.length() < 3) {
             throw new ApiKeyManagerException(INVALID_NAME_LENGTH, HttpStatus.BAD_REQUEST);
         }
         return paService.getAssociablePa(name)
-                .doOnNext(associablePaResponseDto -> log.info("getAssociablePA return list with size: {}",associablePaResponseDto.getItems().size()))
+                .doOnNext(associablePaResponseDto -> log.info("getAssociablePA return list with size: {}", associablePaResponseDto.getItems().size()))
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }
 
     @Override
-    public Mono<ResponseEntity<SaveAggregateResponseDto>> updateAggregate(String id, AggregateRequestDto aggregateRequestDto,  final ServerWebExchange exchange){
+    public Mono<ResponseEntity<SaveAggregateResponseDto>> updateAggregate(String id, AggregateRequestDto aggregateRequestDto, final ServerWebExchange exchange) {
         return aggregationService.updateAggregate(id, aggregateRequestDto)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);

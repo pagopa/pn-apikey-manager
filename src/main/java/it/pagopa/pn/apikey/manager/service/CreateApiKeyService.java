@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import com.amazonaws.util.StringUtils;
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
@@ -30,14 +31,22 @@ public class CreateApiKeyService {
     private final AggregationService aggregationService;
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
+    private final PnApikeyManagerConfig pnApikeyManagerConfig;
     private final ExternalRegistriesClient externalRegistriesClient;
     private final ApiGatewayService apiGatewayService;
 
-    public CreateApiKeyService(ApiKeyRepository apiKeyRepository, AggregationService aggregationService, PaAggregationsService paAggregationsService, ManageApiKeyService manageApiKeyService, ExternalRegistriesClient externalRegistriesClient, ApiGatewayService apiGatewayService) {
+    public CreateApiKeyService(ApiKeyRepository apiKeyRepository,
+                               AggregationService aggregationService,
+                               PaAggregationsService paAggregationsService,
+                               ManageApiKeyService manageApiKeyService,
+                               PnApikeyManagerConfig pnApikeyManagerConfig,
+                               ExternalRegistriesClient externalRegistriesClient,
+                               ApiGatewayService apiGatewayService) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
+        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
         this.externalRegistriesClient = externalRegistriesClient;
         this.apiGatewayService = apiGatewayService;
     }
@@ -57,10 +66,13 @@ public class CreateApiKeyService {
                 });
     }
 
-    private Mono<String> createNewApiKey(ApiKeyAggregateModel apikeyAggregateModel) {
-        return apiGatewayService.createNewAwsApiKey(apikeyAggregateModel.getName())
-                .flatMap(createApiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(createApiKeyResponse, apikeyAggregateModel)
-                        .doOnNext(s1 -> log.info("Updated aggregate: {} with AWS apiKey",s1)));
+    private Mono<String> createNewApiKey(ApiKeyAggregateModel aggregate) {
+        return apiGatewayService.createNewAwsApiKey(aggregate.getName())
+                .flatMap(apiKeyResponse -> apiGatewayService.addUsagePlanToApiKey(pnApikeyManagerConfig.getDefaultPlan(), apiKeyResponse.id())
+                        .map(usagePlanKeyResponse -> apiKeyResponse))
+                .flatMap(apiKeyResponse -> aggregationService.addAwsApiKeyToAggregate(apiKeyResponse, aggregate)
+                        .map(ApiKeyAggregateModel::getAggregateId)
+                        .doOnNext(aggregateId -> log.info("Updated aggregate {} with AWS Api Key", aggregateId)));
     }
 
     private Mono<String> createNewAggregate(String xPagopaPnCxId) {

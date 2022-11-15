@@ -12,10 +12,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -57,6 +59,17 @@ public class AggregationConverter {
         dto.setTotal(page.items().size());
         page.items().forEach(item -> dto.addItemsItem(convertToResponseDto(item)));
         return dto;
+    }
+
+    public ApiKeyAggregateModel convertToModel(AggregateRequestDto dto) {
+        ApiKeyAggregateModel model = new ApiKeyAggregateModel();
+        model.setAggregateId(UUID.randomUUID().toString());
+        model.setName(dto.getName());
+        model.setDescription(dto.getDescription());
+        model.setUsagePlanId(dto.getUsagePlanId());
+        model.setLastUpdate(LocalDateTime.now());
+        model.setCreatedAt(LocalDateTime.now());
+        return model;
     }
 
     private AggregateRowDto convertToResponseDto(ApiKeyAggregateModel aggregation, Map<String, UsagePlanDetailDto> usagePlans) {

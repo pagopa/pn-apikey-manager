@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -46,9 +45,6 @@ class AggregationServiceTest {
 
     @MockBean
     private UsagePlanService usagePlanService;
-
-    @MockBean
-    private ApiGatewayAsyncClient apiGatewayAsyncClient;
 
     @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
@@ -151,6 +147,8 @@ class AggregationServiceTest {
         when(paAggregationRepository.findByAggregateId(any(), any()))
                 .thenReturn(Mono.just(Page.create(Collections.emptyList())));
         ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
+        when(aggregateRepository.getApiKeyAggregation("aggregateId"))
+                .thenReturn(Mono.just(apiKeyAggregateModel));
         when(aggregateRepository.delete("aggregateId"))
                 .thenReturn(Mono.just(apiKeyAggregateModel));
         StepVerifier.create(aggregationService.deleteAggregate("aggregateId"))
@@ -161,6 +159,8 @@ class AggregationServiceTest {
     void testDeleteAggregationNotFound() {
         when(paAggregationRepository.findByAggregateId(any(), any()))
                 .thenReturn(Mono.just(Page.create(Collections.emptyList())));
+        when(aggregateRepository.getApiKeyAggregation("aggregateId"))
+                .thenReturn(Mono.empty());
         when(aggregateRepository.delete("aggregateId"))
                 .thenReturn(Mono.empty());
         StepVerifier.create(aggregationService.deleteAggregate("aggregateId"))
@@ -183,9 +183,9 @@ class AggregationServiceTest {
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         apikeyAggregateModel.setAggregateId("id");
         when(aggregateRepository.saveAggregation(any())).thenReturn(Mono.just(apikeyAggregateModel));
-        StepVerifier.create(aggregationService.addAwsApiKeyToAggregate(CreateApiKeyResponse.builder().id("id").build(), apikeyAggregateModel))
+        StepVerifier.create(aggregationService.addAwsApiKeyToAggregate(CreateApiKeyResponse.builder().id("id").build(), apikeyAggregateModel)
+                        .map(ApiKeyAggregateModel::getAggregateId))
                 .expectNextMatches(apiKeyAggregation1 -> apiKeyAggregation1.equalsIgnoreCase("id")).verifyComplete();
-
     }
 
     @Test
