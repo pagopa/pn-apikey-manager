@@ -30,7 +30,7 @@ public class UsagePlanService {
     public Mono<UsagePlanResponseDto> getUsagePlanList() {
         return Mono.fromFuture(apiGatewayAsyncClient.getUsagePlans())
                 .doOnNext(response -> log.info("usage plan size: {}", response.items().size()))
-                .map(getUsagePlansResponse -> createUsagePlanResponseDto(getUsagePlansResponse.items()));
+                .map(response -> createUsagePlanResponseDto(response.items()));
     }
 
     public Mono<UsagePlanDetailDto> getUsagePlan(String usagePlanId) {

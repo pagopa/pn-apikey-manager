@@ -125,7 +125,7 @@ public class AggregationService {
                 .zipWhen(this::createAwsApiKey)
                 .flatMap(tuple -> addAwsApiKeyToAggregate(tuple.getT2(), tuple.getT1()))
                 .flatMap(aggregate -> addUsagePlanToKey(aggregate).map(response -> aggregate))
-                .doOnEach(signal -> log.info("{} - create aggregate: {}", signal.getType(), signal.get(), signal.getThrowable()))
+                .doOnNext(aggregate -> log.info("Create aggregate: {}", aggregate))
                 .map(aggregate -> {
                     SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
                     dto.setId(aggregate.getAggregateId());
@@ -188,16 +188,18 @@ public class AggregationService {
 
     private Mono<CreateApiKeyResponse> createAwsApiKey(ApiKeyAggregateModel aggregate) {
         return apiGatewayService.createNewAwsApiKey(aggregate.getName())
-                .doOnNext(response -> log.info("AWS Api Key {} with name {} for aggregate {}", response.id(), response.name(), aggregate.getAggregateId()))
+                .doOnNext(response -> log.info("Created AWS Api Key {} with name {} for aggregate {}", response.id(), response.name(), aggregate.getAggregateId()))
                 .onErrorResume(e -> deleteAggregate(aggregate.getAggregateId())
+                        .doOnSuccess(a -> log.info("rollback aggregate {} done", aggregate))
                         .doOnError(re -> log.error("can not execute rollback", re))
                         .then(Mono.error(e)));
     }
 
     private Mono<CreateUsagePlanKeyResponse> addUsagePlanToKey(ApiKeyAggregateModel aggregate) {
         return apiGatewayService.addUsagePlanToApiKey(aggregate.getUsagePlanId(), aggregate.getApiKeyId())
-                .doOnNext(signal -> log.info("AWS Usage Plan {} to Api Key {} for aggregate {}", aggregate.getUsagePlanId(), aggregate.getApiKeyId(), aggregate.getAggregateId()))
+                .doOnNext(signal -> log.info("Added AWS Usage Plan {} to Api Key {} for aggregate {}", aggregate.getUsagePlanId(), aggregate.getApiKeyId(), aggregate.getAggregateId()))
                 .onErrorResume(e -> deleteAggregate(aggregate.getAggregateId())
+                        .doOnSuccess(a -> log.info("rollback aggregate {} done", aggregate))
                         .doOnError(re -> log.error("can not execute rollback", re))
                         .then(Mono.error(e)));
     }

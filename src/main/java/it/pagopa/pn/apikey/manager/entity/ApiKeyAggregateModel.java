@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.LocalDateTime;
@@ -31,7 +32,8 @@ public class ApiKeyAggregateModel {
     @Getter(onMethod=@__({@DynamoDbAttribute("lastUpdate")}))
     private LocalDateTime lastUpdate;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("AWSApiKey")}))
+    @ToString.Exclude
+    @Getter(onMethod=@__({@DynamoDbAttribute(AggregationConstant.AWS_API_KEY)}))
     private String apiKey;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("AWSApiKeyId")}))

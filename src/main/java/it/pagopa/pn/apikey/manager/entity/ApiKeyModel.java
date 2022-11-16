@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.LocalDateTime;
@@ -22,9 +23,10 @@ public class ApiKeyModel {
     }))
     private String id;
 
+    @ToString.Exclude
     @Getter(onMethod = @__({
             @DynamoDbSecondaryPartitionKey(indexNames = ApiKeyConstant.GSI_VK),
-            @DynamoDbAttribute("virtualKey")
+            @DynamoDbAttribute(ApiKeyConstant.VIRTUAL_KEY)
     }))
     private String virtualKey;
 

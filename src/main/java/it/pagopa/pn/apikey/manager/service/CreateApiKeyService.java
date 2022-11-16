@@ -51,7 +51,7 @@ public class CreateApiKeyService {
         log.debug("list groupsToAdd size: {}", groupToAdd.size());
         return paAggregationsService.searchAggregationId(xPagopaPnCxId)
                 .switchIfEmpty(Mono.defer(() -> createNewAggregate(xPagopaPnCxId)))
-                .doOnNext(aggregateId -> log.info("PA {} to aggregate {}", xPagopaPnCxId, aggregateId))
+                .doOnNext(aggregateId -> log.info("Add PA {} to aggregate {}", xPagopaPnCxId, aggregateId))
                 .flatMap(aggregateId -> {
                     requestNewApiKeyDto.setGroups(groupToAdd);
                     ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
@@ -61,13 +61,17 @@ public class CreateApiKeyService {
     }
 
     private Mono<String> createNewAggregate(String xPagopaPnCxId) {
-        return getPaById(xPagopaPnCxId)
-                .flatMap(internalPaDetailDto -> aggregationService.createNewAggregate(internalPaDetailDto)
-                        .flatMap(aggregateId -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(aggregateId, internalPaDetailDto))
-                                .onErrorResume(e -> aggregationService.deleteAggregate(aggregateId)
-                                        .doOnNext(a -> log.info("rollback aggregate {} done", aggregateId))
-                                        .then(Mono.error(e)))
-                                .map(PaAggregationModel::getAggregateId)));
+        return getPaById(xPagopaPnCxId).flatMap(this::createNewAggregate);
+    }
+
+    private Mono<String> createNewAggregate(InternalPaDetailDto internalPaDetailDto) {
+        return aggregationService.createNewAggregate(internalPaDetailDto)
+                .flatMap(aggregateId -> paAggregationsService.createNewPaAggregation(constructPaAggregationModel(aggregateId, internalPaDetailDto))
+                        .onErrorResume(e -> aggregationService.deleteAggregate(aggregateId)
+                                .doOnSuccess(a -> log.info("rollback aggregate {} done", aggregateId))
+                                .doOnError(ea -> log.warn("can not rollback aggregate {}", aggregateId))
+                                .then(Mono.error(e)))
+                        .map(PaAggregationModel::getAggregateId));
     }
 
     private List<String> checkGroups(List<String> groups, List<String> xPagopaPnCxGroups) {
