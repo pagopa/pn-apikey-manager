@@ -23,6 +23,11 @@ public class MaskDataUtils {
         return data;
     }
 
+    public static String maskValue(String data) {
+        Pattern pattern = Pattern.compile("([v|V]alue)=(.*?),");
+        return maskMatcher(pattern, data);
+    }
+
     private static String maskMatcher(Pattern pattern, String dataBuffered) {
         Matcher matcher = pattern.matcher(dataBuffered);
         while (matcher.find()) {

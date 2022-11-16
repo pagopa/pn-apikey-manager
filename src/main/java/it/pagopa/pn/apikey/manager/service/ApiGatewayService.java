@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.service;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateRequestDto;
+import it.pagopa.pn.apikey.manager.utils.MaskDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -55,7 +56,7 @@ public class ApiGatewayService {
         CreateUsagePlanKeyRequest createUsagePlanKeyRequest = constructUsagePlanKeyRequest(usagePlanId, apiKeyId);
         log.debug("create AWS UsagePlan-ApiKey request: {}", createUsagePlanKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
-                .doOnNext(response -> log.info("Create AWS UsagePlan-ApiKey response: {}", response));
+                .doOnNext(response -> log.info("Create AWS UsagePlan-ApiKey response: {}", MaskDataUtils.maskValue(response.toString())));
     }
 
     public Mono<CreateUsagePlanKeyResponse> moveApiKeyToNewUsagePlan(ApiKeyAggregateModel apiKeyAggregateModel, AggregateRequestDto aggregateRequestDto) {

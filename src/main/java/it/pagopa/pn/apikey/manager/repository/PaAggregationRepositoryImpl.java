@@ -63,7 +63,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                     Mono<BatchWriteResult> deferred = Mono.defer(() ->
                             Mono.fromFuture(dynamoDbEnhancedClient.batchWriteItem(BatchWriteItemEnhancedRequest.builder()
                                     .writeBatches(builder.build())
-                                    .build()))).doOnNext(batchGetResultPage -> log.info("call to dynamoDbEnhancedClient.batchPutItem"));
+                                    .build())));
                     return chunk
                             .doOnNext(builder::addPutItem)
                             .then(deferred);
@@ -128,7 +128,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                     Mono<BatchGetResultPage> deferred = Mono.defer(() ->
                             Mono.from(dynamoDbEnhancedClient.batchGetItem(BatchGetItemEnhancedRequest.builder()
                                     .readBatches(builder.build())
-                                    .build())).doOnNext(batchGetResultPage -> log.info("call to dynamoDbEnhancedClient.batchGetItem")));
+                                    .build())));
                     return chunk
                             .doOnNext(paDetailDto -> builder.addGetItem(Key.builder().partitionValue(paDetailDto.getId()).build()))
                             .then(deferred);
