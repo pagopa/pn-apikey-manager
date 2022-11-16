@@ -135,7 +135,7 @@ Resources:
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
         ContainerEnvEntry7: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        MappedPaths: '/apikey-manager/selfcare/*'
+        MappedPaths: '/api-key-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
@@ -189,7 +189,7 @@ Resources:
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
-        ServiceApiPath: 'apikey-manager/selfcare'
+        ServiceApiPath: 'api-key-self'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
