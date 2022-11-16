@@ -5,11 +5,20 @@ Transform:
   - UpdateDeploymentTransform
 
 Parameters:
+
   ProjectName:
     Type: String
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
-  
+
+  WebApiDnsName:
+    Type: String
+    Description: 'The DNS name used for WEB rest API.'
+
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Description: 'Kinesis stream that receive logs'
+
   AlarmSNSTopicArn:
     Type: String
     Description: ARN of alarm topic
@@ -126,13 +135,14 @@ Resources:
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
         ContainerEnvEntry7: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        MappedPaths: '/apikey-manager/*'
+        MappedPaths: '/api-key-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
 
   ApikeyManagerMicroserviceTaskPolicy:
     Type: AWS::IAM::Policy
@@ -170,40 +180,17 @@ Resources:
               - !Ref ApiKeyTableArn
               - !Sub '${ApiKeyTableArn}/index/*'
 
-#  ApiKeyManagerCognitoUserPool:
-#    Type: AWS::Cognito::UserPool
-#
-#  ApiKeyManagerApiGatewayAuthorizer:
-#    Type: AWS::ApiGateway::Authorizer
-#    Properties:
-#      IdentitySource: method.request.header.Authorization
-#      Name: 'api-key-manager-authorizer'
-#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-#      Type: COGNITO_USER_POOLS
-#      ProviderARNs:
-#        - !GetAtt ApiKeyManagerCognitoUserPool.Arn
-#
-#  ApiKeyManagerApiGateway:
-#    Type: AWS::CloudFormation::Stack
-#    Properties:
-#      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-#    Parameters:
-#      MicroServiceUniqueName: !Sub '${ProjectName}-ApiKeyManager'
-#      AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-#
-#  ApiKeyManagerApiGatewayTestResource:
-#    Type: AWS::ApiGateway::Resource
-#    Properties:
-#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-#      ParentId: !GetAtt ApiKeyManagerApiGateway.Outputs.RootResourceId
-#      PathPart: apikey-manager
-#
-#  ApiKeyManagerApiGatewayTestMethod:
-#    Type: AWS::ApiGateway::Method
-#    Properties:
-#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-#      ResourceId: !Ref ApiKeyManagerApiGatewayTestResource
-#      HttpMethod: GET
-#      ApiKeyRequired: false
-#      AuthorizationType: CUSTOM
-#      AuthorizerId: !GetAtt ApiKeyManagerApiGatewayAuthorizer.AuthorizerARN
+  ApiKeyManagerApiGateway:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager'
+        IntendedUsage: WEB
+        DnsName: !Ref WebApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'api-key-self'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
