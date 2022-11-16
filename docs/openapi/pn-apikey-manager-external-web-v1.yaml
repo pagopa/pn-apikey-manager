@@ -5,7 +5,7 @@ info:
   title: 'Piattaforma Notifiche: API per il Front End delle PA'
   x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
   version: '1.0.0'
-  description: >- 
+  description: >-
     ## Abstract
       API utilizzate dal portale di Piattaforma Notifiche dedicato alle Pubbliche Amministrazioni
   contact:
@@ -14,12 +14,12 @@ info:
     name: Licenza di PN
     url: 'https://da-definire/'
 servers:
-- url: https://webapi.pn.pagopa.it
-  description: Ambiente di produzione
-- url: https://webapi.uat.pn.pagopa.it
-  description: Ambiente di test
-- url: https://webapi.dev.pn.pagopa.it
-  description: Ambiente di sviluppo
+  - url: https://webapi.pn.pagopa.it
+    description: Ambiente di produzione
+  - url: https://webapi.uat.pn.pagopa.it
+    description: Ambiente di test
+  - url: https://webapi.dev.pn.pagopa.it
+    description: Ambiente di sviluppo
 tags:
   - name: ApiKeys
     description: >-
@@ -27,23 +27,46 @@ tags:
 
 
 paths:
-  "/api-keys":
-    get:    
+  "/apikey-manager/selfcare/api-keys":
+    get:
       summary: Ricerca api keys
       description: >-
         servizio di consultazione della lista delle api keys
       tags:
         - ApiKeys
       operationId: getApiKeys
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: lastKey
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lastUpdate
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: showVirtualKey
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+
       responses:
         '200':
           description: OK
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ApiKeysResponse'
         '400':
-          description: Bad request       
+          description: Bad request
           content:
             application/problem+json:
               schema:
@@ -53,8 +76,8 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/Problem'    
-    post:    
+                $ref: '#/components/schemas/Problem'
+    post:
       summary: Creazione api key
       description: >-
         servizio di creazione di un'api key
@@ -66,7 +89,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/RequestNewApiKey"
-        required: true         
+        required: true
       responses:
         '200':
           description: OK
@@ -75,7 +98,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseNewApiKey'
         '400':
-          description: Bad request       
+          description: Bad request
           content:
             application/problem+json:
               schema:
@@ -87,8 +110,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-keys/{id}":
-    delete:    
+  "/apikey-manager/selfcare/api-keys/{id}":
+    delete:
       summary: Rimozione api key
       description: >-
         servizio di rimozione dell'api key
@@ -96,12 +119,12 @@ paths:
         - ApiKeys
       operationId: deleteApiKeys
       parameters:
-        - $ref: '#/components/parameters/pathApiKey'    
+        - $ref: '#/components/parameters/pathApiKey'
       responses:
         '200':
           description: OK
         '400':
-          description: Bad request       
+          description: Bad request
           content:
             application/problem+json:
               schema:
@@ -113,7 +136,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Not found       
+          description: Not found
           content:
             application/problem+json:
               schema:
@@ -124,9 +147,9 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  
-  "/api-keys/{id}/status":
-    put:    
+
+  "/apikey-manager/selfcare/api-keys/{id}/status":
+    put:
       summary: Cambia lo stato dell'api key
       description: >-
         servizio di cambio stato dell'api key
@@ -135,17 +158,12 @@ paths:
       operationId: changeStatusApiKey
       parameters:
         - $ref: '#/components/parameters/pathApiKey'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RequestChangeStatusApiKey"
-        required: true
+        - $ref: '#/components/parameters/queryApiKey'
       responses:
         '200':
           description: OK
         '400':
-          description: Bad request       
+          description: Bad request
           content:
             application/problem+json:
               schema:
@@ -157,7 +175,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Not found       
+          description: Not found
           content:
             application/problem+json:
               schema:
@@ -168,7 +186,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  
+
 components:
   parameters:
     ############################################################################################
@@ -187,13 +205,24 @@ components:
       required: true
       schema:
         type: string
-  
+    queryApiKey:
+      description: >-
+        Action per il cambio stato di un'api key
+      name: status
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+          - 'BLOCK'
+          - 'ENABLE'
+          - 'ROTATE'
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
-    
+
     ApiKeysResponse:
-      title: Elenco di api keys 
+      title: Elenco di api keys
       description: >-
         Dto contenente la lista delle api keys associate ad un utente.
       type: object
@@ -204,6 +233,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiKeyRow'
+        lastKey:
+          type: string
+        lastUpdate:
+          type: string
 
     ApiKeyRow:
       type: object
@@ -226,8 +259,8 @@ components:
           description: Gruppi a cui appartiene l'api key
           items:
             type: string
-        status: 
-            $ref: '#/components/schemas/ApiKeyStatus'
+        status:
+          $ref: '#/components/schemas/ApiKeyStatus'
         statusHistory:
           type: array
           description: Storico degli stati dell'api key
@@ -242,7 +275,7 @@ components:
     ApiKeyStatusHistory:
       type: object
       properties:
-        status: 
+        status:
           $ref: '#/components/schemas/ApiKeyStatus'
         date:
           type: string
@@ -251,7 +284,7 @@ components:
         changedByDenomination:
           type: string
           description: nome dell'utente che ha effettuato il cambio di stato
-  
+
     RequestNewApiKey:
       title: Request creazione api key
       description: >-
@@ -269,7 +302,7 @@ components:
           description: Gruppi a cui appartiene l'api key (indicare l'id dei gruppi)
           items:
             type: string
-    
+
     ResponseNewApiKey:
       title: Response creazione api key
       description: >-
@@ -285,16 +318,6 @@ components:
         api-key:
           type: string
           description: Valore dell'api key appena generata
-
-    RequestChangeStatusApiKey:
-      title: Request cambio stato api key
-      description: >-
-        Action per il cambio stato di un'api key
-      type: string
-      enum:
-        - 'BLOCK'
-        - 'ENABLE'
-        - 'ROTATE'
 
   securitySchemes:                                      # ONLY EXTERNAL
     bearerAuth:                                         # ONLY EXTERNAL
