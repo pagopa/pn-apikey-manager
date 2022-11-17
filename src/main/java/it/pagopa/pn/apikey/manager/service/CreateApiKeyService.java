@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,7 +40,6 @@ public class CreateApiKeyService {
 
     public Mono<ResponseNewApiKeyDto> createApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                    RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups) {
-
         List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
         log.debug("list groupsToAdd size: {}", groupToAdd.size());
         return paService.searchAggregationId(xPagopaPnCxId)
@@ -81,8 +81,11 @@ public class CreateApiKeyService {
     }
 
     private List<String> checkGroups(List<String> groups, List<String> xPagopaPnCxGroups) {
+        if (xPagopaPnCxGroups == null) {
+            xPagopaPnCxGroups = new ArrayList<>();
+        }
         List<String> groupsToAdd = new ArrayList<>();
-        if (!groups.isEmpty() && (xPagopaPnCxGroups.containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
+        if (!groups.isEmpty() && (new HashSet<>(xPagopaPnCxGroups).containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
             groupsToAdd.addAll(groups);
             return groupsToAdd;
         } else if (groups.isEmpty() && !xPagopaPnCxGroups.isEmpty()) {
@@ -90,7 +93,7 @@ public class CreateApiKeyService {
             return groupsToAdd;
         } else if (groups.isEmpty()) {
             return groupsToAdd;
-        } else{
+        } else {
             groups.removeIf(xPagopaPnCxGroups::contains);
             throw new ApiKeyManagerException("User cannot add groups: " + groups, HttpStatus.INTERNAL_SERVER_ERROR);
         }
