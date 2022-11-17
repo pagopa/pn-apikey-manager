@@ -52,7 +52,7 @@ class AggregationControllerTest {
 
     @Test
     void testGetAggregateList() {
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -72,7 +72,7 @@ class AggregationControllerTest {
 
     @Test
     void testMovePa() {
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -84,15 +84,15 @@ class AggregationControllerTest {
         MovePaResponseDto dto = new MovePaResponseDto();
         dto.setUnprocessed(1);
         dto.setProcessed(1);
-        when(paService.movePa(any(),any())).thenReturn(Mono.just(dto));
-        StepVerifier.create(aggregationController.movePa("id",new AddPaListRequestDto(),
+        when(paService.movePa(any(), any())).thenReturn(Mono.just(dto));
+        StepVerifier.create(aggregationController.movePa("id", new AddPaListRequestDto(),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
 
     @Test
     void testDeleteApiKeys() {
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -109,7 +109,7 @@ class AggregationControllerTest {
 
     @Test
     void testGetAssociablePa() {
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -127,8 +127,8 @@ class AggregationControllerTest {
     }
 
     @Test
-    void testAddPaListToAggregate(){
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+    void testAddPaListToAggregate() {
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -140,15 +140,15 @@ class AggregationControllerTest {
         MovePaResponseDto dto = new MovePaResponseDto();
         dto.setUnprocessed(1);
         dto.setProcessed(1);
-        when(paService.createNewPaAggregation(any(),any())).thenReturn(Mono.just(dto));
-        StepVerifier.create(aggregationController.addPaListToAggregate("id",new AddPaListRequestDto(),
+        when(paService.createNewPaAggregation(any(), any())).thenReturn(Mono.just(dto));
+        StepVerifier.create(aggregationController.addPaListToAggregate("id", new AddPaListRequestDto(),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
 
     @Test
-    void testGetAggregate(){
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+    void testGetAggregate() {
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -166,8 +166,8 @@ class AggregationControllerTest {
     }
 
     @Test
-    void testGetPaAggregation(){
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+    void testGetPaAggregation() {
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -185,10 +185,9 @@ class AggregationControllerTest {
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
 
-
     @Test
-    void testUpdateAggregate(){
-        AggregationController aggregationController = new AggregationController(scheduler, aggregationService,paService);
+    void testUpdateAggregate() {
+        AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -203,6 +202,31 @@ class AggregationControllerTest {
         when(aggregationService.updateAggregate(any(), any())).thenReturn(Mono.just(dto));
         StepVerifier.create(aggregationController.updateAggregate("id", requestDto,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
-                                new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
+                                new AcceptHeaderLocaleContextResolver())))
+                .expectNext(ResponseEntity.ok().body(dto));
+    }
+
+    @Test
+    void testCreateAggregate() {
+        AggregationController controller = new AggregationController(scheduler, aggregationService, paService);
+
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+        MockServerHttpResponse response = new MockServerHttpResponse();
+        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+
+        SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
+        dto.setId("id");
+
+        when(aggregationService.createAggregate(any())).thenReturn(Mono.just(dto));
+
+        StepVerifier.create(controller.createAggregate(new AggregateRequestDto(),
+                        new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
+                                new AcceptHeaderLocaleContextResolver())))
+                .expectNext(ResponseEntity.ok().body(dto));
     }
 }

@@ -2,23 +2,22 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaAggregateResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ContextConfiguration(classes = {AggregationConverter.class})
 @ExtendWith(SpringExtension.class)
@@ -45,11 +44,11 @@ class AggregationConverterTest {
         usagePlanDetailDto.setName("name");
         map.add(usagePlanDetailDto);
         AggregatesListResponseDto aggregatesListResponseDto = aggregationConverter.convertToResponseDto(page, map);
-        Assertions.assertEquals(1,aggregatesListResponseDto.getItems().size());
+        assertEquals(1, aggregatesListResponseDto.getItems().size());
     }
 
     @Test
-    void converResponseDto2(){
+    void converResponseDto2() {
         ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
         apiKeyAggregateModel.setAggregateId("id");
         apiKeyAggregateModel.setUsagePlanId("id");
@@ -59,11 +58,11 @@ class AggregationConverterTest {
         UsagePlanDetailDto usagePlanDetailDto = new UsagePlanDetailDto();
         usagePlanDetailDto.setId("id");
         AggregateResponseDto aggregatesResponseDto = aggregationConverter.convertToResponseDto(apiKeyAggregateModel, usagePlanDetailDto);
-        Assertions.assertEquals("id",aggregatesResponseDto.getId());
+        assertEquals("id", aggregatesResponseDto.getId());
     }
 
     @Test
-    void converResponseDto3(){
+    void converResponseDto3() {
         PaAggregationModel paAggregationModel = new PaAggregationModel();
         paAggregationModel.setAggregateId("id");
         paAggregationModel.setPaName("name");
@@ -72,6 +71,21 @@ class AggregationConverterTest {
         Page<PaAggregationModel> page = Page.create(List.of(paAggregationModel));
 
         PaAggregateResponseDto paAggregateResponseDto = aggregationConverter.convertToResponseDto(page);
-        Assertions.assertEquals(1,paAggregateResponseDto.getItems().size());
+        assertEquals(1, paAggregateResponseDto.getItems().size());
+    }
+
+    @Test
+    void testConvertToModel() {
+        AggregateRequestDto dto = new AggregateRequestDto();
+        dto.setName("name");
+        dto.setDescription("desc");
+        dto.setUsagePlanId("usagePlan");
+        ApiKeyAggregateModel model = aggregationConverter.convertToModel(dto);
+        assertNotNull(model.getAggregateId());
+        assertEquals("name", model.getName());
+        assertEquals("desc", model.getDescription());
+        assertEquals("usagePlan", model.getUsagePlanId());
+        assertNotNull(model.getLastUpdate());
+        assertNotNull(model.getCreatedAt());
     }
 }

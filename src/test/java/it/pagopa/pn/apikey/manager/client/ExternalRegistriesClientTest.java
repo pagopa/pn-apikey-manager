@@ -48,7 +48,27 @@ class ExternalRegistriesClientTest {
         StepVerifier.create(externalRegistriesClient.getAllPa("name"))
                 .expectNext(new ArrayList<>())
                 .verifyComplete();
+    }
 
+    @Test
+    void testFailGetAllPA() {
+        when(externalRegistriesWebClient.init()).thenReturn(webClient);
+        ExternalRegistriesClient externalRegistriesClient = new ExternalRegistriesClient(externalRegistriesWebClient);
+
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.headers(any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+
+        when(responseSpec.bodyToMono(new ParameterizedTypeReference<List<PaDetailDto>>() {}))
+                .thenReturn(Mono.error(new RuntimeException()));
+
+        StepVerifier.create(externalRegistriesClient.getAllPa("name"))
+                .verifyError();
     }
 
     @Test
@@ -70,6 +90,24 @@ class ExternalRegistriesClientTest {
         StepVerifier.create(externalRegistriesClient.getPaById("id"))
                 .expectNext(internalPaDetailDto)
                 .verifyComplete();
+    }
 
+    @Test
+    void testFailGetPAById() {
+        when(externalRegistriesWebClient.init()).thenReturn(webClient);
+        ExternalRegistriesClient externalRegistriesClient = new ExternalRegistriesClient(externalRegistriesWebClient);
+
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.headers(any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(InternalPaDetailDto.class)).thenReturn(Mono.error(new RuntimeException()));
+
+        StepVerifier.create(externalRegistriesClient.getPaById("id"))
+                .verifyError();
     }
 }

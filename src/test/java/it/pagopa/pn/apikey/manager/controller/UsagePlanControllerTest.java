@@ -1,9 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
@@ -11,7 +9,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.Usage
 import it.pagopa.pn.apikey.manager.service.UsagePlanService;
 
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +30,6 @@ import org.springframework.web.server.i18n.AcceptHeaderLocaleContextResolver;
 import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 
 @ContextConfiguration(classes = {UsagePlanController.class, UsagePlanService.class, PnApikeyManagerConfig.class})
 @ExtendWith(SpringExtension.class)
@@ -64,8 +60,7 @@ class UsagePlanControllerTest {
         usagePlan.setItems(new ArrayList<>());
         when(usagePlanService.getUsagePlanList()).thenReturn(Mono.just(usagePlan));
         StepVerifier.create(usagePlanController.getUsagePlan(new DefaultServerWebExchange(serverHttpRequestDecorator, response,
-                webSessionManager, codecConfigurer, new AcceptHeaderLocaleContextResolver())))
+                        webSessionManager, codecConfigurer, new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().body(usagePlan));
     }
 }
-

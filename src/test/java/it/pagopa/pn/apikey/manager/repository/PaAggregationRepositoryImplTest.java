@@ -3,7 +3,6 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
@@ -44,7 +43,8 @@ class PaAggregationRepositoryImplTest {
 
     @Test
     void savePaAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        when(dynamoDbAsyncTable.tableName()).thenReturn("tableName");
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
         PaAggregationModel paAggregationModel = new PaAggregationModel();
@@ -54,7 +54,8 @@ class PaAggregationRepositoryImplTest {
         when(dynamoDbAsyncTable.putItem(paAggregationModel)).thenReturn(completableFuture);
 
         StepVerifier.create(paRepository.savePaAggregation(paAggregationModel))
-                .expectNext(paAggregationModel).verifyComplete();
+                .expectNext(paAggregationModel)
+                .verifyComplete();
     }
 
    /* @Test
@@ -83,15 +84,36 @@ class PaAggregationRepositoryImplTest {
         AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
         addPaListRequestDto.setItems(List.of(paDetailDto));
         StepVerifier.create(paRepository.batchGetItem(addPaListRequestDto)).verifyComplete();
+    }
+
+    @Test
+    void testSavePaAggregation() {
+        when(dynamoDbAsyncTable.tableName()).thenReturn("tableName");
+        TableSchema tableSchema = mock(TableSchema.class);
+        when(dynamoDbAsyncTable.tableSchema()).thenReturn(tableSchema);
+        DynamoDbEnhancedClientExtension extension = mock(DynamoDbEnhancedClientExtension.class);
+        when(dynamoDbAsyncTable.mapperExtension()).thenReturn(extension);
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+
+        CompletableFuture<BatchWriteResult> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> BatchWriteResult.builder().build());
+        when(dynamoDbEnhancedAsyncClient.batchWriteItem((BatchWriteItemEnhancedRequest) any()))
+                .thenReturn(completableFuture);
+
+        PaAggregationModel model = new PaAggregationModel();
+        model.setPaId("id");
+        StepVerifier.create(paRepository.savePaAggregation(List.of(model)))
+                .verifyComplete();
     }*/
 
     @Test
     void getAllPaAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        Mockito.when(dynamoDbAsyncTable.scan()).thenReturn(pagePublisher);
+        when(dynamoDbAsyncTable.scan()).thenReturn(pagePublisher);
 
         StepVerifier.create(paRepository.getAllPaAggregations())
                 .expectNextCount(0);
@@ -104,7 +126,7 @@ class PaAggregationRepositoryImplTest {
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
         DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
-        Mockito.when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
         when(index.query((QueryEnhancedRequest)any())).thenReturn(pagePublisher);
 
         PaAggregationPageable pageable = PaAggregationPageable.builder()
