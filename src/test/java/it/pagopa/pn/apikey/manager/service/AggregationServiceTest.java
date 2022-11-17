@@ -7,7 +7,6 @@ import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
-import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import org.junit.jupiter.api.Test;
@@ -118,7 +117,7 @@ class AggregationServiceTest {
         when(aggregationConverter.convertToResponseDto(page, List.of(usagePlanDetailDto)))
                 .thenReturn(result);
 
-        StepVerifier.create(aggregationService.getAggregation(null, AggregatePageable.builder().build()))
+        StepVerifier.create(aggregationService.getAggregation(null, null, null, null))
                 .expectNext(result)
                 .verifyComplete();
     }
@@ -138,7 +137,7 @@ class AggregationServiceTest {
         when(aggregationConverter.convertToResponseDto(page, Collections.emptyList()))
                 .thenReturn(result);
 
-        StepVerifier.create(aggregationService.getAggregation("name", AggregatePageable.builder().build()))
+        StepVerifier.create(aggregationService.getAggregation("name", null, null, null))
                 .expectNext(result)
                 .verifyComplete();
     }
@@ -222,11 +221,7 @@ class AggregationServiceTest {
         dto.setName("name");
         dto.setAggregateId("id");
         Page<ApiKeyAggregateModel> page = Page.create(List.of(dto));
-        AggregatePageable aggregatePageable = AggregatePageable.builder()
-                .lastEvaluatedId("id")
-                .limit(10)
-                .build();
-        when(aggregateRepository.findByName("name", aggregatePageable)).thenReturn(Mono.just(page));
+        when(aggregateRepository.findByName(eq("name"), any())).thenReturn(Mono.just(page));
         when(aggregateRepository.countByName("name")).thenReturn(Mono.just(1));
         AggregatesListResponseDto aggregateListResponse = new AggregatesListResponseDto();
         List<AggregateRowDto> list = new ArrayList<>();
@@ -234,8 +229,8 @@ class AggregationServiceTest {
         aggregateRowDto.setId("id");
         list.add(aggregateRowDto);
         aggregateListResponse.setItems(list);
-        when(aggregationConverter.convertToResponseDto(any(),anyList())).thenReturn(aggregateListResponse);
-        StepVerifier.create(aggregationService.getAggregation("name", aggregatePageable))
+        when(aggregationConverter.convertToResponseDto(any(), anyList())).thenReturn(aggregateListResponse);
+        StepVerifier.create(aggregationService.getAggregation("name", 10, "id", null))
                 .expectNext(aggregateListResponse)
                 .verifyComplete();
     }
@@ -246,11 +241,7 @@ class AggregationServiceTest {
         dto.setName("name");
         dto.setAggregateId("id");
         Page<ApiKeyAggregateModel> page = Page.create(List.of(dto));
-        AggregatePageable aggregatePageable = AggregatePageable.builder()
-                .lastEvaluatedId("id")
-                .limit(10)
-                .build();
-        when(aggregateRepository.findAll(aggregatePageable)).thenReturn(Mono.just(page));
+        when(aggregateRepository.findAll(any())).thenReturn(Mono.just(page));
         when(aggregateRepository.count()).thenReturn(Mono.just(1));
         AggregatesListResponseDto aggregateListResponse = new AggregatesListResponseDto();
         List<AggregateRowDto> list = new ArrayList<>();
@@ -259,7 +250,7 @@ class AggregationServiceTest {
         list.add(aggregateRowDto);
         aggregateListResponse.setItems(list);
         when(aggregationConverter.convertToResponseDto(any(),anyList())).thenReturn(aggregateListResponse);
-        StepVerifier.create(aggregationService.getAggregation(null, aggregatePageable))
+        StepVerifier.create(aggregationService.getAggregation(null, 10, "id", null))
                 .expectNext(aggregateListResponse)
                 .verifyComplete();
     }

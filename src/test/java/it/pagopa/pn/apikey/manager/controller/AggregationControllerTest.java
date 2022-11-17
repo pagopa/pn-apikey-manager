@@ -63,7 +63,7 @@ class AggregationControllerTest {
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
         AggregatesListResponseDto aggregatesListResponseDto = new AggregatesListResponseDto();
         aggregatesListResponseDto.setItems(new ArrayList<>());
-        when(aggregationService.getAggregation(any(),any())).thenReturn(Mono.just(aggregatesListResponseDto));
+        when(aggregationService.getAggregation(any(), any(), any(), any())).thenReturn(Mono.just(aggregatesListResponseDto));
         StepVerifier.create(aggregationController.getAggregatesList("name", 10, null, null,
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(aggregatesListResponseDto));

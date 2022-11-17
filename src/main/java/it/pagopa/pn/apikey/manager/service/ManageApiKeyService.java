@@ -10,6 +10,8 @@ import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -20,7 +22,6 @@ import java.util.UUID;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto.*;
-
 
 @Service
 @Slf4j
@@ -67,7 +68,13 @@ public class ManageApiKeyService {
                 });
     }
 
-    public Mono<ApiKeysResponseDto> getApiKeyList(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable, Boolean showVirtualKey) {
+    public Mono<ApiKeysResponseDto> getApiKeyList(@NonNull String xPagopaPnCxId,
+                                                  @NonNull List<String> xPagopaPnCxGroups,
+                                                  @Nullable Integer limit,
+                                                  @Nullable String lastEvaluatedKey,
+                                                  @Nullable String lastEvaluatedLastUpdate,
+                                                  @Nullable Boolean showVirtualKey) {
+        ApiKeyPageable pageable = toApiKeyPageable(limit, lastEvaluatedKey, lastEvaluatedLastUpdate);
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
                 .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
@@ -150,5 +157,13 @@ public class ManageApiKeyService {
             default:
                 throw new ApiKeyManagerException(INVALID_STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private ApiKeyPageable toApiKeyPageable(Integer limit, String lastEvaluatedLastKey, String lastEvaluatedLastUpdate) {
+        return ApiKeyPageable.builder()
+                .limit(limit)
+                .lastEvaluatedKey(lastEvaluatedLastKey)
+                .lastEvaluatedLastUpdate(lastEvaluatedLastUpdate)
+                .build();
     }
 }

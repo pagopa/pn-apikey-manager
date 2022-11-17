@@ -5,7 +5,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponse
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,88 +35,88 @@ public class ApiKeysController implements ApiKeysApi {
      * PUT /apikey-manager/api-keys/{id}/status : Cambia lo stato dell&#39;api key
      * servizio di cambio stato dell&#39;api key
      *
-     * @param xPagopaPnUid User Identifier (required)
-     * @param xPagopaPnCxType Customer/Receiver Type (required)
-     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
-     * @param id Identificativo univoco dell&#39;api key (required)
-     * @param status Action per il cambio stato di un&#39;api key (required)
+     * @param xPagopaPnUid      User Identifier (required)
+     * @param xPagopaPnCxType   Customer/Receiver Type (required)
+     * @param xPagopaPnCxId     Customer/Receiver Identifier (required)
+     * @param id                Identificativo univoco dell&#39;api key (required)
+     * @param status            Action per il cambio stato di un&#39;api key (required)
      * @param xPagopaPnCxGroups Customer Groups (optional)
      * @return OK (status code 200)
-     *         or Bad request (status code 400)
-     *         or Wrong state transition (i.e. enable an enabled key) (status code 409)
-     *         or Not found (status code 404)
-     *         or Internal error (status code 500)
+     * or Bad request (status code 400)
+     * or Wrong state transition (i.e. enable an enabled key) (status code 409)
+     * or Not found (status code 404)
+     * or Internal error (status code 500)
      */
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
-                                                                String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return manageApiKeyService.changeStatus(id,status,xPagopaPnUid).publishOn(scheduler).map(s -> ResponseEntity.ok().build());
+                                                         String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        return manageApiKeyService.changeStatus(id, status, xPagopaPnUid)
+                .publishOn(scheduler)
+                .map(s -> ResponseEntity.ok().build());
     }
 
     /**
      * DELETE /apikey-manager/api-keys/{id} : Rimozione api key
      * servizio di rimozione dell&#39;api key
      *
-     * @param xPagopaPnUid User Identifier (required)
-     * @param xPagopaPnCxType Customer/Receiver Type (required)
-     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
-     * @param id Identificativo univoco dell&#39;api key (required)
+     * @param xPagopaPnUid      User Identifier (required)
+     * @param xPagopaPnCxType   Customer/Receiver Type (required)
+     * @param xPagopaPnCxId     Customer/Receiver Identifier (required)
+     * @param id                Identificativo univoco dell&#39;api key (required)
      * @param xPagopaPnCxGroups Customer Groups (optional)
      * @return OK (status code 200)
-     *         or Bad request (status code 400)
-     *         or Wrong state transition (i.e. delete an enabled key) (status code 409)
-     *         or Not found (status code 404)
-     *         or Internal error (status code 500)
+     * or Bad request (status code 400)
+     * or Wrong state transition (i.e. delete an enabled key) (status code 409)
+     * or Not found (status code 404)
+     * or Internal error (status code 500)
      */
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
-                                                      String id, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
-        return manageApiKeyService.deleteApiKey(id).publishOn(scheduler).map(s -> ResponseEntity.ok().build());
+                                                    String id, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        return manageApiKeyService.deleteApiKey(id)
+                .publishOn(scheduler)
+                .map(s -> ResponseEntity.ok().build());
     }
 
     /**
      * GET /apikey-manager/api-keys : Ricerca api keys
      * servizio di consultazione della lista delle api keys
      *
-     * @param xPagopaPnUid User Identifier (required)
-     * @param xPagopaPnCxType Customer/Receiver Type (required)
-     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnUid      User Identifier (required)
+     * @param xPagopaPnCxType   Customer/Receiver Type (required)
+     * @param xPagopaPnCxId     Customer/Receiver Identifier (required)
      * @param xPagopaPnCxGroups Customer Groups (optional)
-     * @param limit  (optional)
-     * @param lastKey  (optional)
-     * @param lastUpdate  (optional)
-     * @param showVirtualKey  (optional, default to false)
+     * @param limit             (optional)
+     * @param lastKey           (optional)
+     * @param lastUpdate        (optional)
+     * @param showVirtualKey    (optional, default to false)
      * @return OK (status code 200)
-     *         or Bad request (status code 400)
-     *         or Internal error (status code 500)
+     * or Bad request (status code 400)
+     * or Internal error (status code 500)
      */
     @Override
     public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey, final ServerWebExchange exchange) {
-        ApiKeyPageable pageable = ApiKeyPageable.builder()
-                .limit(limit)
-                .lastEvaluatedKey(lastKey)
-                .lastEvaluatedLastUpdate(lastUpdate)
-                .build();
-        return manageApiKeyService.getApiKeyList(xPagopaPnCxId, xPagopaPnCxGroups, pageable, showVirtualKey)
-                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos)).publishOn(scheduler);
+        return manageApiKeyService.getApiKeyList(xPagopaPnCxId, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey)
+                .map(apiKeyRowDtos -> ResponseEntity.ok().body(apiKeyRowDtos))
+                .publishOn(scheduler);
     }
 
     /**
      * POST /apikey-manager/api-keys : Creazione api key
      * servizio di creazione di un&#39;api key
      *
-     * @param xPagopaPnUid User Identifier (required)
-     * @param xPagopaPnCxType Customer/Receiver Type (required)
-     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
-     * @param requestNewApiKeyDto  (required)
-     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @param xPagopaPnUid        User Identifier (required)
+     * @param xPagopaPnCxType     Customer/Receiver Type (required)
+     * @param xPagopaPnCxId       Customer/Receiver Identifier (required)
+     * @param requestNewApiKeyDto (required)
+     * @param xPagopaPnCxGroups   Customer Groups (optional)
      * @return OK (status code 200)
-     *         or Bad request (status code 400)
-     *         or Internal error (status code 500)
+     * or Bad request (status code 400)
+     * or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<ResponseNewApiKeyDto>>newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return createApiKeyService.createApiKey(xPagopaPnUid,xPagopaPnCxType,xPagopaPnCxId,requestNewApiKeyDto, xPagopaPnCxGroups)
+    public Mono<ResponseEntity<ResponseNewApiKeyDto>> newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        return createApiKeyService.createApiKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, requestNewApiKeyDto, xPagopaPnCxGroups)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }

@@ -12,7 +12,6 @@ import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -57,10 +56,16 @@ public class AggregationService {
     /**
      * Ottiene la lista degli aggregati, disponibile la paginazione e il filtro per name.
      * @param name filtro per nome (opzionale)
-     * @param pageable informazioni per la paginazione
+     * @param limit parametro per la paginazione
+     * @param lastEvaluatedId parametro per la paginazione
+     * @param lastEvaluatedName parametro per la paginazione
      * @return Lista degli aggregati
      */
-    public Mono<AggregatesListResponseDto> getAggregation(@Nullable String name, @NonNull AggregatePageable pageable) {
+    public Mono<AggregatesListResponseDto> getAggregation(@Nullable String name,
+                                                          @Nullable Integer limit,
+                                                          @Nullable String lastEvaluatedId,
+                                                          @Nullable String lastEvaluatedName) {
+        AggregatePageable pageable = toAggregatePageable(limit, lastEvaluatedId, lastEvaluatedName);
         log.debug("get aggregation - name: {} - pageable: {}", name, pageable);
         if (StringUtils.hasText(name)) {
             return aggregateRepository.findByName(name, pageable)
@@ -252,6 +257,14 @@ public class AggregationService {
         SaveAggregateResponseDto saveAggregateResponseDto = new SaveAggregateResponseDto();
         saveAggregateResponseDto.setId(aggregateId);
         return Mono.just(saveAggregateResponseDto);
+    }
+
+    private AggregatePageable toAggregatePageable(Integer limit, String lastEvaluatedId, String lastEvaluatedName) {
+        return AggregatePageable.builder()
+                .limit(limit)
+                .lastEvaluatedId(lastEvaluatedId)
+                .lastEvaluatedName(lastEvaluatedName)
+                .build();
     }
 
 }
