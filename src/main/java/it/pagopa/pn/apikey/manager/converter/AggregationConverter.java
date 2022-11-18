@@ -83,7 +83,7 @@ public class AggregationConverter {
             dto.setLastUpdate(Date.from(aggregation.getLastUpdate().toInstant(ZoneOffset.UTC)));
         }
         if (aggregation.getUsagePlanId() != null && usagePlans.containsKey(aggregation.getUsagePlanId())) {
-            dto.setUsagePlan(usagePlans.get(aggregation.getUsagePlanId()).getName());
+            dto.setUsagePlan(usagePlans.get(aggregation.getUsagePlanId()).getDescription());
         }
         return dto;
     }

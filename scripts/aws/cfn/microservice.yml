@@ -116,7 +116,7 @@ Resources:
           Value: pn-apikey-manager
         - Key: size
           Value: S
-      Description: small usage plan
+      Description: Small
       Throttle:
         BurstLimit: 1500
         RateLimit: 5000
@@ -133,7 +133,7 @@ Resources:
           Value: pn-apikey-manager
         - Key: size
           Value: M
-      Description: medium usage plan
+      Description: Medium
       Throttle:
         BurstLimit: 3000
         RateLimit: 10000
@@ -150,7 +150,7 @@ Resources:
           Value: pn-apikey-manager
         - Key: size
           Value: L
-      Description: large usage plan
+      Description: Large
       Throttle:
         BurstLimit: 6000
         RateLimit: 20000

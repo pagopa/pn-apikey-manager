@@ -544,6 +544,8 @@ components:
           description: id dell'istanza di usagePlan collegata all'aggregato
         name:
           type: string
+        description:
+          type: string
         quota:
           type: integer
         rate:

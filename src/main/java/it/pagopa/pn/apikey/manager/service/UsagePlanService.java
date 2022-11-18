@@ -61,6 +61,7 @@ public class UsagePlanService {
         UsagePlanDetailDto dto = new UsagePlanDetailDto();
         dto.setId(usagePlan.id());
         dto.setName(usagePlan.name());
+        dto.setDescription(usagePlan.description());
         if (usagePlan.throttle() != null) {
             dto.setBurst(usagePlan.throttle().burstLimit());
             dto.setRate(usagePlan.throttle().rateLimit());
@@ -75,6 +76,7 @@ public class UsagePlanService {
         UsagePlanDetailDto dto = new UsagePlanDetailDto();
         dto.setId(usagePlan.id());
         dto.setName(usagePlan.name());
+        dto.setDescription(usagePlan.description());
         if (usagePlan.throttle() != null) {
             dto.setBurst(usagePlan.throttle().burstLimit());
             dto.setRate(usagePlan.throttle().rateLimit());
