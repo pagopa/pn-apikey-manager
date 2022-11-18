@@ -8,7 +8,7 @@ tags:
     description: >-
       Invocazioni utilizzabili dai mittenti per la gestione degli aggregati
 paths:
-  "/api-key-backoffice/aggregate":
+  "/api-key-bo/aggregate":
     get:
       summary: Ricerca aggregati
       description: >-
@@ -94,7 +94,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  "/api-key-backoffice/aggregate/{id}/associated-pa":
+  "/api-key-bo/aggregate/{id}/associated-pa":
     get:
       summary: Lista PA associate
       description: >-
@@ -130,7 +130,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-backoffice/aggregate/{id}":
+  "/api-key-bo/aggregate/{id}":
     get:
       summary: Dettaglio Aggregato
       description: >-
@@ -235,7 +235,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-backoffice/aggregate/{id}/add-pa":
+  "/api-key-bo/aggregate/{id}/add-pa":
     post:
       summary: Associazione PA - Aggregato
       description: >-
@@ -277,7 +277,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-backoffice/aggregate/{id}/move-pa":
+  "/api-key-bo/aggregate/{id}/move-pa":
     post:
       summary: Spostamento PA
       description: >-
@@ -319,7 +319,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-backoffice/aggregate/associable-pa":
+  "/api-key-bo/aggregate/associable-pa":
     get:
       summary: Lista PA associabili
       description: >-
@@ -359,7 +359,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-backoffice/usage-plan":
+  "/api-key-bo/usage-plan":
     get:
       summary: Lista usagePlan
       description: >-

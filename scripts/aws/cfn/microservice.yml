@@ -69,11 +69,15 @@ Parameters:
 
   UsagePlanApiId:
     Type: String
-    Description: 'ApiId for new AWS usagePlan'
+    Description: 'ApiId for AWS Usage Plan'
 
   UsagePlanStage:
     Type: String
-    Description: 'stage for new AWS usagePlan'
+    Description: 'Stage for AWS Usage Plan'
+
+  UsagePlanDefault:
+    Type: String
+    Description: 'Id Usage Plan default'
 
   CorsAllowedDomains:
     Type: String
@@ -105,58 +109,6 @@ Parameters:
 
 Resources:
 
-  UsagePlanSmall:
-    Type: 'AWS::ApiGateway::UsagePlan'
-    Properties:
-      ApiStages:
-        - ApiId: !Ref UsagePlanApiId
-          Stage: !Ref UsagePlanStage
-      Tags:
-        - Key: scope
-          Value: pn-apikey-manager
-        - Key: size
-          Value: S
-      Description: Small
-      Throttle:
-        BurstLimit: 1500
-        RateLimit: 5000
-      UsagePlanName: pn_usageplan_small
-
-  UsagePlanMedium:
-    Type: 'AWS::ApiGateway::UsagePlan'
-    Properties:
-      ApiStages:
-        - ApiId: !Ref UsagePlanApiId
-          Stage: !Ref UsagePlanStage
-      Tags:
-        - Key: scope
-          Value: pn-apikey-manager
-        - Key: size
-          Value: M
-      Description: Medium
-      Throttle:
-        BurstLimit: 3000
-        RateLimit: 10000
-      UsagePlanName: pn_usageplan_medium
-
-  UsagePlanLarge:
-    Type: 'AWS::ApiGateway::UsagePlan'
-    Properties:
-      ApiStages:
-        - ApiId: !Ref UsagePlanApiId
-          Stage: !Ref UsagePlanStage
-      Tags:
-        - Key: scope
-          Value: pn-apikey-manager
-        - Key: size
-          Value: L
-      Description: Large
-      Throttle:
-        BurstLimit: 6000
-        RateLimit: 20000
-      UsagePlanName: pn_usageplan_large
-
-
   # PN-National-Registry microservice
   ApikeyManagerMicroservice:
     Type: AWS::CloudFormation::Stack
@@ -177,8 +129,8 @@ Resources:
         ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry7: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        MappedPaths: '/api-key-self/*,/api-key-backoffice/*'
+        ContainerEnvEntry6: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
+        MappedPaths: '/api-key-self/*,/api-key-bo/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
@@ -248,7 +200,7 @@ Resources:
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
-        ServiceApiPath: 'api-key-backoffice'
+        ServiceApiPath: 'api-key-bo'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
