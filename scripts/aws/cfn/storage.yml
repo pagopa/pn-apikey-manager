@@ -89,6 +89,8 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "x-pagopa-pn-cx-id"
           AttributeType: "S"
+        - AttributeName: "aggregateId"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "x-pagopa-pn-cx-id"
           KeyType: "HASH"
