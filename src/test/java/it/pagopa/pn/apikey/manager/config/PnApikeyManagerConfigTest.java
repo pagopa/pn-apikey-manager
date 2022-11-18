@@ -3,7 +3,6 @@ package it.pagopa.pn.apikey.manager.config;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -23,19 +22,6 @@ class PnApikeyManagerConfigTest {
     void testCanEqual() {
         assertFalse(pnApikeyManagerConfig.canEqual("Other"));
         assertTrue(pnApikeyManagerConfig.canEqual(pnApikeyManagerConfig));
-    }
-
-    /**
-     * Methods under test:
-     *
-     * <ul>
-     *   <li>default or parameterless constructor of {@link PnApikeyManagerConfig}
-     *   <li>{@link PnApikeyManagerConfig#toString()}
-     * </ul>
-     */
-    @Test
-    void testConstructor() {
-        assertEquals("PnApikeyManagerConfig(usageplanApiId=null, usageplanKeyType=null, usageplanQuota=null, usageplanThrottle=null, usageplanStage=null, usageplanBurstLimit=null)", (new PnApikeyManagerConfig()).toString());
     }
 
     /**

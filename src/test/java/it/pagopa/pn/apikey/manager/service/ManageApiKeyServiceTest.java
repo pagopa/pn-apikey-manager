@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
@@ -48,6 +49,9 @@ class ManageApiKeyServiceTest {
 
     @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
+
+    @MockBean
+    private ExternalRegistriesClient externalRegistriesClient;
 
     /**
      * Method under test: {@link ManageApiKeyService#changeStatus(String, String, String)}
@@ -173,10 +177,14 @@ class ManageApiKeyServiceTest {
         apiKeysResponseDto.setLastKey(lastKey);
         apiKeysResponseDto.setLastUpdate(lastUpdate);
 
-        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), anyInt(), anyString(), anyString()))
+        when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), any()))
                 .thenReturn(Mono.just(page));
+        when(apiKeyRepository.countWithFilters(anyString(), anyList()))
+                .thenReturn(Mono.just(1));
         when(apiKeyConverter.convertResponsetoDto(any(),anyBoolean())).thenReturn(apiKeysResponseDto);
-        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey)).expectNext(apiKeysResponseDto).verifyComplete();
+        StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey))
+                .expectNext(apiKeysResponseDto)
+                .verifyComplete();
     }
 
 }

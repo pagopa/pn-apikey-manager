@@ -8,6 +8,7 @@ import org.reactivestreams.Subscriber;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -37,7 +39,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void delete(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         apiKeyModel.setId("42");
@@ -52,7 +54,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void save(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
@@ -70,7 +72,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void findById(){
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
 
         ApiKeyModel apiKeyModel= new ApiKeyModel();
         apiKeyModel.setId("id");
@@ -85,7 +87,7 @@ class ApiKeyRepositoryImplTest {
     @Test
     void getAllWithFilter() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
@@ -98,7 +100,25 @@ class ApiKeyRepositoryImplTest {
         Mockito.when(dynamoDbAsyncTable.index("")).thenReturn(index);
         Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
-        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId", list, 10, "id", ""))
+        ApiKeyPageable pageable = ApiKeyPageable.builder()
+                .limit(10)
+                .lastEvaluatedKey("id")
+                .lastEvaluatedLastUpdate("")
+                .build();
+        StepVerifier.create(apiKeyRepository.getAllWithFilter("paId", list, pageable))
                 .expectNext(Page.create(apiKeyModelList));
+    }
+
+
+    @Test
+    void testCount(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        StepVerifier.create(apiKeyRepository.countWithFilters("id",new ArrayList<>())).expectNext(0);
     }
 }

@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.converter;
 
-import it.pagopa.pn.apikey.manager.entity.ApiKeyHistory;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,16 +28,15 @@ class ApiKeyConverterTest {
     void testConvertResponsetoDto() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         List<String> groups = new ArrayList<>();
-        List<ApiKeyHistory> apiKeyHistories = new ArrayList<>();
-        ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
-        apiKeyHistory.setChangeByDenomination("CREATE");
-        apiKeyHistory.setStatus("CREATED");
-        apiKeyHistory.setDate(LocalDateTime.now());
-        apiKeyHistories.add(apiKeyHistory);
+        List<ApiKeyHistoryModel> apiKeyHistories = new ArrayList<>();
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setChangeByDenomination("CREATE");
+        apiKeyHistoryModel.setStatus("CREATED");
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistories.add(apiKeyHistoryModel);
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
-        apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
         apiKeyModel.setLastUpdate(LocalDateTime.now());
         apiKeyModel.setVirtualKey("virtualKey");
@@ -64,15 +63,14 @@ class ApiKeyConverterTest {
     void testConvertResponsetoDtoExc2() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         List<String> groups = new ArrayList<>();
-        List<ApiKeyHistory> apiKeyHistories = new ArrayList<>();
-        ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
-        apiKeyHistory.setChangeByDenomination("CREATE");
-        apiKeyHistory.setStatus("CREATED");
-        apiKeyHistories.add(apiKeyHistory);
+        List<ApiKeyHistoryModel> apiKeyHistories = new ArrayList<>();
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setChangeByDenomination("CREATE");
+        apiKeyHistoryModel.setStatus("CREATED");
+        apiKeyHistories.add(apiKeyHistoryModel);
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
-        apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
         apiKeyModel.setVirtualKey("virtualKey");
         apiKeyModel.setGroups(groups);
