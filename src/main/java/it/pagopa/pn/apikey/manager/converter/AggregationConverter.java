@@ -44,6 +44,7 @@ public class AggregationConverter {
         AggregateResponseDto dto = new AggregateResponseDto();
         dto.setId(aggregation.getAggregateId());
         dto.setName(aggregation.getName());
+        dto.setDescription(aggregation.getDescription());
         dto.setUsagePlan(usagePlanDto);
         if (aggregation.getCreatedAt() != null) {
             dto.setCreatedAt(Date.from(aggregation.getCreatedAt().toInstant(ZoneOffset.UTC)));
@@ -76,6 +77,7 @@ public class AggregationConverter {
         AggregateRowDto dto = new AggregateRowDto();
         dto.setId(aggregation.getAggregateId());
         dto.setName(aggregation.getName());
+        dto.setDescription(aggregation.getDescription());
         if (aggregation.getCreatedAt() != null) {
             dto.setCreatedAt(Date.from(aggregation.getCreatedAt().toInstant(ZoneOffset.UTC)));
         }

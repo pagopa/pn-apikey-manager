@@ -496,10 +496,13 @@ components:
       properties:
         id:
           type: string
-          description: Id dell'api key
+          description: Id dell'aggregato
         name:
           type: string
-          description: Nome dell'api key
+          description: Nome dell'aggregato
+        description:
+          type: string
+          description: Descrizione dell'aggregato
         usagePlan:
           type: string
           description: size dello usage plan al quale è collegato
@@ -522,10 +525,13 @@ components:
       properties:
         id:
           type: string
-          description: Id dell'api key
+          description: Id dell'aggregato
         name:
           type: string
-          description: Nome dell'api key
+          description: Nome dell'aggregato
+        description:
+          type: string
+          description: Descrizione dell'aggregato
         usagePlan:
           $ref: '#/components/schemas/UsagePlanDetail'
         createdAt:
