@@ -21,14 +21,6 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
-  UsagePlanApiId:
-    Type: String
-    Description: 'ApiId for new AWS usagePlan'
-
-  UsagePlanStage:
-    Type: String
-    Description: 'stage for new AWS usagePlan'
-
 
 Resources:
   # Dynamo Table
@@ -114,9 +106,6 @@ Resources:
   UsagePlanSmall:
     Type: 'AWS::ApiGateway::UsagePlan'
     Properties:
-      ApiStages:
-        - ApiId: !Ref UsagePlanApiId
-          Stage: !Ref UsagePlanStage
       Tags:
         - Key: scope
           Value: pn-apikey-manager
@@ -131,9 +120,6 @@ Resources:
   UsagePlanMedium:
     Type: 'AWS::ApiGateway::UsagePlan'
     Properties:
-      ApiStages:
-        - ApiId: !Ref UsagePlanApiId
-          Stage: !Ref UsagePlanStage
       Tags:
         - Key: scope
           Value: pn-apikey-manager
@@ -148,9 +134,6 @@ Resources:
   UsagePlanLarge:
     Type: 'AWS::ApiGateway::UsagePlan'
     Properties:
-      ApiStages:
-        - ApiId: !Ref UsagePlanApiId
-          Stage: !Ref UsagePlanStage
       Tags:
         - Key: scope
           Value: pn-apikey-manager
