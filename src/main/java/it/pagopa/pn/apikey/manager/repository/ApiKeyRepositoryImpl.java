@@ -118,7 +118,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
     private String buildExpressionGroupFilter(List<String> xPagopaPnCxGroups, Map<String, AttributeValue> expressionValues) {
         StringBuilder expressionGroup = new StringBuilder();
-        if (!xPagopaPnCxGroups.isEmpty()) {
+        if (xPagopaPnCxGroups != null && !xPagopaPnCxGroups.isEmpty()) {
             for (int i = 0; i < xPagopaPnCxGroups.size(); i++) {
                 AttributeValue pnCxGroup = AttributeValue.builder().s(xPagopaPnCxGroups.get(i)).build();
                 expressionValues.put(":group" + i, pnCxGroup);

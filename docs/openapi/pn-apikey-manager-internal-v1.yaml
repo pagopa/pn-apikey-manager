@@ -199,6 +199,7 @@ components:
       $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'      # NO EXTERNAL
     cxGroupsAuthFleet:                                                     # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'  # NO EXTERNAL
+      required: false
     uidAuthFleet:                                                          # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'       # NO EXTERNAL
 

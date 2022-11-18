@@ -75,6 +75,9 @@ public class CreateApiKeyService {
     }
 
     private List<String> checkGroups(List<String> groups, List<String> xPagopaPnCxGroups) {
+        if (xPagopaPnCxGroups == null) {
+            xPagopaPnCxGroups = new ArrayList<>();
+        }
         List<String> groupsToAdd = new ArrayList<>();
         if (!groups.isEmpty() && (new HashSet<>(xPagopaPnCxGroups).containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
             groupsToAdd.addAll(groups);
