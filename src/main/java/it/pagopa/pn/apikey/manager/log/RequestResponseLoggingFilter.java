@@ -26,9 +26,15 @@ import java.nio.charset.StandardCharsets;
 public class RequestResponseLoggingFilter implements WebFilter {
 
     @Override
-    public @NotNull Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    public @NotNull Mono<Void> filter(ServerWebExchange exchange, @NotNull WebFilterChain chain) {
         ServerHttpRequest httpRequest = exchange.getRequest();
         final String httpUrl = httpRequest.getURI().toString();
+
+        if (httpRequest.getURI().getPath().equalsIgnoreCase("/actuator/health")) {
+            log.trace("request to health-check actuator");
+            return chain.filter(exchange);
+        }
+
         Long startTime = System.currentTimeMillis();
 
         ServerHttpRequestDecorator loggingServerHttpRequestDecorator = new ServerHttpRequestDecorator(exchange.getRequest()) {
