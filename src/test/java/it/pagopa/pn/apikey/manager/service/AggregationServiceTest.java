@@ -269,7 +269,7 @@ class AggregationServiceTest {
     }
 
     @Test
-    void testUpdateAggregate(){
+    void testUpdateAggregate() {
         AggregateRequestDto dto = new AggregateRequestDto();
         dto.setName("name");
         dto.setDescription("description");
@@ -285,9 +285,9 @@ class AggregationServiceTest {
         CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().build();
         when(aggregateRepository.saveAggregation(model)).thenReturn(Mono.just(model));
         when(aggregateRepository.findById("id")).thenReturn(Mono.just(model));
-        when(apiGatewayService.moveApiKeyToNewUsagePlan(model,dto))
+        when(apiGatewayService.moveApiKeyToNewUsagePlan(new ApiKeyAggregateModel(), model))
                 .thenReturn(Mono.just(createUsagePlanKeyResponse));
-        StepVerifier.create(aggregationService.updateAggregate("id",dto))
+        StepVerifier.create(aggregationService.updateAggregate("id", dto))
                 .expectNext(saveAggregateResponseDto)
                 .verifyComplete();
     }

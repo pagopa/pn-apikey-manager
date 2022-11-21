@@ -2,8 +2,6 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.SaveAggregateResponseDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,11 +32,6 @@ class ApiGatewayServiceTest {
 
     @Test
     void moveApiKeyToNewUsagePlan() {
-        AggregateRequestDto dto = new AggregateRequestDto();
-        dto.setName("name");
-        dto.setDescription("description");
-        dto.setUsagePlanId("usagePlanId");
-
         ApiKeyAggregateModel model = new ApiKeyAggregateModel();
         model.setAggregateId("id");
 
@@ -53,7 +46,7 @@ class ApiGatewayServiceTest {
                 .thenReturn(completableFuture2);
         CreateUsagePlanKeyResponse createUsagePlanKeyResponse = CreateUsagePlanKeyResponse.builder().build();
 
-        StepVerifier.create(apiGatewayService.moveApiKeyToNewUsagePlan(model,dto))
+        StepVerifier.create(apiGatewayService.moveApiKeyToNewUsagePlan(new ApiKeyAggregateModel(), model))
                 .expectNext(createUsagePlanKeyResponse).verifyComplete();
     }
 

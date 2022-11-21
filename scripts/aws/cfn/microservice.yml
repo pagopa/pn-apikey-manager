@@ -155,7 +155,14 @@ Resources:
             Resource:
               - !Ref ApiGatewayApikeysArn
               - !Ref ApiGatewayUsagePlanArn
+              - !Sub '${ApiGatewayUsagePlanArn}/*'
               - !Sub '${ApiGatewayUsagePlanArn}/*/keys'
+          - Effect: Allow
+            Action:
+              - apigateway:DELETE
+            Resource:
+              - !Sub '${ApiGatewayApikeysArn}/*'
+              - !Sub '${ApiGatewayUsagePlanArn}/*/keys/*'
           - Effect: Allow
             Action:
               - dynamodb:BatchGetItem
@@ -173,6 +180,8 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Sub '${AggregatesTableArn}/index/*'
+              - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
 
   ApiKeyManagerApiGateway:
