@@ -241,9 +241,9 @@ public class AggregationService {
             aggregate.setUsagePlanId(aggregateRequestDto.getUsagePlanId());
         }
         return aggregateRepository.saveAggregation(aggregate)
-                .flatMap(apiKeyAggregateModel1 -> {
+                .flatMap(model -> {
                     if (isUsagePlanChanged) {
-                        return apiGatewayService.moveApiKeyToNewUsagePlan(aggregate, aggregateRequestDto)
+                        return apiGatewayService.moveApiKeyToNewUsagePlan(oldApiKeyAggregate, aggregate)
                                 .onErrorResume(e -> aggregateRepository.saveAggregation(oldApiKeyAggregate)
                                         .doOnNext(a -> log.info("rollback aggregate {} done", a.getAggregateId()))
                                         .then(Mono.error(e)))

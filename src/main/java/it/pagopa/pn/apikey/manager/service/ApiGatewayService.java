@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateRequestDto;
 import it.pagopa.pn.apikey.manager.utils.MaskDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,15 +58,16 @@ public class ApiGatewayService {
                 .doOnNext(response -> log.info("Create AWS UsagePlan-ApiKey response: {}", MaskDataUtils.maskValue(response.toString())));
     }
 
-    public Mono<CreateUsagePlanKeyResponse> moveApiKeyToNewUsagePlan(ApiKeyAggregateModel apiKeyAggregateModel, AggregateRequestDto aggregateRequestDto) {
+    public Mono<CreateUsagePlanKeyResponse> moveApiKeyToNewUsagePlan(ApiKeyAggregateModel oldApiKeyAggregate,
+                                                                     ApiKeyAggregateModel newApiKeyAggregate) {
         DeleteUsagePlanKeyRequest deleteUsagePlanKeyRequest = DeleteUsagePlanKeyRequest.builder()
-                .usagePlanId(apiKeyAggregateModel.getUsagePlanId())
-                .keyId(apiKeyAggregateModel.getApiKeyId())
+                .usagePlanId(oldApiKeyAggregate.getUsagePlanId())
+                .keyId(newApiKeyAggregate.getApiKeyId())
                 .build();
-        log.debug("DeleteUsagePlanKeyRequest for usagePlanId: {}, ApiKeyId: {}", apiKeyAggregateModel.getUsagePlanId(), apiKeyAggregateModel.getApiKeyId());
+        log.debug("DeleteUsagePlanKeyRequest for usagePlanId: {}, ApiKeyId: {}", oldApiKeyAggregate.getUsagePlanId(), newApiKeyAggregate.getApiKeyId());
         return Mono.fromFuture(apiGatewayAsyncClient.deleteUsagePlanKey(deleteUsagePlanKeyRequest))
                 .doOnNext(response -> log.info("Delete AWS UsagePlan-ApiKey response: {}", response))
-                .flatMap(response -> addUsagePlanToApiKey(aggregateRequestDto.getUsagePlanId(), apiKeyAggregateModel.getApiKeyId()));
+                .flatMap(response -> addUsagePlanToApiKey(newApiKeyAggregate.getUsagePlanId(), newApiKeyAggregate.getApiKeyId()));
     }
 
     private CreateApiKeyRequest constructApiKeyRequest(String aggregateName) {
