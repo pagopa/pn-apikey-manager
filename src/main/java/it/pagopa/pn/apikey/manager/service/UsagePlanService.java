@@ -29,16 +29,18 @@ public class UsagePlanService {
 
     public Mono<UsagePlanResponseDto> getUsagePlanList() {
         return Mono.fromFuture(apiGatewayAsyncClient.getUsagePlans())
+                .doOnError(e -> log.warn("can not get UsagePlan list", e))
                 .doOnNext(response -> log.info("usage plan size: {}", response.items().size()))
                 .map(response -> createUsagePlanResponseDto(response.items()));
     }
 
     public Mono<UsagePlanDetailDto> getUsagePlan(String usagePlanId) {
-        log.debug("get usage plan with id {}", usagePlanId);
         GetUsagePlanRequest usagePlanRequest = GetUsagePlanRequest.builder()
                 .usagePlanId(usagePlanId)
                 .build();
+        log.debug("get Usage Plan request: {}", usagePlanRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.getUsagePlan(usagePlanRequest))
+                .doOnError(e -> log.warn("can not get UsagePlan {}", usagePlanId, e))
                 .doOnNext(response -> log.info("usage plan: {}", response))
                 .map(this::convertToUsagePlanDto);
     }

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.KEY_DOES_NOT_EXISTS;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_DOES_NOT_EXISTS;
 
 @Component
 public class ApiKeyRepositoryImpl implements ApiKeyRepository {
@@ -52,7 +52,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .build();
 
         return Mono.fromFuture(table.getItem(key))
-                .switchIfEmpty(Mono.error(new ApiKeyManagerException(KEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(APIKEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
     }
 
     @Override

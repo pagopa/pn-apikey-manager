@@ -36,7 +36,7 @@ public class ManageApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter){
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
     }
@@ -52,7 +52,7 @@ public class ManageApiKeyService {
                         return saveAndCheckIfRotate(apiKeyModel, oldApiKey, status, xPagopaPnUid)
                                 .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
                     } else {
-                        return Mono.error(new ApiKeyManagerException(String.format(INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
+                        return Mono.error(new ApiKeyManagerException(String.format(APIKEY_INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
                     }
                 });
     }
@@ -63,13 +63,13 @@ public class ManageApiKeyService {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
                         return apiKeyRepository.delete(id);
                     } else {
-                        return Mono.error(new ApiKeyManagerException(String.format(CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
+                        return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
                     }
                 });
     }
 
     public Mono<ApiKeysResponseDto> getApiKeyList(@NonNull String xPagopaPnCxId,
-                                                  @NonNull List<String> xPagopaPnCxGroups,
+                                                  @Nullable List<String> xPagopaPnCxGroups,
                                                   @Nullable Integer limit,
                                                   @Nullable String lastEvaluatedKey,
                                                   @Nullable String lastEvaluatedLastUpdate,
@@ -148,14 +148,15 @@ public class ManageApiKeyService {
             case ENABLE:
                 return ApiKeyStatusDto.ENABLED;
             case CREATE:
-                if (history)
+                if (history) {
                     return ApiKeyStatusDto.CREATED;
-                else
+                } else {
                     return ApiKeyStatusDto.ENABLED;
+                }
             case ROTATE:
                 return ApiKeyStatusDto.ROTATED;
             default:
-                throw new ApiKeyManagerException(INVALID_STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
