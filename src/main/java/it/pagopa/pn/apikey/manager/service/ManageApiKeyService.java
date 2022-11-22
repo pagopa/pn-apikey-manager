@@ -1,11 +1,13 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,8 @@ public class ManageApiKeyService {
     private static final String CREATE = "CREATE";
     private static final String DELETE = "DELETE";
 
+    private static final String CX_TYPE_NOT_ALLOWED = "CxTypeAuthFleet {} not allowed";
+
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
 
@@ -41,7 +45,11 @@ public class ManageApiKeyService {
         this.apiKeyConverter = apiKeyConverter;
     }
 
-    public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid) {
+    public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
+        if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
+            log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
+        }
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, status)) {
@@ -57,7 +65,11 @@ public class ManageApiKeyService {
                 });
     }
 
-    public Mono<String> deleteApiKey(String id) {
+    public Mono<String> deleteApiKey(String id, CxTypeAuthFleetDto xPagopaPnCxType) {
+        if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
+            log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
+        }
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
@@ -73,7 +85,12 @@ public class ManageApiKeyService {
                                                   @Nullable Integer limit,
                                                   @Nullable String lastEvaluatedKey,
                                                   @Nullable String lastEvaluatedLastUpdate,
-                                                  @Nullable Boolean showVirtualKey) {
+                                                  @Nullable Boolean showVirtualKey,
+                                                  @NonNull CxTypeAuthFleetDto xPagopaPnCxType) {
+        if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
+            log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
+        }
         ApiKeyPageable pageable = toApiKeyPageable(limit, lastEvaluatedKey, lastEvaluatedLastUpdate);
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))

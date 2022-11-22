@@ -1,7 +1,10 @@
 package it.pagopa.pn.apikey.manager.constant;
 
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 @NoArgsConstructor(access = AccessLevel.NONE)
 public final class ApiKeyConstant {
@@ -12,4 +15,6 @@ public final class ApiKeyConstant {
     public static final String VIRTUAL_KEY = "virtualKey";
     public static final String GSI_VK = "virtualKey-id-index";
     public static final String GSI_PA = "paId-lastUpdate-index";
+
+    public static final Set<CxTypeAuthFleetDto> ALLOWED_CX_TYPE = Set.of(CxTypeAuthFleetDto.PA);
 }
