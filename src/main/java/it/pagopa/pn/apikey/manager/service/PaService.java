@@ -46,6 +46,7 @@ public class PaService {
 
     public Mono<AssociablePaResponseDto> getAssociablePa(String name) {
         return externalRegistriesClient.getAllPa(name)
+                .doOnError(e -> log.warn("can not get PA from external registries with name {}", name, e))
                 .doOnNext(paDetailDtos -> log.info("list of onboarded Pa size: {}", paDetailDtos.size()))
                 .flatMap(this::filterForResponse);
     }

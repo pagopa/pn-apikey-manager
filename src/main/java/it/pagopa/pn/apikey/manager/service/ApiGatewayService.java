@@ -30,6 +30,7 @@ public class ApiGatewayService {
         CreateApiKeyRequest createApiKeyRequest = constructApiKeyRequest(aggregateName);
         log.debug("create AWS Api Key request: {}", createApiKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.createApiKey(createApiKeyRequest))
+                .doOnError(e -> log.warn("can not create AWS Api Key for aggregate {}", aggregateName, e))
                 .doOnNext(response -> log.info("Create AWS Api Key response: {}", response));
     }
 
@@ -42,6 +43,7 @@ public class ApiGatewayService {
         DeleteApiKeyRequest deleteApiKeyRequest = DeleteApiKeyRequest.builder().apiKey(apiKeyId).build();
         log.debug("delete AWS Api Key {} request: {}", apiKeyId, deleteApiKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.deleteApiKey(deleteApiKeyRequest))
+                .doOnError(e -> log.warn("can not delete AWS Api Key {}", apiKeyId, e))
                 .doOnNext(response -> log.info("Delete AWS Api Key {} response: {}", apiKeyId, response));
     }
 
@@ -55,6 +57,7 @@ public class ApiGatewayService {
         CreateUsagePlanKeyRequest createUsagePlanKeyRequest = constructUsagePlanKeyRequest(usagePlanId, apiKeyId);
         log.debug("create AWS UsagePlan-ApiKey request: {}", createUsagePlanKeyRequest);
         return Mono.fromFuture(apiGatewayAsyncClient.createUsagePlanKey(createUsagePlanKeyRequest))
+                .doOnError(e -> log.warn("can not add UsagePlan {} to ApiKey {}", usagePlanId, apiKeyId, e))
                 .doOnNext(response -> log.info("Create AWS UsagePlan-ApiKey response: {}", MaskDataUtils.maskValue(response.toString())));
     }
 
@@ -62,10 +65,11 @@ public class ApiGatewayService {
                                                                      ApiKeyAggregateModel newApiKeyAggregate) {
         DeleteUsagePlanKeyRequest deleteUsagePlanKeyRequest = DeleteUsagePlanKeyRequest.builder()
                 .usagePlanId(oldApiKeyAggregate.getUsagePlanId())
-                .keyId(newApiKeyAggregate.getApiKeyId())
+                .keyId(oldApiKeyAggregate.getApiKeyId())
                 .build();
-        log.debug("DeleteUsagePlanKeyRequest for usagePlanId: {}, ApiKeyId: {}", oldApiKeyAggregate.getUsagePlanId(), newApiKeyAggregate.getApiKeyId());
+        log.debug("DeleteUsagePlanKeyRequest for usagePlanId: {}, ApiKeyId: {}", oldApiKeyAggregate.getUsagePlanId(), oldApiKeyAggregate.getApiKeyId());
         return Mono.fromFuture(apiGatewayAsyncClient.deleteUsagePlanKey(deleteUsagePlanKeyRequest))
+                .doOnError(e -> log.warn("can not delete UsagePlan {} from ApiKey {}", deleteUsagePlanKeyRequest.usagePlanId(), deleteUsagePlanKeyRequest.keyId()))
                 .doOnNext(response -> log.info("Delete AWS UsagePlan-ApiKey response: {}", response))
                 .flatMap(response -> addUsagePlanToApiKey(newApiKeyAggregate.getUsagePlanId(), newApiKeyAggregate.getApiKeyId()));
     }
