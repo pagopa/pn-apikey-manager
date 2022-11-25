@@ -1,10 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.api.ApiKeysApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,12 +32,12 @@ public class ApiKeysController implements ApiKeysApi {
      * PUT /apikey-manager/api-keys/{id}/status : Cambia lo stato dell&#39;api key
      * servizio di cambio stato dell&#39;api key
      *
-     * @param xPagopaPnUid      User Identifier (required)
-     * @param xPagopaPnCxType   Customer/Receiver Type (required)
-     * @param xPagopaPnCxId     Customer/Receiver Identifier (required)
-     * @param id                Identificativo univoco dell&#39;api key (required)
-     * @param status            Action per il cambio stato di un&#39;api key (required)
-     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @param xPagopaPnUid           User Identifier (required)
+     * @param xPagopaPnCxType        Customer/Receiver Type (required)
+     * @param xPagopaPnCxId          Customer/Receiver Identifier (required)
+     * @param id                     Identificativo univoco dell&#39;api key (required)
+     * @param requestApiKeyStatusDto Action per il cambio stato di un&#39;api key (required)
+     * @param xPagopaPnCxGroups      Customer Groups (optional)
      * @return OK (status code 200)
      * or Bad request (status code 400)
      * or Wrong state transition (i.e. enable an enabled key) (status code 409)
@@ -49,8 +46,9 @@ public class ApiKeysController implements ApiKeysApi {
      */
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
-                                                         String id, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        return manageApiKeyService.changeStatus(id, status, xPagopaPnUid, xPagopaPnCxType)
+                                                         String id, RequestApiKeyStatusDto requestApiKeyStatusDto, List<String> xPagopaPnCxGroups,
+                                                         final ServerWebExchange exchange) {
+        return manageApiKeyService.changeStatus(id, requestApiKeyStatusDto, xPagopaPnUid, xPagopaPnCxType)
                 .publishOn(scheduler)
                 .map(s -> ResponseEntity.ok().build());
     }

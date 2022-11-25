@@ -11,6 +11,7 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ class ManageApiKeyServiceTest {
     private ExternalRegistriesClient externalRegistriesClient;
 
     /**
-     * Method under test: {@link ManageApiKeyService#changeStatus(String, String, String, CxTypeAuthFleetDto)}
+     * Method under test: {@link ManageApiKeyService#changeStatus(String, RequestApiKeyStatusDto, String, CxTypeAuthFleetDto)}
      */
     @Test
     void testChangeStatus2() {
@@ -74,7 +75,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
-        StepVerifier.create(apiKeyService.changeStatus("42", "ENABLE", "1234", CxTypeAuthFleetDto.PA))
+
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ENABLE);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
                 .expectNext(apiKeyModel1)
                 .verifyComplete();
     }
@@ -91,7 +96,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
-        StepVerifier.create(apiKeyService.changeStatus("42", "test", "1234", CxTypeAuthFleetDto.PA))
+
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
@@ -108,7 +117,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
-        StepVerifier.create(apiKeyService.changeStatus("42", "BLOCK", "1234", CxTypeAuthFleetDto.PA))
+
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.BLOCK);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
                 .expectNext(apiKeyModel1)
                 .verifyComplete();
     }
@@ -125,7 +138,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
-        StepVerifier.create(apiKeyService.changeStatus("42", "ENABLE", "1234", CxTypeAuthFleetDto.PA))
+
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ENABLE);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
@@ -142,14 +159,21 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
-        StepVerifier.create(apiKeyService.changeStatus("42", "ROTATE", "1234", CxTypeAuthFleetDto.PA))
+
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
                 .expectNext(apiKeyModel1)
                 .verifyComplete();
     }
 
     @Test
     void testChangeStatus6() {
-        StepVerifier.create(apiKeyService.changeStatus("42", "ROTATE", "1234", CxTypeAuthFleetDto.PF))
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PF))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
