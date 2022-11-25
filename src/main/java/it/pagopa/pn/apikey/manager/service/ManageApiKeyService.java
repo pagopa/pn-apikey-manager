@@ -8,6 +8,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +46,12 @@ public class ManageApiKeyService {
         this.apiKeyConverter = apiKeyConverter;
     }
 
-    public Mono<ApiKeyModel> changeStatus(String id, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
+    public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
+        String status = requestApiKeyStatusDto.getStatus().getValue();
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, status)) {

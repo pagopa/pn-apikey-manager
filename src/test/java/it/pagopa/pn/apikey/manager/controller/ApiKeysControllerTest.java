@@ -58,7 +58,7 @@ class ApiKeysControllerTest {
     ServerWebExchange serverWebExchange;
 
     /**
-     * Method under test: {@link ApiKeysController#changeStatusApiKey(String, CxTypeAuthFleetDto, String, String, String, List, ServerWebExchange)}
+     * Method under test: {@link ApiKeysController#changeStatusApiKey(String, CxTypeAuthFleetDto, String, String, RequestApiKeyStatusDto, List, ServerWebExchange)}
      */
     @Test
     void testChangeStatusApiKey() {
@@ -76,7 +76,7 @@ class ApiKeysControllerTest {
         when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
         MockServerHttpResponse response = new MockServerHttpResponse();
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
-        StepVerifier.create(apiKeysController.changeStatusApiKey("foo", CxTypeAuthFleetDto.PA, "foo", "foo", "foo", xPagopaPnCxGroups,
+        StepVerifier.create(apiKeysController.changeStatusApiKey("foo", CxTypeAuthFleetDto.PA, "foo", "foo", new RequestApiKeyStatusDto(), xPagopaPnCxGroups,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().build());
