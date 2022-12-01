@@ -12,12 +12,14 @@ import java.util.regex.Pattern;
 public class MaskDataUtils {
 
     public static String maskInformation(String data) {
-        Pattern virtualKey = Pattern.compile("(\"value\")\\s*:\\s*\"(.*?)\"");
+        Pattern virtualKey1 = Pattern.compile("(\"value\")\\s*:\\s*\"(.*?)\"");
+        Pattern virtualKey2 = Pattern.compile("(\"apiKey\")\\s*:\\s*\"(.*?)\"");
 
         String dynamoDbPrefix = "(" + ApiKeyConstant.VIRTUAL_KEY + "|" + AggregationConstant.AWS_API_KEY + ")";
         Pattern dynamoDb = Pattern.compile(dynamoDbPrefix + "=AttributeValue\\(S=(.*?)\\)");
 
-        data = maskMatcher(virtualKey, data);
+        data = maskMatcher(virtualKey1, data);
+        data = maskMatcher(virtualKey2, data);
         data = maskMatcher(dynamoDb, data);
 
         return data;
