@@ -158,7 +158,12 @@ paths:
       operationId: changeStatusApiKey
       parameters:
         - $ref: '#/components/parameters/pathApiKey'
-        - $ref: '#/components/parameters/queryApiKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestApiKeyStatus"
+        required: true
       responses:
         '200':
           description: OK
@@ -205,18 +210,6 @@ components:
       required: true
       schema:
         type: string
-    queryApiKey:
-      description: >-
-        Action per il cambio stato di un'api key
-      name: status
-      in: query
-      required: true
-      schema:
-        type: string
-        enum:
-          - 'BLOCK'
-          - 'ENABLE'
-          - 'ROTATE'
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
@@ -237,6 +230,8 @@ components:
           type: string
         lastUpdate:
           type: string
+        total:
+          type: integer
 
     ApiKeyRow:
       type: object
@@ -310,14 +305,30 @@ components:
       type: object
       required:
         - id
-        - api-key
+        - apiKey
       properties:
         id:
           type: string
           description: id dell'api key appena generata
-        api-key:
+        apiKey:
           type: string
           description: Valore dell'api key appena generata
+
+    RequestApiKeyStatus:
+      title: Richiesta di cambio stato per una api key
+      description: >-
+        Richiesta di cambio stato per una api key
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Action per il cambio stato di un'api key
+          enum:
+            - 'BLOCK'
+            - 'ENABLE'
+            - 'ROTATE'
 
   securitySchemes:                                      # ONLY EXTERNAL
     bearerAuth:                                         # ONLY EXTERNAL
