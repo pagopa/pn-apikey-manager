@@ -58,6 +58,8 @@ Resources:
           Projection:
             ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true        
 
   AggregatesTable:
     Type: AWS::DynamoDB::Table
@@ -83,6 +85,8 @@ Resources:
           Projection:
             ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true        
 
   PaAggregationsTable:
     Type: AWS::DynamoDB::Table
@@ -106,7 +110,9 @@ Resources:
           Projection:
             ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
-
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true  
+        
   UsagePlanSmall:
     Type: 'AWS::ApiGateway::UsagePlan'
     Properties:
