@@ -80,6 +80,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .queryConditional(queryConditional)
                 .exclusiveStartKey(startKey)
                 .filterExpression(expression)
+                .scanIndexForward(false)
                 .limit(pageable.getLimit())
                 .build();
 
