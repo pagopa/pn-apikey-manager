@@ -11,6 +11,9 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleet
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -20,6 +23,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,18 +44,41 @@ public class ManageApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
+    private final PnAuditLogBuilder auditLogBuilder;
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter) {
+
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, PnAuditLogBuilder auditLogBuilder) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
+        this.auditLogBuilder = auditLogBuilder;
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
+        String logMessage = "";
+        PnAuditLogEventType type = null;
+        String status = requestApiKeyStatusDto.getStatus().getValue();
+        if(status.equals(ROTATE)){
+            logMessage = String.format("Rotazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s", xPagopaPnUid, xPagopaPnCxType);
+            type = PnAuditLogEventType.AUD_AK_ROTATE;
+        }
+        if(status.equals(BLOCK)){
+            logMessage = String.format("Blocco di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s", xPagopaPnUid, xPagopaPnCxType);
+            type = PnAuditLogEventType.AUD_AK_BLOCK;
+        }
+        if(status.equals(ENABLE)){
+            logMessage = String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s", xPagopaPnUid, xPagopaPnCxType);
+            type = PnAuditLogEventType.AUD_AK_REACTIVATE;
+        }
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(type, logMessage)
+                .uid(xPagopaPnUid)
+                .build();
+        logEvent.log();
+
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
-        String status = requestApiKeyStatusDto.getStatus().getValue();
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, status)) {
@@ -59,8 +86,14 @@ public class ManageApiKeyService {
                         apiKeyModel.setStatus(decodeStatus(status, false).getValue());
                         apiKeyModel.setLastUpdate(LocalDateTime.now());
                         apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
+                        String messageAction = String.format("xPagopaPnUid=%s - xPagopaPnCxType=%s", xPagopaPnUid, xPagopaPnCxType);
                         return saveAndCheckIfRotate(apiKeyModel, oldApiKey, status, xPagopaPnUid)
-                                .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
+                                .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status))
+                                .onErrorResume(throwable -> {
+                                    logEvent.generateFailure(throwable.getMessage()).log();
+                                    return Mono.error(throwable);
+                                })
+                                .then(Mono.fromRunnable(() -> logEvent.generateSuccess(messageAction).log()));
                     } else {
                         return Mono.error(new ApiKeyManagerException(String.format(APIKEY_INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
                     }
@@ -68,6 +101,12 @@ public class ManageApiKeyService {
     }
 
     public Mono<String> deleteApiKey(String id, CxTypeAuthFleetDto xPagopaPnCxType) {
+        String logMessage = String.format("Cancellazione API Key - IdApiKey=%s - xPagopaPnCxType=%s", id, xPagopaPnCxType.getValue());
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_DELETE, logMessage)
+                .build();
+        logEvent.log();
+
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
@@ -75,7 +114,13 @@ public class ManageApiKeyService {
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, DELETE)) {
-                        return apiKeyRepository.delete(id);
+                        String messageAction = String.format("IdApiKey=%s - xPagopaPnCxType=%s", id, xPagopaPnCxType.getValue());
+                        return apiKeyRepository.delete(id)
+                                .onErrorResume(throwable -> {
+                                    logEvent.generateFailure(throwable.getMessage()).log();
+                                    return Mono.error(throwable);
+                                })
+                                .then(Mono.fromRunnable(() -> logEvent.generateSuccess(messageAction).log()));
                     } else {
                         return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
                     }
@@ -89,6 +134,13 @@ public class ManageApiKeyService {
                                                   @Nullable String lastEvaluatedLastUpdate,
                                                   @Nullable Boolean showVirtualKey,
                                                   @NonNull CxTypeAuthFleetDto xPagopaPnCxType) {
+        String logMessage = String.format("Visualizzazione di una API Key - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnCxType.getValue(), xPagopaPnCxId, xPagopaPnCxGroups!=null? Arrays.toString(xPagopaPnCxGroups.toArray()):null);
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)
+                .cxId(xPagopaPnCxId)
+                .build();
+        logEvent.log();
+
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
@@ -96,6 +148,10 @@ public class ManageApiKeyService {
         ApiKeyPageable pageable = toApiKeyPageable(limit, lastEvaluatedKey, lastEvaluatedLastUpdate);
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
+                .onErrorResume(throwable -> {
+                    logEvent.generateFailure(throwable.getMessage()).log();
+                    return Mono.error(throwable);
+                })
                 .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
                 .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
                 .map(Tuple2::getT1);
