@@ -3,6 +3,8 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.utils.QueryUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +24,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_DOES_NOT_EXISTS;
 
+@Slf4j
 @Component
 public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
     private final DynamoDbAsyncTable<ApiKeyModel> table;
     private final String gsiLastUpdate;
+
+    private static final int MIN_LIMIT = 100;
 
     public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                 @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.pa-id}") String gsiLastUpdate,
@@ -57,6 +63,13 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
     @Override
     public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable) {
+        return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, new ArrayList<>(), pageable);
+    }
+
+    private Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId,
+                                                     List<String> xPagopaPnCxGroups,
+                                                     List<ApiKeyModel> cumulativeQueryResult,
+                                                     ApiKeyPageable pageable) {
         Map<String, AttributeValue> expressionValues = new HashMap<>();
 
         Expression expression = Expression.builder()
@@ -76,16 +89,35 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
                         .build());
 
+        Integer limit = pageable.getLimit();
+        if (limit != null && limit < MIN_LIMIT) {
+            limit = MIN_LIMIT;
+        }
+        log.debug("limit from pageable {} - actual limit {}", pageable.getLimit(), limit);
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .exclusiveStartKey(startKey)
                 .filterExpression(expression)
                 .scanIndexForward(false)
-                .limit(pageable.getLimit())
+                .limit(limit)
                 .build();
 
         if (pageable.hasLimit()) {
-            return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest));
+            return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest))
+                    .flatMap(page -> {
+                        cumulativeQueryResult.addAll(page.items());
+                        Map<String, AttributeValue> lastEvaluatedKey = null;
+                        if (page.lastEvaluatedKey() != null) {
+                            lastEvaluatedKey = new HashMap<>(page.lastEvaluatedKey());
+                        }
+                        if (cumulativeQueryResult.size() <= pageable.getLimit() && page.lastEvaluatedKey() != null) {
+                            ApiKeyPageable newPageable = QueryUtils.getNewPageable(page, pageable);
+                            log.trace("get new page with pageable {}", newPageable);
+                            return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, cumulativeQueryResult, newPageable);
+                        }
+                        List<ApiKeyModel> result = QueryUtils.adjustPageResult(cumulativeQueryResult, pageable, lastEvaluatedKey);
+                        return Mono.just(Page.create(result, lastEvaluatedKey));
+                    });
         } else {
             return Flux.from(table.index(gsiLastUpdate).query(queryEnhancedRequest).flatMapIterable(Page::items))
                     .collectList()
@@ -125,7 +157,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 expressionValues.put(":group" + i, pnCxGroup);
                 expressionGroup.append(" contains(" + ApiKeyConstant.GROUPS + ",:group").append(i).append(") OR");
             }
-            expressionGroup.append("(").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
+            expressionGroup.replace(expressionGroup.length() - 2, expressionGroup.length(), "");
         } else {
             expressionGroup.append("attribute_exists(" + ApiKeyConstant.GROUPS + ")");
         }
