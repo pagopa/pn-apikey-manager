@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.utils.QueryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,6 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -111,11 +111,11 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                             lastEvaluatedKey = new HashMap<>(page.lastEvaluatedKey());
                         }
                         if (cumulativeQueryResult.size() <= pageable.getLimit() && page.lastEvaluatedKey() != null) {
-                            ApiKeyPageable newPageable = getNewPageable(page, pageable);
+                            ApiKeyPageable newPageable = QueryUtils.getNewPageable(page, pageable);
                             log.trace("get new page with pageable {}", newPageable);
                             return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, cumulativeQueryResult, newPageable);
                         }
-                        List<ApiKeyModel> result = adjustPageResult(cumulativeQueryResult, pageable, lastEvaluatedKey);
+                        List<ApiKeyModel> result = QueryUtils.adjustPageResult(cumulativeQueryResult, pageable, lastEvaluatedKey);
                         return Mono.just(Page.create(result, lastEvaluatedKey));
                     });
         } else {
@@ -123,35 +123,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                     .collectList()
                     .map(Page::create);
         }
-    }
-
-    private ApiKeyPageable getNewPageable(Page<ApiKeyModel> page, ApiKeyPageable pageable) {
-        return ApiKeyPageable.builder()
-                .lastEvaluatedKey(page.lastEvaluatedKey().get(ApiKeyConstant.PK).s())
-                .lastEvaluatedLastUpdate(page.lastEvaluatedKey().get(ApiKeyConstant.LAST_UPDATE).s())
-                .limit(pageable.getLimit())
-                .build();
-    }
-
-    private List<ApiKeyModel> adjustPageResult(List<ApiKeyModel> result,
-                                               ApiKeyPageable pageable,
-                                               Map<String, AttributeValue> lastEvaluatedKey) {
-        if (pageable.hasLimit() && result.size() > pageable.getLimit()) {
-            log.debug("need to truncate last page - size from {} to {}", result.size(), pageable.getLimit());
-            result = result.subList(0, pageable.getLimit());
-            if (!result.isEmpty() && lastEvaluatedKey != null) {
-                log.debug("need to adjust last evaluated key from {}", lastEvaluatedKey);
-                ApiKeyModel lastElement = result.get(result.size() - 1);
-                log.debug("last element is {}", lastElement);
-                lastEvaluatedKey.put(ApiKeyConstant.PK, AttributeValue.builder().s(lastElement.getId()).build());
-                if (lastElement.getLastUpdate() != null) {
-                    lastEvaluatedKey.put(ApiKeyConstant.LAST_UPDATE, AttributeValue.builder().s(lastElement.getLastUpdate()
-                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)).build());
-                }
-                log.debug("new last evaluated key is {}", lastEvaluatedKey);
-            }
-        }
-        return result;
     }
 
     @Override
