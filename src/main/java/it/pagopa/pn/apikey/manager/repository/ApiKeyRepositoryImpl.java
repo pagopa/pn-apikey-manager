@@ -125,7 +125,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 expressionValues.put(":group" + i, pnCxGroup);
                 expressionGroup.append(" contains(" + ApiKeyConstant.GROUPS + ",:group").append(i).append(") OR");
             }
-            expressionGroup.append("(").append(expressionGroup.substring(0, expressionGroup.length() - 2)).append(")");
+            expressionGroup.replace(expressionGroup.length() - 2, expressionGroup.length(), "");
         } else {
             expressionGroup.append("attribute_exists(" + ApiKeyConstant.GROUPS + ")");
         }
