@@ -13,6 +13,8 @@ import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +52,9 @@ class ApiKeysControllerTest {
     @Autowired
     private ApiKeysController apiKeysController;
 
+    @MockBean
+    private PnAuditLogBuilder auditLogBuilder;
+
     @Qualifier("apikeyManagerScheduler")
     @MockBean
     private Scheduler scheduler;
@@ -66,7 +71,7 @@ class ApiKeysControllerTest {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
         when(manageApiKeyService.changeStatus(any(), any(), any(), eq(CxTypeAuthFleetDto.PA)))
                 .thenReturn(Mono.just(new ApiKeyModel()));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -90,7 +95,7 @@ class ApiKeysControllerTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
         when(manageApiKeyService.deleteApiKey(any(), eq(CxTypeAuthFleetDto.PA))).thenReturn(Mono.just("id"));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -122,7 +127,7 @@ class ApiKeysControllerTest {
 
         when(createApiKeyService.createApiKey(eq("uid"), eq(CxTypeAuthFleetDto.PA), eq("cxId"), any(), any()))
                 .thenReturn(Mono.just(apiKeyModel));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
         ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);

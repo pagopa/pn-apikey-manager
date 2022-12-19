@@ -11,9 +11,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKe
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -37,21 +34,17 @@ public class CreateApiKeyService {
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
     private final ExternalRegistriesClient externalRegistriesClient;
-    private final PnAuditLogBuilder auditLogBuilder;
-
 
     public CreateApiKeyService(ApiKeyRepository apiKeyRepository,
                                AggregationService aggregationService,
                                PaAggregationsService paAggregationsService,
                                ManageApiKeyService manageApiKeyService,
-                               ExternalRegistriesClient externalRegistriesClient,
-                               PnAuditLogBuilder auditLogBuilder) {
+                               ExternalRegistriesClient externalRegistriesClient) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
         this.externalRegistriesClient = externalRegistriesClient;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     public Mono<ResponseNewApiKeyDto> createApiKey(@NonNull String xPagopaPnUid,
@@ -59,12 +52,6 @@ public class CreateApiKeyService {
                                                    @NonNull String xPagopaPnCxId,
                                                    @NonNull RequestNewApiKeyDto requestNewApiKeyDto,
                                                    @Nullable List<String> xPagopaPnCxGroups) {
-        String logMessage = String.format("Creazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType.getValue(), xPagopaPnCxId, xPagopaPnCxGroups!=null?Arrays.toString(xPagopaPnCxGroups.toArray()):null);
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
-                .uid(xPagopaPnUid)
-                .build();
-        logEvent.log();
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
@@ -75,16 +62,10 @@ public class CreateApiKeyService {
                 .switchIfEmpty(Mono.defer(() -> createNewAggregate(xPagopaPnCxId)))
                 .doOnNext(aggregateId -> log.info("Add PA {} to aggregate {}", xPagopaPnCxId, aggregateId))
                 .flatMap(aggregateId -> {
-                    String messageAction = String.format("xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s - createApiKey=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups!=null?Arrays.toString(xPagopaPnCxGroups.toArray()):null,aggregateId);
                     requestNewApiKeyDto.setGroups(groupToAdd);
                     ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
                     return apiKeyRepository.save(apiKeyModel)
-                            .map(this::createResponseNewApiKey)
-                            .onErrorResume(throwable -> {
-                                logEvent.generateFailure(throwable.getMessage()).log();
-                                return Mono.error(throwable);
-                            })
-                            .then(Mono.fromRunnable(() -> logEvent.generateSuccess(messageAction).log()));
+                            .map(this::createResponseNewApiKey);
                 });
     }
 
