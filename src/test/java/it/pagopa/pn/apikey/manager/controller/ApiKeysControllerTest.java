@@ -18,6 +18,8 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -68,14 +70,15 @@ class ApiKeysControllerTest {
     /**
      * Method under test: {@link ApiKeysController#changeStatusApiKey(String, CxTypeAuthFleetDto, String, String, RequestApiKeyStatusDto, List, ServerWebExchange)}
      */
-    @Test
-    void testChangeStatusApiKey() {
+    @ParameterizedTest
+    @EnumSource(RequestApiKeyStatusDto.StatusEnum.class)
+    void testChangeStatusApiKey(RequestApiKeyStatusDto.StatusEnum status) {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
         when(manageApiKeyService.changeStatus(any(), any(), any(), eq(CxTypeAuthFleetDto.PA)))
                 .thenReturn(Mono.just(new ApiKeyModel()));
         ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -85,7 +88,7 @@ class ApiKeysControllerTest {
         MockServerHttpResponse response = new MockServerHttpResponse();
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
-        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
+        requestApiKeyStatusDto.setStatus(status);
         when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
         when(auditLogBuilder.uid(any())).thenReturn(auditLogBuilder);
         when(auditLogBuilder.cxId(any())).thenReturn(auditLogBuilder);
@@ -106,7 +109,7 @@ class ApiKeysControllerTest {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
         when(manageApiKeyService.deleteApiKey(any(), eq(CxTypeAuthFleetDto.PA))).thenReturn(Mono.just("id"));
         ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -144,7 +147,7 @@ class ApiKeysControllerTest {
                 .thenReturn(Mono.just(apiKeyModel));
         ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");

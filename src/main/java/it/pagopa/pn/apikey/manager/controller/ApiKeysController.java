@@ -208,21 +208,17 @@ public class ApiKeysController implements ApiKeysApi {
             return auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AK_ROTATE,
                             String.format("Rotazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        }
-        else if (status.equals(BLOCK)) {
+        } else if (status.equals(BLOCK)) {
             return auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AK_BLOCK,
                             String.format("Blocco di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        }
-        else if (status.equals(ENABLE)) {
+        } else if (status.equals(ENABLE)) {
             return auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AK_REACTIVATE,
                             String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        }
-        else {
+        } else {
             throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
         }
-
     }
 
 }
