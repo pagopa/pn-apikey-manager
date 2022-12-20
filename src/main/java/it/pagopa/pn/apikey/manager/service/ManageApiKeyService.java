@@ -41,17 +41,19 @@ public class ManageApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
 
+
     public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
+        String status = requestApiKeyStatusDto.getStatus().getValue();
+
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
-        String status = requestApiKeyStatusDto.getStatus().getValue();
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> {
                     if (isOperationAllowed(apiKeyModel, status)) {
@@ -68,6 +70,7 @@ public class ManageApiKeyService {
     }
 
     public Mono<String> deleteApiKey(String id, CxTypeAuthFleetDto xPagopaPnCxType) {
+
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
@@ -89,6 +92,7 @@ public class ManageApiKeyService {
                                                   @Nullable String lastEvaluatedLastUpdate,
                                                   @Nullable Boolean showVirtualKey,
                                                   @NonNull CxTypeAuthFleetDto xPagopaPnCxType) {
+
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));

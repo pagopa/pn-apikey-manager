@@ -13,9 +13,13 @@ import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -50,6 +54,12 @@ class ApiKeysControllerTest {
     @Autowired
     private ApiKeysController apiKeysController;
 
+    @MockBean
+    private PnAuditLogBuilder auditLogBuilder;
+
+    @MockBean
+    private PnAuditLogEvent pnAuditLogEvent;
+
     @Qualifier("apikeyManagerScheduler")
     @MockBean
     private Scheduler scheduler;
@@ -60,14 +70,15 @@ class ApiKeysControllerTest {
     /**
      * Method under test: {@link ApiKeysController#changeStatusApiKey(String, CxTypeAuthFleetDto, String, String, RequestApiKeyStatusDto, List, ServerWebExchange)}
      */
-    @Test
-    void testChangeStatusApiKey() {
+    @ParameterizedTest
+    @EnumSource(RequestApiKeyStatusDto.StatusEnum.class)
+    void testChangeStatusApiKey(RequestApiKeyStatusDto.StatusEnum status) {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
         when(manageApiKeyService.changeStatus(any(), any(), any(), eq(CxTypeAuthFleetDto.PA)))
                 .thenReturn(Mono.just(new ApiKeyModel()));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -76,7 +87,14 @@ class ApiKeysControllerTest {
         when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
         MockServerHttpResponse response = new MockServerHttpResponse();
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
-        StepVerifier.create(apiKeysController.changeStatusApiKey("foo", CxTypeAuthFleetDto.PA, "foo", "foo", new RequestApiKeyStatusDto(), xPagopaPnCxGroups,
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(status);
+        when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.uid(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxId(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxType(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
+        StepVerifier.create(apiKeysController.changeStatusApiKey("foo", CxTypeAuthFleetDto.PA, "foo", "foo", requestApiKeyStatusDto, xPagopaPnCxGroups,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().build());
@@ -90,8 +108,8 @@ class ApiKeysControllerTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
         when(manageApiKeyService.deleteApiKey(any(), eq(CxTypeAuthFleetDto.PA))).thenReturn(Mono.just("id"));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -100,6 +118,11 @@ class ApiKeysControllerTest {
         when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
         MockServerHttpResponse response = new MockServerHttpResponse();
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+        when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.uid(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxId(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxType(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
         StepVerifier.create(apiKeysController.deleteApiKeys("foo", CxTypeAuthFleetDto.PA, "foo", "foo", xPagopaPnCxGroups,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
@@ -122,9 +145,9 @@ class ApiKeysControllerTest {
 
         when(createApiKeyService.createApiKey(eq("uid"), eq(CxTypeAuthFleetDto.PA), eq("cxId"), any(), any()))
                 .thenReturn(Mono.just(apiKeyModel));
-        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, scheduler);
+        ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
         RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
-        ArrayList<String> xPagopaPnCxGroups = new ArrayList<>();
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -135,6 +158,11 @@ class ApiKeysControllerTest {
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
 
         ResponseEntity<ResponseNewApiKeyDto> responseEntity = ResponseEntity.ok().body(apiKeyModel);
+        when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.uid(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxId(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxType(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
         StepVerifier.create(apiKeysController.newApiKey("uid", CxTypeAuthFleetDto.PA, "cxId", requestNewApiKeyDto, xPagopaPnCxGroups,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
@@ -159,6 +187,11 @@ class ApiKeysControllerTest {
         apiKeysResponseDto.setLastUpdate(lastUpdate);
         when(manageApiKeyService.getApiKeyList(anyString(), any(), any(), any(), any(), anyBoolean(), eq(xPagopaPnCxType)))
                 .thenReturn(Mono.just(apiKeysResponseDto));
+        when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.uid(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxId(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.cxType(any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
         StepVerifier.create(apiKeysController.getApiKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, serverWebExchange))
                 .expectNext(ResponseEntity.ok().body(apiKeysResponseDto));
     }
