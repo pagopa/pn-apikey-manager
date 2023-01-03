@@ -62,10 +62,7 @@ public class ApiKeysController implements ApiKeysApi {
         PnAuditLogBuilder logEventBuilder = buildAuditLogForChangeStatus(requestApiKeyStatusDto.getStatus(),
                 xPagopaPnCxId, xPagopaPnCxGroups,xPagopaPnCxType,xPagopaPnUid);
 
-        PnAuditLogEvent logEvent = logEventBuilder.cxId(xPagopaPnCxId)
-                .cxType(xPagopaPnCxType.getValue())
-                .uid(xPagopaPnUid)
-                .build();
+        PnAuditLogEvent logEvent = logEventBuilder.build();
 
         logEvent.log();
 
@@ -105,9 +102,6 @@ public class ApiKeysController implements ApiKeysApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AK_DELETE, logMessage)
-                .cxId(xPagopaPnCxId)
-                .cxType(xPagopaPnCxType.getValue())
-                .uid(xPagopaPnUid)
                 .build();
 
         logEvent.log();
@@ -147,9 +141,6 @@ public class ApiKeysController implements ApiKeysApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)
-                .cxId(xPagopaPnCxId)
-                .cxType(xPagopaPnCxType.getValue())
-                .uid(xPagopaPnUid)
                 .build();
 
         logEvent.log();
@@ -187,9 +178,6 @@ public class ApiKeysController implements ApiKeysApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
-                .cxId(xPagopaPnCxId)
-                .cxType(xPagopaPnCxType.getValue())
-                .uid(xPagopaPnUid)
                 .build();
 
         logEvent.log();
