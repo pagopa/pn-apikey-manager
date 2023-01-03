@@ -171,6 +171,18 @@ Outputs:
     Description: ARM Dynamo Name used by application to access the key-value store of ApiKeyTable
     Value: !Sub '${ApiKeyTable.Arn}'
 
+  PaAggregationsTableName:
+    Description: Name of dynamodb table containing aggregations
+    Value: !Ref PaAggregationsTable
+
+  AggregatesTableName:
+    Description: Name of dynamodb table containing aggregates
+    Value: !Ref AggregatesTable
+
+  ApiKeyTableName:
+    Description: Name of dynamodb table containing apikey
+    Value: !Ref ApiKeyTable
+
   UsagePlanDefault:
     Description: Id Usage Plan default
     Value: !Ref UsagePlanMedium

@@ -95,6 +95,18 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
+  PaAggregationsTableName:
+    Type: String
+    Description: Name of dynamodb table containing aggregations
+
+  AggregatesTableName:
+    Type: String
+    Description: Name of dynamodb table containing aggregates
+
+  ApiKeyTableName:
+    Type: String
+    Description: Name of dynamodb table containing apikey
+
   ExternalRegistriesBasePath:
     Type: String
     Description: 'BasePath for interaction with pn-external-registries'
@@ -211,3 +223,31 @@ Resources:
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+
+    ApiKeyManagerMicroserviceCloudWatchDashboard:
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
+        Parameters:
+          DashboardName: !Sub "${ProjectName}-ApikeyManager"
+          DynamoDBTableNames: !Join
+            - ','
+            - - !Ref PaAggregationsTableName
+              - !Ref AggregatesTableName
+              - !Ref ApiKeyTableName
+          RestApiStageArns: !Join
+            - ','
+            - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
+              - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiStageArn
+          RestApiNames: !Join
+            - ','
+            - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
+              - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
+          AlarmArns: !Join
+            - ','
+            - - !GetAtt ApikeyManagerMicroservice.Outputs.AutoScalingAlarmArn
+              - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
+              - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiErrorAlarmArn
+              - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiLatencyAlarmArn
+              - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiErrorAlarmArn
+              - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
