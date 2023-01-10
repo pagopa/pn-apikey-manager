@@ -229,7 +229,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
       Parameters:
-        DashboardName: !Sub "${ProjectName}-ApikeyManager"
+        DashboardName: !Sub "${ProjectName}-apikey-manager"
         DynamoDBTableNames: !Join
           - ','
           - - !Ref PaAggregationsTableName
@@ -245,8 +245,7 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
         AlarmArns: !Join
           - ','
-          - - !GetAtt ApikeyManagerMicroservice.Outputs.AutoScalingAlarmArn
-            - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
+          - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiErrorAlarmArn
             - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiLatencyAlarmArn
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiErrorAlarmArn
