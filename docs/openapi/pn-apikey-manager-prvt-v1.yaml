@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
+  title: 'Gestione Api Key'
+  version: '1.0.0'
+tags:
+  - name: ApiKeysPrvt
+    description: >-
+      Invocazioni utilizzabili dai mittenti per la gestione delle api keys
+paths:
+  "/api-key-prvt/api-keys/associate-api-key":
+    put:
+      summary: Cambia la virtual key di un api key dato un cxId
+      description: >-
+        servizio di cambio virtual key di un api key dato un cxId
+      tags:
+        - ApiKeysPrvt
+      operationId: changeVirtualKeyApiKey
+      parameters:
+        - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/virtualKey'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+components:
+  parameters:
+    ############################################################################################
+    ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
+    ############################################################################################
+    ### N.B. PRENDERLE DA AUTH FLEET ###
+    cxIdAuthFleet: # NO EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'    # NO EXTERNAL
+
+    ############################################################################################
+    ###                        PARAMETRI RICERCA API KEY                                     ###
+    ############################################################################################
+    virtualKey:
+      description: >-
+        Virtual Key dell'api key
+      name: virtualKey
+      in: header
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    Problem:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Contiene il codice HTTP dell'errore
+        title:
+          type: string
+        detail:
+          type: string
+        traceId:
+          type: string
+        timestamp:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              element:
+                type: string
+              detail:
+                type: string
+

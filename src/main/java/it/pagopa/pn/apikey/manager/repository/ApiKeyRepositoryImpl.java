@@ -52,6 +52,16 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     }
 
     @Override
+    public Mono<List<ApiKeyModel>> setNewVirtualKey(List<ApiKeyModel> apiKeyModels, String virtualKey) {
+        return Flux.fromIterable(apiKeyModels)
+                .flatMap(apiKeyModel -> {
+                    apiKeyModel.setVirtualKey(virtualKey);
+                    return Mono.fromFuture(table.updateItem(apiKeyModel));
+                })
+                .collectList();
+    }
+
+    @Override
     public Mono<ApiKeyModel> findById(String id) {
         Key key = Key.builder()
                 .partitionValue(id)
@@ -62,9 +72,27 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     }
 
     @Override
+    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId){
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
+                        .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .scanIndexForward(false)
+                .build();
+
+        return Mono.from(
+                table.index(gsiLastUpdate)
+                        .query(queryEnhancedRequest)
+                        .map(Page::items));
+    }
+
+    @Override
     public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable) {
         return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, new ArrayList<>(), pageable);
     }
+
 
     private Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId,
                                                      List<String> xPagopaPnCxGroups,

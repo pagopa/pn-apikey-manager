@@ -63,7 +63,6 @@ class ApiKeyRepositoryImplTest {
         completableFuture.completeAsync(() -> null);
         when(dynamoDbAsyncTable.putItem(apiKeyModel)).thenReturn(completableFuture);
 
-
         StepVerifier.create(apiKeyRepository.save(apiKeyModel))
                 .expectNext(apiKeyModel).verifyComplete();
 
@@ -82,6 +81,45 @@ class ApiKeyRepositoryImplTest {
         when(dynamoDbAsyncTable.getItem((Key) any())).thenReturn(completableFuture);
 
         StepVerifier.create(apiKeyRepository.findById("42")).expectNext(apiKeyModel).verifyComplete();
+    }
+
+    @Test
+    void testSetNewVirtualKey(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModels = new ArrayList<>();
+        apiKeyModels.add(apiKeyModel);
+
+        when(dynamoDbAsyncTable.updateItem((ApiKeyModel) any())).thenReturn(CompletableFuture.completedFuture(apiKeyModel));
+
+        StepVerifier.create(apiKeyRepository.setNewVirtualKey(apiKeyModels,"virtualKey"))
+                .expectNextCount(0);
+
+    }
+
+    @Test
+    void findByCxId(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
+        apiKeyModelList.add(apiKeyModel);
+
+        StepVerifier.create(apiKeyRepository.setNewVirtualKey(apiKeyModelList, "virtualKey"))
+                .expectNextCount(0);
+
     }
 
     @Test

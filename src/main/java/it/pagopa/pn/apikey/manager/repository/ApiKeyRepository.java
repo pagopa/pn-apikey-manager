@@ -12,7 +12,11 @@ public interface ApiKeyRepository {
 
     Mono<ApiKeyModel> save (ApiKeyModel apiKeyModel);
 
+    Mono<List<ApiKeyModel>> setNewVirtualKey(List<ApiKeyModel> apiKeyModels, String virtualKey);
+
     Mono<ApiKeyModel> findById(String id);
+
+    Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId);
 
     Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable);
 
