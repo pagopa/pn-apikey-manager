@@ -9,16 +9,19 @@ tags:
       Invocazioni utilizzabili dai mittenti per la gestione delle api keys
 paths:
   "/api-key-prvt/api-keys/associate-api-key":
-    put:
+    post:
       summary: Cambia la virtual key di un api key dato un cxId
       description: >-
         servizio di cambio virtual key di un api key dato un cxId
       tags:
         - ApiKeysPrvt
       operationId: changeVirtualKeyApiKey
-      parameters:
-        - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
-        - $ref: '#/components/parameters/virtualKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestBodyApiKeyPk"
+        required: true
       responses:
         '200':
           description: OK
@@ -48,27 +51,23 @@ paths:
                 $ref: '#/components/schemas/Problem'
 
 components:
-  parameters:
-    ############################################################################################
-    ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
-    ############################################################################################
-    ### N.B. PRENDERLE DA AUTH FLEET ###
-    cxIdAuthFleet: # NO EXTERNAL
-      $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'    # NO EXTERNAL
-
-    ############################################################################################
-    ###                        PARAMETRI RICERCA API KEY                                     ###
-    ############################################################################################
-    virtualKey:
-      description: >-
-        Virtual Key dell'api key
-      name: virtualKey
-      in: header
-      required: true
-      schema:
-        type: string
-
   schemas:
+    RequestBodyApiKeyPk:
+      title: Request cambio api key dato un cxId
+      description: >-
+        Request per il cambio pk dato un cxId
+      type: object
+      required:
+        - xPagopaPnCxId
+        - virtualKey
+      properties:
+        xPagopaPnCxId:
+          type: string
+          description: CxId dell'api key
+        virtualKey:
+          type: string
+          description: Valore dell'api key
+
     Problem:
       type: object
       properties:
