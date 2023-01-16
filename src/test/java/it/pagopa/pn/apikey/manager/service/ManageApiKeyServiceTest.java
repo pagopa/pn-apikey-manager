@@ -60,6 +60,22 @@ class ManageApiKeyServiceTest {
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
 
+    @Test
+    void testChangeVirtualKey() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setCxId("cxId");
+
+        List<ApiKeyModel> apiKeyModels = new ArrayList<>();
+        apiKeyModels.add(apiKeyModel);
+
+        when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
+        when(apiKeyRepository.setNewVirtualKey(anyList(),any())).thenReturn(Mono.just(apiKeyModels));
+
+        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+                .expectNext(apiKeyModels)
+                .verifyComplete();
+    }
+
     /**
      * Method under test: {@link ManageApiKeyService#changeStatus(String, RequestApiKeyStatusDto, String, CxTypeAuthFleetDto)}
      */

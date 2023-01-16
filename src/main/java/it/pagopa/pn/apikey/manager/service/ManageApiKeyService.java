@@ -47,6 +47,12 @@ public class ManageApiKeyService {
         this.apiKeyConverter = apiKeyConverter;
     }
 
+    public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey){
+        return apiKeyRepository.findByCxId(xPagopaPnCxId)
+                .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels,virtualKey))
+                .doOnNext(apiKeyModels -> log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}",virtualKey,xPagopaPnCxId));
+    }
+
     public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
         String status = requestApiKeyStatusDto.getStatus().getValue();
 
