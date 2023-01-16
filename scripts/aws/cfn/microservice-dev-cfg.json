@@ -1,9 +1,4 @@
 {
   "Parameters": {
-    "UsagePlanApiId": "vub3na4af4",
-    "UsagePlanStage": "dev",
-    "ExternalRegistriesBasePath" : "http://internal-pn-in-Appli-1HXGA7HK0CJQ3-1346751104.eu-south-1.elb.amazonaws.com:8080",
-    "ApiGatewayApikeysArn":"arn:aws:apigateway:eu-south-1::/apikeys",
-    "ApiGatewayUsagePlanArn":"arn:aws:apigateway:eu-south-1::/usageplans"
   }
 }

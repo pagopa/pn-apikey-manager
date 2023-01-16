@@ -67,14 +67,6 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
-  UsagePlanApiId:
-    Type: String
-    Description: 'ApiId for AWS Usage Plan'
-
-  UsagePlanStage:
-    Type: String
-    Description: 'Stage for AWS Usage Plan'
-
   UsagePlanDefault:
     Type: String
     Description: 'Id Usage Plan default'
@@ -107,18 +99,6 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
 
-  ExternalRegistriesBasePath:
-    Type: String
-    Description: 'BasePath for interaction with pn-external-registries'
-
-  ApiGatewayApikeysArn:
-    Type: String
-    Description: 'Arn of apiGateway apiKeys'
-
-  ApiGatewayUsagePlanArn:
-    Type: String
-    Description: 'Arn of apiGateway usagePlans'
-
 Resources:
 
   # PN-National-Registry microservice
@@ -137,8 +117,6 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
-        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
-        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry6: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
@@ -163,16 +141,16 @@ Resources:
               - apigateway:POST
               - apigateway:GET
             Resource:
-              - !Ref ApiGatewayApikeysArn
-              - !Ref ApiGatewayUsagePlanArn
-              - !Sub '${ApiGatewayUsagePlanArn}/*'
-              - !Sub '${ApiGatewayUsagePlanArn}/*/keys'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
           - Effect: Allow
             Action:
               - apigateway:DELETE
             Resource:
-              - !Sub '${ApiGatewayApikeysArn}/*'
-              - !Sub '${ApiGatewayUsagePlanArn}/*/keys/*'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys/*'
           - Effect: Allow
             Action:
               - dynamodb:BatchGetItem

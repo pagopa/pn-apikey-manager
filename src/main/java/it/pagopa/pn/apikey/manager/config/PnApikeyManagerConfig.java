@@ -14,9 +14,7 @@ import org.springframework.context.annotation.Import;
 @Data
 @Import({SharedAutoConfiguration.class, PnAuditLogBuilder.class})
 public class PnApikeyManagerConfig {
-    private String apiId;
     private String keyType;
-    private String stage;
     private String defaultPlan;
     private String scope;
     private String tag;
