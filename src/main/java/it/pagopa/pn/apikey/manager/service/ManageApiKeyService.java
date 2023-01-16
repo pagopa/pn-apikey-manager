@@ -49,6 +49,12 @@ public class ManageApiKeyService {
 
     public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey){
         return apiKeyRepository.findByCxId(xPagopaPnCxId)
+                .map(apiKeyModels -> {
+                    if(apiKeyModels.isEmpty()){
+                        throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
+                    }
+                    return apiKeyModels;
+                })
                 .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels,virtualKey))
                 .doOnNext(apiKeyModels -> log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}",virtualKey,xPagopaPnCxId));
     }
