@@ -55,7 +55,7 @@ components:
     RequestBodyApiKeyPk:
       title: Request cambio api key dato un cxId
       description: >-
-        Request per il cambio pk dato un cxId
+        Assegnare al campo virtual key il nuovo valore da associare alla virtual key legata al xPagopaPnCxId
       type: object
       required:
         - xPagopaPnCxId
