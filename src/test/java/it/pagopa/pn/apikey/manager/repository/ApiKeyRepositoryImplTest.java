@@ -117,7 +117,7 @@ class ApiKeyRepositoryImplTest {
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
         apiKeyModelList.add(apiKeyModel);
 
-        StepVerifier.create(apiKeyRepository.setNewVirtualKey(apiKeyModelList, "virtualKey"))
+        StepVerifier.create(apiKeyRepository.findByCxId("cxId"))
                 .expectNextCount(0);
 
     }
