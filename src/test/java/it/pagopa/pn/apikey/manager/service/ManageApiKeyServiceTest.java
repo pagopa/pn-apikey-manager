@@ -76,6 +76,32 @@ class ManageApiKeyServiceTest {
                 .verifyComplete();
     }
 
+    @Test
+    void testChangeVirtualKeyEmpty() {
+        List<ApiKeyModel> apiKeyModels = new ArrayList<>();
+
+        when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
+
+        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+                .expectError(ApiKeyManagerException.class)
+                .verify();
+    }
+
+    @Test
+    void testChangeVirtualKeyMoreOneElement() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        ApiKeyModel apiKeyModel1 = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModels = new ArrayList<>();
+        apiKeyModels.add(apiKeyModel);
+        apiKeyModels.add(apiKeyModel1);
+
+        when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
+
+        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+                .expectError(ApiKeyManagerException.class)
+                .verify();
+    }
+
     /**
      * Method under test: {@link ManageApiKeyService#changeStatus(String, RequestApiKeyStatusDto, String, CxTypeAuthFleetDto)}
      */
