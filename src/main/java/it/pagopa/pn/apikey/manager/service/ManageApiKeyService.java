@@ -53,6 +53,9 @@ public class ManageApiKeyService {
                     if(apiKeyModels.isEmpty()){
                         throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
                     }
+                    if(apiKeyModels.size() > 1){
+                        throw new ApiKeyManagerException("Already exist a virtual key associated for this cxId", HttpStatus.BAD_REQUEST);
+                    }
                     return apiKeyModels;
                 })
                 .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels,virtualKey))
