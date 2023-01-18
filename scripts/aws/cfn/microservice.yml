@@ -204,7 +204,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager-bo'
-        IntendedUsage: HELPDESK
+        IntendedUsage: BACKOFFICE
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'api-key-bo'
