@@ -99,6 +99,17 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
 
+  # OpenApi Bucket params
+  MicroserviceBucketName:
+    Type: String
+    Default: ''
+    Description: 'Name of the bucket where the microservice files are copied during deploy'
+
+  MicroserviceBucketBaseKey:
+    Type: String
+    Default: ''
+    Description: 'Base key of the microservice in the s3 bucket'
+
 Resources:
 
   # PN-National-Registry microservice
@@ -193,7 +204,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager-bo'
-        IntendedUsage: WEB
+        IntendedUsage: BACKOFFICE
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'api-key-bo'
@@ -201,6 +212,8 @@ Resources:
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-manage-aggregate-test-v3.yaml
 
   ApiKeyManagerApiGatewayPrvt:
     Type: AWS::CloudFormation::Stack
