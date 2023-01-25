@@ -19,7 +19,6 @@
             **/it/pagopa/pn/apikey/manager/entity/*,
             **/it/pagopa/pn/apikey/manager/model/*
         </sonar.coverage.exclusions>
-        <awssdk.version>2.16.97</awssdk.version>
     </properties>
 
     <dependencies>
