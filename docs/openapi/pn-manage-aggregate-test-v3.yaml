@@ -16,6 +16,8 @@ paths:
       tags:
         - Aggregate
       operationId: getAggregatesList
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
         - name: name
           in: query
@@ -63,6 +65,8 @@ paths:
       tags:
         - Aggregate
       operationId: createAggregate
+      x-api-permissions:
+        - 'api-key-write'
       requestBody:
         content:
           application/json:
@@ -102,6 +106,8 @@ paths:
       tags:
         - Aggregate
       operationId: getPaAggregation
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       responses:
@@ -138,6 +144,8 @@ paths:
       tags:
         - Aggregate
       operationId: getAggregate
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       responses:
@@ -172,6 +180,8 @@ paths:
       tags:
         - Aggregate
       operationId: deleteApiKeys
+      x-api-permissions:
+        - 'api-key-write'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       responses:
@@ -201,6 +211,8 @@ paths:
       tags:
         - Aggregate
       operationId: updateAggregate
+      x-api-permissions:
+        - 'api-key-write'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       requestBody:
@@ -243,6 +255,8 @@ paths:
       tags:
         - Aggregate
       operationId: addPaListToAggregate
+      x-api-permissions:
+        - 'api-key-write'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       requestBody:
@@ -285,6 +299,8 @@ paths:
       tags:
         - Aggregate
       operationId: movePa
+      x-api-permissions:
+        - 'api-key-write'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       requestBody:
@@ -327,6 +343,8 @@ paths:
       tags:
         - Aggregate
       operationId: getAssociablePa
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
         - name: name
           in: query
@@ -367,6 +385,8 @@ paths:
       tags:
         - UsagePlan
       operationId: getUsagePlan
+      x-api-permissions:
+        - 'api-key-read'
       responses:
         '200':
           description: OK
