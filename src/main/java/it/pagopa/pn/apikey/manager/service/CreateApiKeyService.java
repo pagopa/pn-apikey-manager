@@ -96,7 +96,7 @@ public class CreateApiKeyService {
         Mono<List<String>> groupsToCheck = isUserAdmin ? getPaGroupsById(cxId) : Mono.just(xPagopaPnCxGroups);
 
         return groupsToCheck.map(groups -> {
-           if(!groups.isEmpty() && !new HashSet<>(groups).containsAll(requestGroups)) {
+           if(!new HashSet<>(groups).containsAll(requestGroups)) {
                 requestGroups.removeIf(groups::contains);
                 throw new ApiKeyManagerException("User cannot add groups: " + requestGroups, HttpStatus.INTERNAL_SERVER_ERROR);
             }
