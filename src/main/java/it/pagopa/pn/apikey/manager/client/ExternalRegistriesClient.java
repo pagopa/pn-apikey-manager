@@ -3,6 +3,8 @@ package it.pagopa.pn.apikey.manager.client;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
+import it.pagopa.pn.apikey.manager.model.PaGroup;
+import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -52,6 +54,26 @@ public class ExternalRegistriesClient {
                 .doOnError(throwable -> {
                     if (throwable instanceof WebClientResponseException) {
                         WebClientResponseException ex = (WebClientResponseException) throwable;
+                        throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
+                    }
+                });
+    }
+
+    public Mono<List<PaGroup>> getPaGroupsById(String id) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/ext-registry-private/pa/v1/groups-all")
+                        .queryParam("statusFilter", PaGroupStatus.ACTIVE)
+                        .build()
+                )
+                .headers(httpHeaders -> {
+                    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                    httpHeaders.set("x-pagopa-pn-cx-id", id);
+                })
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<PaGroup>>() {})
+                .doOnError(throwable -> {
+                    if (throwable instanceof WebClientResponseException ex) {
                         throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
                     }
                 });

@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.client;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
+import it.pagopa.pn.apikey.manager.model.PaGroup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -108,6 +109,45 @@ class ExternalRegistriesClientTest {
         when(responseSpec.bodyToMono(InternalPaDetailDto.class)).thenReturn(Mono.error(new RuntimeException()));
 
         StepVerifier.create(externalRegistriesClient.getPaById("id"))
+                .verifyError();
+    }
+
+    @Test
+    void testGetPaGroupsById() {
+        when(externalRegistriesWebClient.init()).thenReturn(webClient);
+        ExternalRegistriesClient externalRegistriesClient = new ExternalRegistriesClient(externalRegistriesWebClient);
+
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.headers(any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(new ParameterizedTypeReference<List<PaGroup>>() {})).thenReturn(Mono.just(new ArrayList<>()));
+
+        StepVerifier.create(externalRegistriesClient.getPaGroupsById("id"))
+                .expectNext(new ArrayList<>())
+                .verifyComplete();
+    }
+
+    @Test
+    void testFailGetPaGroupsById() {
+        when(externalRegistriesWebClient.init()).thenReturn(webClient);
+        ExternalRegistriesClient externalRegistriesClient = new ExternalRegistriesClient(externalRegistriesWebClient);
+
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.headers(any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(new ParameterizedTypeReference<List<PaGroup>>() {})).thenReturn(Mono.error(new RuntimeException()));
+
+        StepVerifier.create(externalRegistriesClient.getPaGroupsById("id"))
                 .verifyError();
     }
 }
