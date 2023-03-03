@@ -10,6 +10,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleet
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
+import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -56,16 +57,18 @@ public class CreateApiKeyService {
             log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
-        List<String> groupToAdd = checkGroups(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups);
-        log.debug("list groupsToAdd size: {}", groupToAdd.size());
-        return paAggregationsService.searchAggregationId(xPagopaPnCxId)
-                .switchIfEmpty(Mono.defer(() -> createNewAggregate(xPagopaPnCxId)))
-                .doOnNext(aggregateId -> log.info("Add PA {} to aggregate {}", xPagopaPnCxId, aggregateId))
-                .flatMap(aggregateId -> {
-                    requestNewApiKeyDto.setGroups(groupToAdd);
-                    ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
-                    return apiKeyRepository.save(apiKeyModel)
-                            .map(this::createResponseNewApiKey);
+        return checkGroupsToAdd(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups, xPagopaPnCxId)
+                .flatMap(groupToAdd -> {
+                    log.debug("list groupsToAdd size: {}", groupToAdd.size());
+                    return paAggregationsService.searchAggregationId(xPagopaPnCxId)
+                            .switchIfEmpty(Mono.defer(() -> createNewAggregate(xPagopaPnCxId)))
+                            .doOnNext(aggregateId -> log.info("Add PA {} to aggregate {}", xPagopaPnCxId, aggregateId))
+                            .flatMap(aggregateId -> {
+                                requestNewApiKeyDto.setGroups(groupToAdd);
+                                ApiKeyModel apiKeyModel = constructApiKeyModel(requestNewApiKeyDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
+                                return apiKeyRepository.save(apiKeyModel)
+                                        .map(this::createResponseNewApiKey);
+                            });
                 });
     }
 
@@ -83,23 +86,28 @@ public class CreateApiKeyService {
                         .map(PaAggregationModel::getAggregateId));
     }
 
-    private List<String> checkGroups(List<String> groups, List<String> xPagopaPnCxGroups) {
-        if (xPagopaPnCxGroups == null) {
-            xPagopaPnCxGroups = new ArrayList<>();
+    private Mono<List<String>> checkGroupsToAdd(List<String> requestGroups, List<String> xPagopaPnCxGroups, String cxId) {
+        boolean isUserAdmin = xPagopaPnCxGroups == null || xPagopaPnCxGroups.isEmpty();
+
+        if(requestGroups.isEmpty()) {
+            return Mono.just(isUserAdmin ? requestGroups : xPagopaPnCxGroups);
         }
-        List<String> groupsToAdd = new ArrayList<>();
-        if (!groups.isEmpty() && (new HashSet<>(xPagopaPnCxGroups).containsAll(groups) || xPagopaPnCxGroups.isEmpty())) {
-            groupsToAdd.addAll(groups);
-            return groupsToAdd;
-        } else if (groups.isEmpty() && !xPagopaPnCxGroups.isEmpty()) {
-            groupsToAdd.addAll(xPagopaPnCxGroups);
-            return groupsToAdd;
-        } else if (groups.isEmpty()) {
-            return groupsToAdd;
-        } else {
-            groups.removeIf(xPagopaPnCxGroups::contains);
-            throw new ApiKeyManagerException("User cannot add groups: " + groups, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
+        Mono<List<String>> groupsToCheck = isUserAdmin ? getPaGroupsById(cxId) : Mono.just(xPagopaPnCxGroups);
+
+        return groupsToCheck.map(groups -> {
+           if(!groups.isEmpty() && !new HashSet<>(groups).containsAll(requestGroups)) {
+                requestGroups.removeIf(groups::contains);
+                throw new ApiKeyManagerException("User cannot add groups: " + requestGroups, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return requestGroups;
+        });
+    }
+
+    private Mono<List<String>> getPaGroupsById(String cxId) {
+        return this.externalRegistriesClient.getPaGroupsById(cxId)
+                .defaultIfEmpty(new ArrayList<>())
+                .map(paGroups -> paGroups.stream().map(PaGroup::getName).toList());
     }
 
     private ResponseNewApiKeyDto createResponseNewApiKey(ApiKeyModel apiKeyModel) {

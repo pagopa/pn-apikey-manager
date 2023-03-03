@@ -5,10 +5,12 @@ import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
+import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.CreateApiKeyResponse;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -154,6 +157,13 @@ class CreateApiKeyServiceTest {
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setId("idtest");
 
+        PaGroup group = new PaGroup();
+        group.setName("Groups1");
+        List<PaGroup> paGroups = new ArrayList<>();
+        paGroups.add(group);
+
+        when(externalRegistriesClient.getPaGroupsById(any())).thenReturn(Mono.just(paGroups));
+
         StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, new ArrayList<>()))
                 .expectNext(responseNewApiKeyDto).verifyComplete();
     }
@@ -182,5 +192,21 @@ class CreateApiKeyServiceTest {
 
         StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, stringList))
                 .expectNext(responseNewApiKeyDto).verifyComplete();
+    }
+
+    @Test
+    void testCreateApiKey5() {
+        RequestNewApiKeyDto requestNewApiKeyDto = new RequestNewApiKeyDto();
+        requestNewApiKeyDto.addGroupsItem("Groups1");
+
+        PaGroup group = new PaGroup();
+        group.setName("Groups2");
+        List<PaGroup> paGroups = new ArrayList<>();
+        paGroups.add(group);
+
+        when(externalRegistriesClient.getPaGroupsById(any())).thenReturn(Mono.just(paGroups));
+
+        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, new ArrayList<>()))
+                .expectError(ApiKeyManagerException.class).verify();
     }
 }
