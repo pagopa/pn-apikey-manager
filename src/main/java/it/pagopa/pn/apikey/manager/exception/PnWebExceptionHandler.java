@@ -46,13 +46,18 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
         DataBufferFactory bufferFactory = serverWebExchange.getResponse().bufferFactory();
         Problem problem;
         try {
-            log.error("Exception uri: {}, message: {} ",throwable.getMessage(), serverWebExchange.getRequest().getURI());
-            log.error("Exception uri : {}, error: ",serverWebExchange.getRequest().getURI(), throwable);
-            if(throwable instanceof ApiKeyManagerException){
-                ApiKeyManagerException apiKeyManagerException = (ApiKeyManagerException) throwable;
+            if(throwable instanceof ApiKeyManagerException apiKeyManagerException){
                 problem = handleApiKeyException(apiKeyManagerException);
             }else {
                 problem = handleException(throwable);
+            }
+
+            if(problem.getStatus() >= 500) {
+                log.error("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage());
+                log.error("Exception uri: {}, error: {}", serverWebExchange.getRequest().getURI(), throwable);
+            } else {
+                log.warn("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage());
+                log.warn("Exception uri: {}, error: {}", serverWebExchange.getRequest().getURI(), throwable);
             }
 
             problem.setTraceId(MDC.get("trace_id"));

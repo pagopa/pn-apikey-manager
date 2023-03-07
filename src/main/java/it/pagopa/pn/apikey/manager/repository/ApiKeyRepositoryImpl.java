@@ -68,7 +68,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .build();
 
         return Mono.fromFuture(table.getItem(key))
-                .switchIfEmpty(Mono.error(new ApiKeyManagerException(APIKEY_DOES_NOT_EXISTS, HttpStatus.INTERNAL_SERVER_ERROR)));
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(APIKEY_DOES_NOT_EXISTS, HttpStatus.NOT_FOUND)));
     }
 
     @Override

@@ -158,7 +158,7 @@ class CreateApiKeyServiceTest {
         responseNewApiKeyDto.setId("idtest");
 
         PaGroup group = new PaGroup();
-        group.setName("Groups1");
+        group.setId("Groups1");
         List<PaGroup> paGroups = new ArrayList<>();
         paGroups.add(group);
 
@@ -200,7 +200,7 @@ class CreateApiKeyServiceTest {
         requestNewApiKeyDto.addGroupsItem("Groups1");
 
         PaGroup group = new PaGroup();
-        group.setName("Groups2");
+        group.setId("Groups2");
         List<PaGroup> paGroups = new ArrayList<>();
         paGroups.add(group);
 

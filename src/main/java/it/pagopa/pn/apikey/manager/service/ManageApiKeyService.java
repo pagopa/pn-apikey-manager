@@ -194,7 +194,7 @@ public class ManageApiKeyService {
             case ROTATE:
                 return ApiKeyStatusDto.ROTATED;
             default:
-                throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
         }
     }
 
