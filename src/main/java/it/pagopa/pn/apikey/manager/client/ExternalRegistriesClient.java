@@ -36,8 +36,7 @@ public class ExternalRegistriesClient {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<PaDetailDto>>() {})
                 .doOnError(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                    if (throwable instanceof WebClientResponseException ex) {
                         throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
                     }
                 });
@@ -52,8 +51,7 @@ public class ExternalRegistriesClient {
                 .retrieve()
                 .bodyToMono(InternalPaDetailDto.class)
                 .doOnError(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                    if (throwable instanceof WebClientResponseException ex) {
                         throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
                     }
                 });

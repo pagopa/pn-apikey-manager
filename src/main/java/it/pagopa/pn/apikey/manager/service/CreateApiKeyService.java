@@ -98,7 +98,7 @@ public class CreateApiKeyService {
         return groupsToCheck.map(groups -> {
            if(!new HashSet<>(groups).containsAll(requestGroups)) {
                 requestGroups.removeIf(groups::contains);
-                throw new ApiKeyManagerException("User cannot add groups: " + requestGroups, HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new ApiKeyManagerException("User cannot add groups: " + requestGroups, HttpStatus.BAD_REQUEST);
             }
             return requestGroups;
         });
@@ -107,7 +107,7 @@ public class CreateApiKeyService {
     private Mono<List<String>> getPaGroupsById(String cxId) {
         return this.externalRegistriesClient.getPaGroupsById(cxId)
                 .defaultIfEmpty(new ArrayList<>())
-                .map(paGroups -> paGroups.stream().map(PaGroup::getName).toList());
+                .map(paGroups -> paGroups.stream().map(PaGroup::getId).toList());
     }
 
     private ResponseNewApiKeyDto createResponseNewApiKey(ApiKeyModel apiKeyModel) {
