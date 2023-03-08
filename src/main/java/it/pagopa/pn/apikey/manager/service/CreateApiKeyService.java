@@ -11,6 +11,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKe
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
+import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -105,7 +106,7 @@ public class CreateApiKeyService {
     }
 
     private Mono<List<String>> getPaGroupsById(String cxId) {
-        return this.externalRegistriesClient.getPaGroupsById(cxId)
+        return this.externalRegistriesClient.getPaGroupsById(cxId, PaGroupStatus.ACTIVE)
                 .defaultIfEmpty(new ArrayList<>())
                 .map(paGroups -> paGroups.stream().map(PaGroup::getId).toList());
     }

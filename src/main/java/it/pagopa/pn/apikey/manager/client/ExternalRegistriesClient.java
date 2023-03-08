@@ -57,11 +57,13 @@ public class ExternalRegistriesClient {
                 });
     }
 
-    public Mono<List<PaGroup>> getPaGroupsById(String id) {
+    public Mono<List<PaGroup>> getPaGroupsById(String id, PaGroupStatus status) {
+        Optional<PaGroupStatus> optStatus =  status == null ? Optional.empty() : Optional.of(status);
+
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/ext-registry-private/pa/v1/groups-all")
-                        .queryParam("statusFilter", PaGroupStatus.ACTIVE)
+                        .queryParamIfPresent("statusFilter", optStatus)
                         .build()
                 )
                 .headers(httpHeaders -> {

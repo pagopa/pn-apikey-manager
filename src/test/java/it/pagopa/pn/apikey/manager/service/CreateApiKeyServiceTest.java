@@ -162,7 +162,7 @@ class CreateApiKeyServiceTest {
         List<PaGroup> paGroups = new ArrayList<>();
         paGroups.add(group);
 
-        when(externalRegistriesClient.getPaGroupsById(any())).thenReturn(Mono.just(paGroups));
+        when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
 
         StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, new ArrayList<>()))
                 .expectNext(responseNewApiKeyDto).verifyComplete();
@@ -204,7 +204,7 @@ class CreateApiKeyServiceTest {
         List<PaGroup> paGroups = new ArrayList<>();
         paGroups.add(group);
 
-        when(externalRegistriesClient.getPaGroupsById(any())).thenReturn(Mono.just(paGroups));
+        when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
 
         StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, new ArrayList<>()))
                 .expectError(ApiKeyManagerException.class).verify();
