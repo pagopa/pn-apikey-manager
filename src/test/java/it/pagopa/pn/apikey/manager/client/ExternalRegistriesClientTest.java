@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.client;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
+import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -127,7 +128,7 @@ class ExternalRegistriesClientTest {
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(new ParameterizedTypeReference<List<PaGroup>>() {})).thenReturn(Mono.just(new ArrayList<>()));
 
-        StepVerifier.create(externalRegistriesClient.getPaGroupsById("id"))
+        StepVerifier.create(externalRegistriesClient.getPaGroupsById("id", PaGroupStatus.ACTIVE))
                 .expectNext(new ArrayList<>())
                 .verifyComplete();
     }
@@ -147,7 +148,7 @@ class ExternalRegistriesClientTest {
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(new ParameterizedTypeReference<List<PaGroup>>() {})).thenReturn(Mono.error(new RuntimeException()));
 
-        StepVerifier.create(externalRegistriesClient.getPaGroupsById("id"))
+        StepVerifier.create(externalRegistriesClient.getPaGroupsById("id", PaGroupStatus.ACTIVE))
                 .verifyError();
     }
 }

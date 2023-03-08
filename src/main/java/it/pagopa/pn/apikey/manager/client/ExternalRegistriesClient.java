@@ -36,8 +36,7 @@ public class ExternalRegistriesClient {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<PaDetailDto>>() {})
                 .doOnError(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                    if (throwable instanceof WebClientResponseException ex) {
                         throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
                     }
                 });
@@ -52,18 +51,19 @@ public class ExternalRegistriesClient {
                 .retrieve()
                 .bodyToMono(InternalPaDetailDto.class)
                 .doOnError(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                    if (throwable instanceof WebClientResponseException ex) {
                         throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
                     }
                 });
     }
 
-    public Mono<List<PaGroup>> getPaGroupsById(String id) {
+    public Mono<List<PaGroup>> getPaGroupsById(String id, PaGroupStatus status) {
+        Optional<PaGroupStatus> optStatus =  status == null ? Optional.empty() : Optional.of(status);
+
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/ext-registry-private/pa/v1/groups-all")
-                        .queryParam("statusFilter", PaGroupStatus.ACTIVE)
+                        .queryParamIfPresent("statusFilter", optStatus)
                         .build()
                 )
                 .headers(httpHeaders -> {

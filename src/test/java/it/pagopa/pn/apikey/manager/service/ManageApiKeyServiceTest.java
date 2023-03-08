@@ -9,9 +9,8 @@ import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 
 import java.util.ArrayList;
@@ -256,26 +255,50 @@ class ManageApiKeyServiceTest {
     void testGetApiKeyList() {
         String xPagopaPnUid = "cxId";
         List<String> xPagopaPnCxGroups = new ArrayList<>();
-        xPagopaPnCxGroups.add("RECLAMI");
+        xPagopaPnCxGroups.add("0001");
         Boolean showVirtualKey = true;
         String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
         String lastUpdate = "2022-10-25T16:25:58.334862500";
 
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
-        apiKeyModels.add(new ApiKeyModel());
+        ApiKeyModel apiKey = new ApiKeyModel();
+        apiKey.setVirtualKey("virtualKey");
+        apiKey.setStatus("ENABLED");
+        apiKey.setId("id");
+        apiKey.setCxId("cxId");
+        apiKey.setName("name");
+        apiKey.setStatusHistory(new ArrayList<>());
+        apiKey.setCxType("PA");
+        apiKey.setUid("uid");
+        apiKey.setGroups(List.of("0001"));
+        apiKeyModels.add(apiKey);
 
         Page<ApiKeyModel> page = Page.create(apiKeyModels);
 
         ApiKeysResponseDto apiKeysResponseDto = new ApiKeysResponseDto();
-        apiKeysResponseDto.setItems(new ArrayList<>());
+        ApiKeyRowDto apiKeyDto = new ApiKeyRowDto();
+        apiKeyDto.setValue("virtualKey");
+        apiKeyDto.setStatus(ApiKeyStatusDto.ENABLED);
+        apiKeyDto.setId("id");
+        apiKeyDto.setName("name");
+        apiKeyDto.setStatusHistory(new ArrayList<>());
+        apiKeyDto.setGroups(List.of("0001"));
+        apiKeysResponseDto.setItems(List.of(apiKeyDto));
         apiKeysResponseDto.setLastKey(lastKey);
         apiKeysResponseDto.setLastUpdate(lastUpdate);
+
+        List<PaGroup> paGroups = new ArrayList<>();
+        PaGroup paGroup = new PaGroup();
+        paGroup.setId("0001");
+        paGroup.setName("Tributi");
+        paGroups.add(paGroup);
 
         when(apiKeyRepository.getAllWithFilter(anyString(), anyList(), any()))
                 .thenReturn(Mono.just(page));
         when(apiKeyRepository.countWithFilters(anyString(), anyList()))
                 .thenReturn(Mono.just(1));
         when(apiKeyConverter.convertResponsetoDto(any(),anyBoolean())).thenReturn(apiKeysResponseDto);
+        when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
         StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, CxTypeAuthFleetDto.PA))
                 .expectNext(apiKeysResponseDto)
                 .verifyComplete();

@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
@@ -9,6 +10,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -18,10 +20,13 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto.*;
@@ -40,11 +45,13 @@ public class ManageApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
+    private final ExternalRegistriesClient externalRegistriesClient;
 
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter) {
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ExternalRegistriesClient externalRegistriesClient) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
+        this.externalRegistriesClient = externalRegistriesClient;
     }
 
     public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey){
@@ -114,10 +121,41 @@ public class ManageApiKeyService {
         }
         ApiKeyPageable pageable = toApiKeyPageable(limit, lastEvaluatedKey, lastEvaluatedLastUpdate);
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
+                .zipWith(externalRegistriesClient.getPaGroupsById(xPagopaPnCxId, null))
+                .map(this::decodeGroupIdsToGroupNames)
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
                 .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
                 .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
                 .map(Tuple2::getT1);
+    }
+
+    private Page<ApiKeyModel> decodeGroupIdsToGroupNames(Tuple2<Page<ApiKeyModel>, List<PaGroup>> tuple) {
+        Page<ApiKeyModel> apiKeysFound = tuple.getT1();
+        List<PaGroup> paGroups = tuple.getT2();
+
+        if(paGroups.isEmpty() || apiKeysFound.items().isEmpty()) {
+            return apiKeysFound;
+        }
+
+        log.info("Start decode group names of {} api keys", apiKeysFound.items().size());
+
+        Map<String, String> mapGroupsIdToName = convertPaGroupsToMap(paGroups);
+
+        apiKeysFound.items().forEach(
+                apiKeyModel -> apiKeyModel.setGroups(getGroupNamesByGroupIds(apiKeyModel.getGroups(), mapGroupsIdToName))
+        );
+
+        log.info("End decode group names");
+        return apiKeysFound;
+    }
+
+    private Map<String, String> convertPaGroupsToMap(List<PaGroup> paGroups) {
+        return paGroups.stream().collect(Collectors.toMap(PaGroup::getId, PaGroup::getName));
+    }
+    private List<String> getGroupNamesByGroupIds(List<String> groups, Map<String, String> mapGroupsIdToName) {
+        return groups.stream()
+                .map(group -> mapGroupsIdToName.getOrDefault(group, group))
+                .toList();
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, ApiKeyModel oldApiKey, String status, String xPagopaPnUid) {
