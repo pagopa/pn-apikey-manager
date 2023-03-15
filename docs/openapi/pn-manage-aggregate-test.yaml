@@ -2,13 +2,13 @@ openapi: 3.0.3
 info:
   x-summary: 'Piattaforma Notifiche: API per il Front End del BackOffice'
   title: 'Gestione Aggregati'
-  version: '1.0.0'
+  version: '3.0.0'
 tags:
   - name: Aggregate
     description: >-
       Invocazioni utilizzabili dai mittenti per la gestione degli aggregati
 paths:
-  "/aggregate":
+  "/api-key-bo/aggregate":
     get:
       summary: Ricerca aggregati
       description: >-
@@ -16,7 +16,9 @@ paths:
       tags:
         - Aggregate
       operationId: getAggregatesList
-      parameters:                
+      x-api-permissions:
+        - 'api-key-read'
+      parameters:
         - name: name
           in: query
           required: false
@@ -27,7 +29,6 @@ paths:
           required: false
           schema:
             type: integer
-            default: 10
         - name: lastEvaluatedId
           in: query
           required: false
@@ -58,8 +59,84 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+    post:
+      summary: Creazione Aggregato
+      description: Servizio per la creazione di un nuovo aggregato
+      tags:
+        - Aggregate
+      operationId: createAggregate
+      x-api-permissions:
+        - 'api-key-write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AggregateRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SaveAggregateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  "/api-key-bo/aggregate/{id}/associated-pa":
+    get:
+      summary: Lista PA associate
+      description: >-
+        servizio per la lista delle PA associate all'aggregato
+      tags:
+        - Aggregate
+      operationId: getPaAggregation
+      x-api-permissions:
+        - 'api-key-read'
+      parameters:
+        - $ref: '#/components/parameters/pathAggregate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/PaAggregateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 
-  "/aggregate/{id}":
+  "/api-key-bo/aggregate/{id}":
     get:
       summary: Dettaglio Aggregato
       description: >-
@@ -67,6 +144,8 @@ paths:
       tags:
         - Aggregate
       operationId: getAggregate
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       responses:
@@ -101,6 +180,8 @@ paths:
       tags:
         - Aggregate
       operationId: deleteApiKeys
+      x-api-permissions:
+        - 'api-key-write'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       responses:
@@ -124,8 +205,49 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  
-  "/aggregate/{id}/add-pa":
+    put:
+      summary: Modifica Aggregato
+      description: Servizio per la modifica di un aggregato
+      tags:
+        - Aggregate
+      operationId: updateAggregate
+      x-api-permissions:
+        - 'api-key-write'
+      parameters:
+        - $ref: '#/components/parameters/pathAggregate'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AggregateRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SaveAggregateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/api-key-bo/aggregate/{id}/add-pa":
     post:
       summary: Associazione PA - Aggregato
       description: >-
@@ -133,6 +255,8 @@ paths:
       tags:
         - Aggregate
       operationId: addPaListToAggregate
+      x-api-permissions:
+        - 'api-key-write'
       parameters:
         - $ref: '#/components/parameters/pathAggregate'
       requestBody:
@@ -144,6 +268,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/MovePaResponse'
         '400':
           description: Bad request
           content:
@@ -162,8 +290,52 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-                
-  "/aggregate/{id}/associable-pa":
+
+  "/api-key-bo/aggregate/{id}/move-pa":
+    post:
+      summary: Spostamento PA
+      description: >-
+        servizio che si occupa dello spostamento di una PA da un aggregato a un altro
+      tags:
+        - Aggregate
+      operationId: movePa
+      x-api-permissions:
+        - 'api-key-write'
+      parameters:
+        - $ref: '#/components/parameters/pathAggregate'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddPaListRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/MovePaResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/api-key-bo/aggregate/associable-pa":
     get:
       summary: Lista PA associabili
       description: >-
@@ -171,8 +343,14 @@ paths:
       tags:
         - Aggregate
       operationId: getAssociablePa
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
-        - $ref: '#/components/parameters/pathAggregate'
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -199,21 +377,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/usage-plan/template":
+  "/api-key-bo/usage-plan":
     get:
-      summary: Lista usagePlan template
+      summary: Lista usagePlan
       description: >-
         servizio che restituisce la lista dei template per gli usage plan
       tags:
         - UsagePlan
-      operationId: getUsagePlanTemplate
+      operationId: getUsagePlan
+      x-api-permissions:
+        - 'api-key-read'
       responses:
         '200':
           description: OK
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/UsagePlanTemplateResponse'
+                $ref: '#/components/schemas/UsagePlanResponse'
         '400':
           description: Bad request
           content:
@@ -243,13 +423,58 @@ components:
       required: true
       schema:
         type: string
-  
+
   schemas:
+    AggregateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        usagePlanId:
+          type: string
     Problem:
-      $ref: './remote-refs.yaml#/components/schemas/Problem'
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Contiene il codice HTTP dell'errore
+        title:
+          type: string
+        detail:
+          type: string
+        traceId:
+          type: string
+        timestamp:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              element:
+                type: string
+              detail:
+                type: string
+    PaAggregateResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        items:
+          $ref: '#/components/schemas/AssociatedPa'
+    AssociatedPa:
+      type: array
+      items:
+        $ref: '#/components/schemas/PaDetail'
     AssociablePaResponse:
       type: object
       properties:
+        total:
+          type: integer
         items:
           $ref: '#/components/schemas/AssociablePa'
     AssociablePa:
@@ -276,6 +501,8 @@ components:
       required:
         - items
       properties:
+        total:
+          type: integer
         items:
           type: array
           items:
@@ -289,13 +516,16 @@ components:
       properties:
         id:
           type: string
-          description: Id dell'api key
+          description: Id dell'aggregato
         name:
           type: string
-          description: Nome dell'api key
-        usagePlanTemplate:
+          description: Nome dell'aggregato
+        description:
           type: string
-          description: template dello usage plan al quale è collegato
+          description: Descrizione dell'aggregato
+        usagePlan:
+          type: string
+          description: size dello usage plan al quale è collegato
         createdAt:
           type: string
           description: Data creazione
@@ -304,19 +534,25 @@ components:
           type: string
           description: Data ultima modifica
           format: date-time
+    SaveAggregateResponse:
+      title: Salvataggio aggregato
+      properties:
+        id:
+          type: string
+          description: Id dell'aggregato
     AggregateResponse:
       title: Dettaglio aggregato
       properties:
         id:
           type: string
-          description: Id dell'api key
+          description: Id dell'aggregato
         name:
           type: string
-          description: Nome dell'api key
-        usagePlanTemplate:
+          description: Nome dell'aggregato
+        description:
           type: string
-          description: template dello usage plan al quale è collegato
-        usagePlanInstance:
+          description: Descrizione dell'aggregato
+        usagePlan:
           $ref: '#/components/schemas/UsagePlanDetail'
         createdAt:
           type: string
@@ -326,24 +562,22 @@ components:
           type: string
           description: Data ultima modifica
           format: date-time
-        associatedPa:
-          type: integer
-          description: numero di PA associate
-        associatedPaList:
-          type: array
-          items:
-            $ref: '#/components/schemas/PaDetail'
     UsagePlanDetail:
       type: object
       properties:
-        usagePlanId:
+        id:
           type: string
           description: id dell'istanza di usagePlan collegata all'aggregato
-        usagePlanQuota:
+        name:
+          type: string
+        description:
+          type: string
+        quota:
+          type: integer
+        rate:
           type: number
-        usagePlanRate:
-          type: number
-        usagePlanBurst:
+          format: double
+        burst:
           type: integer
     PaDetail:
       type: object
@@ -352,7 +586,7 @@ components:
           type: string
         name:
           type: string
-    UsagePlanTemplateResponse:
+    UsagePlanResponse:
       title: elenco usagePlan template
       description: >-
         Dto contenente la lista dei template per gli usagePlan
@@ -363,20 +597,18 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/UsagePlanTemplate'
-    UsagePlanTemplate:
+            $ref: '#/components/schemas/UsagePlanDetail'
+    MovePaResponse:
       type: object
       properties:
-        id:
-          type: string
-        name: 
-          type: string
-        quota:
-          type: number
-        rate:
-          type: number
-        burst:
+        processed:
           type: integer
-    
-
-
+          default: 0
+        unprocessed:
+          type: integer
+          default: 0
+        unprocessedPA:
+          type: array
+          default: []
+          items:
+            $ref: '#/components/schemas/PaDetail'
