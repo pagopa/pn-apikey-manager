@@ -23,7 +23,46 @@ Parameters:
 
 
 Resources:
-  # Dynamo Table
+
+  # KMS AWS managed key for SSE pn-apiKey DynamoDB table
+  ApiKeyTableEncryptKey:
+    Type: 'AWS::KMS::Key'
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Symmetric default key to encrypt table
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+
+  # KMS AWS managed key for SSE pn-aggregates DynamoDB table
+  AggregatesTableEncryptKey:
+    Type: 'AWS::KMS::Key'
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Symmetric default key to encrypt table
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+
+  # pn-apiKey DynamoDB table
   ApiKeyTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -65,7 +104,12 @@ Resources:
           Value: pnStorage
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-apiKey'
+      SSESpecification:
+        KMSMasterKeyId: !Ref ApiKeyTableEncryptKey
+        SSEEnabled: true
+        SSEType: KMS
 
+  # pn-aggregates DynamoDB table
   AggregatesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -97,7 +141,12 @@ Resources:
           Value: pnStorage
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-aggregates'
+      SSESpecification:
+        KMSMasterKeyId: !Ref AggregatesTableEncryptKey
+        SSEEnabled: true
+        SSEType: KMS
 
+  # pn-paAggregations DynamoDB table
   PaAggregationsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -170,10 +219,17 @@ Resources:
         RateLimit: 20000
       UsagePlanName: pn_usageplan_large
 
-# Necessario a causa di bug script deploy
+
 Outputs:
 
-  # Table parameters
+  ApiKeyTableEncryptKeyArn:
+    Description: ARN KMS key for ApiKeyTable
+    Value: !Sub '${ApiKeyTableEncryptKey.Arn}'
+
+  AggregatesTableEncryptKeyArn:
+    Description: ARN KMS key for AggregatesTable
+    Value: !Sub '${AggregatesTableEncryptKey.Arn}'
+
   PaAggregationsTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store of PaAggregationsTable
     Value: !Sub '${PaAggregationsTable.Arn}'
