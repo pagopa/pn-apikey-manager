@@ -140,7 +140,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/docs/openapi/pn-manage-aggregate-test-v3.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-manage-aggregate-test.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <modelNameSuffix>Dto</modelNameSuffix>
@@ -178,7 +178,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-internal-v2.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-internal.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <modelNameSuffix>Dto</modelNameSuffix>
@@ -216,7 +216,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-prvt-v1.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-prvt.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <modelNameSuffix>Dto</modelNameSuffix>

@@ -4,7 +4,7 @@ info:
   x-api-id: api-internal-web-pa
   title: 'Piattaforma Notifiche: API per il Front End delle PA'
   x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
-  version: '1.0.0'
+  version: '2.0.0'
   description: >-
     ## Abstract
       API utilizzate dal portale di Piattaforma Notifiche dedicato alle Pubbliche Amministrazioni
