@@ -1,5 +1,5 @@
 {
   "Parameters": {
-    "MaxTasksNumber": 1
+    "MaxTasksNumber": "1"
   }
 }
