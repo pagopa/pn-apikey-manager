@@ -73,7 +73,7 @@ public class ManageApiKeyService {
         String status = requestApiKeyStatusDto.getStatus().getValue();
 
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
-            log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+            log.warn(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
         return apiKeyRepository.findById(id)
@@ -94,7 +94,7 @@ public class ManageApiKeyService {
     public Mono<String> deleteApiKey(String id, CxTypeAuthFleetDto xPagopaPnCxType) {
 
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
-            log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+            log.warn(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
         return apiKeyRepository.findById(id)
@@ -116,7 +116,7 @@ public class ManageApiKeyService {
                                                   @NonNull CxTypeAuthFleetDto xPagopaPnCxType) {
 
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
-            log.error(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+            log.warn(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
         ApiKeyPageable pageable = toApiKeyPageable(limit, lastEvaluatedKey, lastEvaluatedLastUpdate);
