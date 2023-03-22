@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.controller;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.api.ApiKeysPrvtApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
+import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
@@ -54,7 +55,12 @@ public class ApiKeysPrvtController implements ApiKeysPrvtApi {
 
         return manageApiKeyService.changeVirtualKey(requestBodyApiKeyPkDto.getxPagopaPnCxId(), requestBodyApiKeyPkDto.getVirtualKey())
                 .publishOn(scheduler)
-                .doOnError(throwable -> logEvent.generateFailure(throwable.getMessage()).log())
+                .doOnError(throwable -> {
+                    if(CheckExceptionUtils.checkExceptionStatusForLogLevel(throwable))
+                        logEvent.generateWarning(throwable.getMessage()).log();
+                    else
+                        logEvent.generateFailure(throwable.getMessage()).log();
+                })
                 .map(s -> {
                     logEvent.generateSuccess().log();
                     return ResponseEntity.ok().build();
