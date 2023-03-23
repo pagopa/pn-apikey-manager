@@ -69,12 +69,7 @@ public class ApiKeysController implements ApiKeysApi {
 
         return manageApiKeyService.changeStatus(id, requestApiKeyStatusDto, xPagopaPnUid, xPagopaPnCxType)
                 .publishOn(scheduler)
-                .doOnError(throwable -> {
-                    if(CheckExceptionUtils.checkExceptionStatusForLogLevel(throwable))
-                        logEvent.generateWarning(throwable.getMessage()).log();
-                    else
-                        logEvent.generateFailure(throwable.getMessage()).log();
-                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .map(s -> {
                     logEvent.generateSuccess().log();
                     return ResponseEntity.ok().build();
@@ -114,17 +109,13 @@ public class ApiKeysController implements ApiKeysApi {
 
         return manageApiKeyService.deleteApiKey(id, xPagopaPnCxType)
                 .publishOn(scheduler)
-                .doOnError(throwable -> {
-                    if(CheckExceptionUtils.checkExceptionStatusForLogLevel(throwable))
-                        logEvent.generateWarning(throwable.getMessage()).log();
-                    else
-                        logEvent.generateFailure(throwable.getMessage()).log();
-                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().build();
                 });
     }
+
 
     /**
      * GET /api-key-self/api-keys : Ricerca api keys
@@ -161,12 +152,7 @@ public class ApiKeysController implements ApiKeysApi {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
                 })
-                .doOnError(throwable -> {
-                    if(CheckExceptionUtils.checkExceptionStatusForLogLevel(throwable))
-                        logEvent.generateWarning(throwable.getMessage()).log();
-                    else
-                        logEvent.generateFailure(throwable.getMessage()).log();
-                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
     }
 
@@ -203,12 +189,7 @@ public class ApiKeysController implements ApiKeysApi {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
                 })
-                .doOnError(throwable -> {
-                    if(CheckExceptionUtils.checkExceptionStatusForLogLevel(throwable))
-                        logEvent.generateWarning(throwable.getMessage()).log();
-                    else
-                        logEvent.generateFailure(throwable.getMessage()).log();
-                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
     }
 
