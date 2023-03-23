@@ -55,12 +55,7 @@ public class ApiKeysPrvtController implements ApiKeysPrvtApi {
 
         return manageApiKeyService.changeVirtualKey(requestBodyApiKeyPkDto.getxPagopaPnCxId(), requestBodyApiKeyPkDto.getVirtualKey())
                 .publishOn(scheduler)
-                .doOnError(throwable -> {
-                    if(CheckExceptionUtils.checkExceptionStatusForLogLevel(throwable))
-                        logEvent.generateWarning(throwable.getMessage()).log();
-                    else
-                        logEvent.generateFailure(throwable.getMessage()).log();
-                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .map(s -> {
                     logEvent.generateSuccess().log();
                     return ResponseEntity.ok().build();
