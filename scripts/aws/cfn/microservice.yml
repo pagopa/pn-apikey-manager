@@ -194,6 +194,11 @@ Parameters:
     Type: String
     Description: 'ARN KMS key for AggregatesTable'
 
+  # Log group parameters
+  EcsLogGroup:
+    Type: String
+    Description: 'Ecs log group name'
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -216,7 +221,7 @@ Resources:
         AutoscalingDataPointN: !Ref AutoscalingDataPointN
         AutoscalingDataPointM: !Ref AutoscalingDataPointM
         AutoscalingStrategy: REST-API
-        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager'
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager'
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
@@ -230,8 +235,8 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
+        EcsLogGroup: !Ref EcsLogGroup
 
   ApikeyManagerMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -287,7 +292,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager'
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -302,7 +307,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager-bo'
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager-bo'
         IntendedUsage: BACKOFFICE
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -319,7 +324,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-ApikeyManager-bo'
+        WAFName: !Sub '${ProjectName}-apikey-manager-bo'
         IntendedUsage: BACKOFFICE 
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.APIGatewayARN
 
@@ -328,7 +333,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager-prvt'
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager-prvt'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -343,7 +348,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-ApikeyManager-prvt'
+        WAFName: !Sub '${ProjectName}-apikey-manager-prvt'
         IntendedUsage: WEB 
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayPrvt.Outputs.APIGatewayARN
 
@@ -373,3 +378,6 @@ Resources:
             - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiLatencyAlarmArn
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiErrorAlarmArn
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'    
