@@ -24,45 +24,12 @@ Parameters:
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Where to send Logs'
+  
+  ApiKeyTablesEncryptKeyId:
+    Type: String
+    Description: Dynamo table encryption key
+
 Resources:
-
-  # KMS AWS managed key for SSE pn-apiKey DynamoDB table
-  ApiKeyTableEncryptKey:
-    Type: 'AWS::KMS::Key'
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      Description: Symmetric default key to encrypt table
-      KeySpec: SYMMETRIC_DEFAULT
-      KeyUsage: ENCRYPT_DECRYPT
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: 'kms:*'
-            Resource: '*'
-
-  # KMS AWS managed key for SSE pn-aggregates DynamoDB table
-  AggregatesTableEncryptKey:
-    Type: 'AWS::KMS::Key'
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      Description: Symmetric default key to encrypt table
-      KeySpec: SYMMETRIC_DEFAULT
-      KeyUsage: ENCRYPT_DECRYPT
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: 'kms:*'
-            Resource: '*'
 
   # pn-apiKey DynamoDB table
   ApiKeyTable:
@@ -109,7 +76,7 @@ Resources:
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-apiKey'
       SSESpecification:
-        KMSMasterKeyId: !Ref ApiKeyTableEncryptKey
+        KMSMasterKeyId: !Ref ApiKeyTablesEncryptKeyId
         SSEEnabled: true
         SSEType: KMS
 
@@ -148,7 +115,7 @@ Resources:
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-aggregates'
       SSESpecification:
-        KMSMasterKeyId: !Ref AggregatesTableEncryptKey
+        KMSMasterKeyId: !Ref ApiKeyTablesEncryptKeyId
         SSEEnabled: true
         SSEType: KMS
 
@@ -243,14 +210,6 @@ Resources:
         LogGroupName: !Sub '${ProjectName}-apikey-manager'
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
 Outputs:
-
-  ApiKeyTableEncryptKeyArn:
-    Description: ARN KMS key for ApiKeyTable
-    Value: !Sub '${ApiKeyTableEncryptKey.Arn}'
-
-  AggregatesTableEncryptKeyArn:
-    Description: ARN KMS key for AggregatesTable
-    Value: !Sub '${AggregatesTableEncryptKey.Arn}'
 
   PaAggregationsTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store of PaAggregationsTable
