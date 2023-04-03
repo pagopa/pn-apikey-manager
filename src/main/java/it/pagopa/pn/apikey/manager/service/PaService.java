@@ -3,10 +3,7 @@ package it.pagopa.pn.apikey.manager.service;
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AssociablePaResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.MovePaResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.PnBatchGetItemResponse;
 import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
@@ -74,7 +71,17 @@ public class PaService {
         return savePaAggregation(aggregateId, createPaAggregationModel(aggregateId, addPaListRequestDto.getItems()), movePaResponseDto);
     }
 
-    public Mono<MovePaResponseDto> movePa(String id, AddPaListRequestDto addPaListRequestDto) {
+
+    public Mono<MovePaResponseDto> movePa(String id, MovePaListRequestDto movePaListRequestDto) {
+        AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
+        List<PaDetailDto> paDetailDtos = movePaListRequestDto
+                .getItems()
+                .stream().map(paMoveDetailDto -> {
+                    PaDetailDto paDetailDto = new PaDetailDto();
+                    paDetailDto.setId(paMoveDetailDto.getId());
+                    return paDetailDto;
+                }).toList();
+        addPaListRequestDto.setItems(paDetailDtos);
         log.debug("start movePa for {} PA to aggregate: {}", addPaListRequestDto.getItems().size(), id);
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
                 .distinct()

@@ -7,10 +7,7 @@ import static org.mockito.Mockito.when;
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AssociablePaResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.MovePaResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.PnBatchGetItemResponse;
 import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
@@ -71,7 +68,7 @@ class PaServiceTest {
     }
 
     /**
-     * Method under test: {@link PaService#movePa(String, AddPaListRequestDto)}
+     * Method under test: {@link PaService#movePa(String, MovePaListRequestDto)}
      */
     @Test
     void testMovePa() {
@@ -108,18 +105,16 @@ class PaServiceTest {
         when(aggregateRepository.getApiKeyAggregation(any()))
                 .thenReturn(Mono.just(new ApiKeyAggregateModel()));
 
-        AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
-        List<PaDetailDto> list = new ArrayList<>();
-        PaDetailDto paDetailDto = new PaDetailDto();
-        paDetailDto.setId("id");
-        paDetailDto.setName("name");
-        list.add(paDetailDto);
-        addPaListRequestDto.setItems(list);
-
+        MovePaListRequestDto movePaListRequestDto = new MovePaListRequestDto();
+        List<PaMoveDetailDto> list = new ArrayList<>();
+        PaMoveDetailDto paMoveDetailDto = new PaMoveDetailDto();
+        paMoveDetailDto.setId("id");
+        list.add(paMoveDetailDto);
+        movePaListRequestDto.setItems(list);
         MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
         movePaResponseDto.setProcessed(1);
-        StepVerifier.create(paService.movePa("foo", addPaListRequestDto))
+        StepVerifier.create(paService.movePa("foo", movePaListRequestDto))
                 .expectNext(movePaResponseDto)
                 .verifyComplete();
     }

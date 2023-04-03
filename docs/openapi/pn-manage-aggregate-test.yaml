@@ -307,7 +307,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddPaListRequest"
+              $ref: "#/components/schemas/MovePaListRequest"
         required: true
       responses:
         '200':
@@ -481,6 +481,18 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/PaDetail'
+    MovePaListRequest:
+      title: Lista Pa da Spostare
+      description: >-
+        Dto contenente la lista delle Pa da spostare all'aggregato selezionato
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaMoveDetail'
     AddPaListRequest:
       title: Lista Pa da Associare
       description: >-
@@ -585,6 +597,11 @@ components:
         id:
           type: string
         name:
+          type: string
+    PaMoveDetail:
+      type: object
+      properties:
+        id:
           type: string
     UsagePlanResponse:
       title: elenco usagePlan template

@@ -85,11 +85,10 @@ class AggregationControllerTest {
         dto.setUnprocessed(1);
         dto.setProcessed(1);
         when(paService.movePa(any(), any())).thenReturn(Mono.just(dto));
-        StepVerifier.create(aggregationController.movePa("id", new AddPaListRequestDto(),
+        StepVerifier.create(aggregationController.movePa("id", new MovePaListRequestDto(),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
-
     @Test
     void testDeleteApiKeys() {
         AggregationController aggregationController = new AggregationController(scheduler, aggregationService, paService);

@@ -90,19 +90,18 @@ public class AggregationController implements AggregateApi {
      * servizio che si occupa dello spostamento di una PA da un aggregato a un altro
      *
      * @param id                  Identificativo univoco dell&#39;aggregato (required)
-     * @param addPaListRequestDto (required)
+     * @param movePaListRequestDto (required)
      * @return OK (status code 200)
      * or Bad request (status code 400)
      * or Not found (status code 404)
      * or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto, final ServerWebExchange exchange) {
-        return paService.movePa(id, addPaListRequestDto)
+    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, MovePaListRequestDto movePaListRequestDto, final ServerWebExchange exchange) {
+        return paService.movePa(id, movePaListRequestDto)
                 .publishOn(scheduler)
                 .map(a -> ResponseEntity.ok().body(a));
     }
-
     /**
      * POST /aggregate/{id}/add-pa : Associazione PA - Aggregato
      * servizio che associa una lista di PA a un determinato aggregato
