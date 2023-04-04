@@ -11,6 +11,7 @@ import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,9 @@ public class AggregationService {
     private final AggregationConverter aggregationConverter;
     private final ApiGatewayService apiGatewayService;
 
+    @Value("${pn.apikey.manager.flag.pdnd}")
+    private boolean flagPdnd;
+
     public AggregationService(AggregateRepository aggregateRepository,
                               PaAggregationRepository paAggregationRepository,
                               PnApikeyManagerConfig pnApikeyManagerConfig,
@@ -51,6 +55,14 @@ public class AggregationService {
         this.usagePlanService = usagePlanService;
         this.aggregationConverter = aggregationConverter;
         this.apiGatewayService = apiGatewayService;
+    }
+
+    public Mono<Void> changePdnd(Boolean flag){
+        if(flagPdnd!=true){
+
+        }
+        System.setProperty("pn.apikey.manager.flag.pdnd", String.valueOf(flag));
+        return Mono.empty();
     }
 
     /**

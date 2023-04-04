@@ -3,8 +3,8 @@ package it.pagopa.pn.apikey.manager.controller;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.AggregateApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
-import it.pagopa.pn.apikey.manager.service.PaService;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
+import it.pagopa.pn.apikey.manager.service.PaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -181,5 +181,22 @@ public class AggregationController implements AggregateApi {
         return aggregationService.updateAggregate(id, aggregateRequestDto)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
+    }
+
+    /**
+     * POST /api-key-bo/aggregate/changePdnd : Cambio valore pdnd
+     * servizio che cambia il valore del flag pdnd di un aggregato
+     *
+     * @param pdndPaDto  (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> changePdndPa(PdndPaDto pdndPaDto, ServerWebExchange exchange) {
+        return aggregationService.changePdnd(pdndPaDto.getPdnd())
+                .publishOn(scheduler)
+                .map(a -> ResponseEntity.ok().build());
     }
 }

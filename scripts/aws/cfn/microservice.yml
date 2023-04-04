@@ -99,6 +99,10 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
 
+  FlagPdnd:
+    Type: boolean
+    Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
+
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
@@ -228,6 +232,7 @@ Resources:
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry6: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
+        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
