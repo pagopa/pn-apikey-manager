@@ -66,6 +66,10 @@ public class ApiKeyModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("correlationId")}))
     private String correlationId;
 
+
+    @Getter(onMethod = @__({@DynamoDbAttribute("pdnd")}))
+    private boolean pdnd;
+
     public ApiKeyModel(ApiKeyModel apiKeyModel) {
         id = apiKeyModel.id;
         virtualKey = apiKeyModel.virtualKey;
@@ -83,6 +87,7 @@ public class ApiKeyModel {
         cxType = apiKeyModel.cxType;
         cxGroup = apiKeyModel.cxGroup;
         correlationId = apiKeyModel.correlationId;
+        pdnd = apiKeyModel.pdnd;
     }
 
 }

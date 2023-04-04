@@ -11,7 +11,6 @@ import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -21,13 +20,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.services.apigateway.model.*;
+import software.amazon.awssdk.services.apigateway.model.CreateApiKeyResponse;
+import software.amazon.awssdk.services.apigateway.model.CreateUsagePlanKeyResponse;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.AGGREGATE_INVALID_STATUS;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.AGGREGATE_NOT_FOUND;
 
 @Service
 @Slf4j
@@ -39,9 +42,6 @@ public class AggregationService {
     private final UsagePlanService usagePlanService;
     private final AggregationConverter aggregationConverter;
     private final ApiGatewayService apiGatewayService;
-
-    @Value("${pn.apikey.manager.flag.pdnd}")
-    private boolean flagPdnd;
 
     public AggregationService(AggregateRepository aggregateRepository,
                               PaAggregationRepository paAggregationRepository,
@@ -55,14 +55,6 @@ public class AggregationService {
         this.usagePlanService = usagePlanService;
         this.aggregationConverter = aggregationConverter;
         this.apiGatewayService = apiGatewayService;
-    }
-
-    public Mono<Void> changePdnd(Boolean flag){
-        if(flagPdnd!=true){
-
-        }
-        System.setProperty("pn.apikey.manager.flag.pdnd", String.valueOf(flag));
-        return Mono.empty();
     }
 
     /**

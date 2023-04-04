@@ -209,6 +209,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/api-key-self/api-keys/changePdnd":
+    post:
+      summary: Cambio valore pdnd
+      description: >-
+        servizio che cambia il valore del flag pdnd di una api key
+      tags:
+        - ApiKeys
+      operationId: changePdnd
+      x-api-permissions:
+        - 'api-key-write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/ApiKeyRequestPdnd'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
 components:
   parameters:
     ############################################################################################
@@ -356,6 +394,25 @@ components:
             - 'ENABLE'
             - 'ROTATE'
 
+    ApiKeyRequestPdnd:
+      title: Elenco di api keys da cambiare pdnd
+      description: >-
+        Dto contenente la lista delle api keys per cui bisogna cambiare il valore del pdnd
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiPdnd'
+
+    ApiPdnd:
+      properties:
+        id:
+          type: string
+        pdnd:
+          type: boolean
 
 #  securitySchemes:                                      # ONLY EXTERNAL
 #    bearerAuth:                                         # ONLY EXTERNAL

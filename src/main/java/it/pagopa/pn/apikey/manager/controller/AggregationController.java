@@ -183,20 +183,4 @@ public class AggregationController implements AggregateApi {
                 .publishOn(scheduler);
     }
 
-    /**
-     * POST /api-key-bo/aggregate/changePdnd : Cambio valore pdnd
-     * servizio che cambia il valore del flag pdnd di un aggregato
-     *
-     * @param pdndPaDto  (required)
-     * @return OK (status code 200)
-     *         or Bad request (status code 400)
-     *         or Not found (status code 404)
-     *         or Internal error (status code 500)
-     */
-    @Override
-    public Mono<ResponseEntity<Void>> changePdndPa(PdndPaDto pdndPaDto, ServerWebExchange exchange) {
-        return aggregationService.changePdnd(pdndPaDto.getPdnd())
-                .publishOn(scheduler)
-                .map(a -> ResponseEntity.ok().build());
-    }
 }

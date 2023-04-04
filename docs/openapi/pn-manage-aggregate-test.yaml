@@ -413,43 +413,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-bo/aggregate/changePdnd":
-    post:
-      summary: Cambio valore pdnd
-      description: >-
-        servizio che cambia il valore del flag pdnd di un aggregato
-      tags:
-        - Aggregate
-      operationId: changePdndPa
-      x-api-permissions:
-        - 'api-key-write'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PdndPa"
-        required: true
-      responses:
-        '200':
-          description: OK
-        '400':
-          description: Bad request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '500':
-          description: Internal error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
 
 components:
   parameters:
@@ -667,8 +630,3 @@ components:
           default: []
           items:
             $ref: '#/components/schemas/PaDetail'
-    PdndPa:
-      type: object
-      properties:
-        pdnd:
-          type: boolean
