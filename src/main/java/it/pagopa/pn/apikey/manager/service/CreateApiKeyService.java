@@ -37,20 +37,20 @@ public class CreateApiKeyService {
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
     private final ExternalRegistriesClient externalRegistriesClient;
-
-    @Value("pn.apikey.manager.flag.pdnd")
-    private boolean flagPdnd;
+    private final String flagPdnd;
 
     public CreateApiKeyService(ApiKeyRepository apiKeyRepository,
                                AggregationService aggregationService,
                                PaAggregationsService paAggregationsService,
                                ManageApiKeyService manageApiKeyService,
-                               ExternalRegistriesClient externalRegistriesClient) {
+                               ExternalRegistriesClient externalRegistriesClient,
+                               @Value("${pn.apikey.manager.flag.pdnd}") String flagPdnd) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
         this.externalRegistriesClient = externalRegistriesClient;
+        this.flagPdnd = flagPdnd;
     }
 
     public Mono<ResponseNewApiKeyDto> createApiKey(@NonNull String xPagopaPnUid,
@@ -135,7 +135,7 @@ public class CreateApiKeyService {
         apiKeyModel.setCxId(xPagopaPnCxId);
         apiKeyModel.setCxType(xPagopaPnCxType.getValue());
         apiKeyModel.getStatusHistory().add(manageApiKeyService.createNewApiKeyHistory(CREATE, xPagopaPnUid));
-        apiKeyModel.setPdnd(flagPdnd);
+        apiKeyModel.setPdnd(Boolean.getBoolean(flagPdnd));
         log.debug("constructed apiKeyModel: {}", apiKeyModel.getId());
         return apiKeyModel;
     }
