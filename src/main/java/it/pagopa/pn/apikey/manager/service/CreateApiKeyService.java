@@ -14,6 +14,7 @@ import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -36,6 +37,9 @@ public class CreateApiKeyService {
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
     private final ExternalRegistriesClient externalRegistriesClient;
+
+    @Value("pn.apikey.manager.flag.pdnd")
+    private boolean flagPdnd;
 
     public CreateApiKeyService(ApiKeyRepository apiKeyRepository,
                                AggregationService aggregationService,
@@ -131,6 +135,7 @@ public class CreateApiKeyService {
         apiKeyModel.setCxId(xPagopaPnCxId);
         apiKeyModel.setCxType(xPagopaPnCxType.getValue());
         apiKeyModel.getStatusHistory().add(manageApiKeyService.createNewApiKeyHistory(CREATE, xPagopaPnUid));
+        apiKeyModel.setPdnd(flagPdnd);
         log.debug("constructed apiKeyModel: {}", apiKeyModel.getId());
         return apiKeyModel;
     }

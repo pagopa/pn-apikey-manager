@@ -92,12 +92,18 @@ public class PaService {
                 .flatMap(batchGetResultPage -> {
                     MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
                     movePaResponseDto.setUnprocessedPA(new ArrayList<>());
+                    ArrayList<PaAggregationModel> paAggregationModelsToSave = new ArrayList<>();
                     batchGetResultPage.forEach(result -> {
                         PnBatchGetItemResponse pnBatchGetItemResponse = dynamoBatchResponseUtils.convertPaAggregationsBatchGetItemResponse(result);
+                        paAggregationModelsToSave.addAll(pnBatchGetItemResponse.getFounded()
+                                .stream().map(paAggregationModel -> {
+                                    paAggregationModel.setAggregateId(id);
+                                    return paAggregationModel;
+                                }).toList());
                         countAndConvertUnprocessedGetItem(movePaResponseDto, pnBatchGetItemResponse, addPaListRequestDto.getItems());
                     });
                     addPaListRequestDto.getItems().removeIf(paDetailDto -> movePaResponseDto.getUnprocessedPA().contains(paDetailDto));
-                    return savePaAggregation(id, createPaAggregationModel(id, addPaListRequestDto.getItems()), movePaResponseDto);
+                    return savePaAggregation(id, paAggregationModelsToSave, movePaResponseDto);
                 });
     }
 

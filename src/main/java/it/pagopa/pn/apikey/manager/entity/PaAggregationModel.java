@@ -24,6 +24,4 @@ public class PaAggregationModel {
 
     @Getter(onMethod = @__({@DynamoDbAttribute("paName")}))
     private String paName;
-    @Getter(onMethod = @__({@DynamoDbAttribute("pdnd")}))
-    private boolean pdnd;
 }
