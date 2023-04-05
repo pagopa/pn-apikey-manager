@@ -1,22 +1,15 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-
-import java.util.ArrayList;
-
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +23,18 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
 @SpringBootTest
 @TestPropertySource(properties = {
         "pn.apikey.manager.pn-external-registries.base-path=path",
-        "aws.region=eu-south-1"
+        "aws.region=eu-south-1",
+        "pn.apikey.manager.flag.pdnd=true"
 })
 @ExtendWith(SpringExtension.class)
 class ManageApiKeyServiceTest {
@@ -58,6 +59,28 @@ class ManageApiKeyServiceTest {
 
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
+
+    @Test
+    void changePdnd(){
+        List<ApiPdndDto> apiPdndDtos = new ArrayList<>();
+        ApiPdndDto apiPdndDto = new ApiPdndDto();
+        apiPdndDto.setPdnd(true);
+        apiPdndDto.setId("id");
+        apiPdndDtos.add(apiPdndDto);
+
+        ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
+        apiKeyResponsePdndDto.setApikeyNonModificate(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+
+        when(apiKeyRepository.changePdnd("id",true)).thenReturn(Mono.just(apiKeyModel));
+        when(apiKeyConverter.convertToResponsePdnd(any(),any())).thenReturn(apiKeyResponsePdndDto);
+
+        StepVerifier.create(apiKeyService.changePdnd(apiPdndDtos))
+                .expectNext(apiKeyResponsePdndDto)
+                .verifyComplete();
+    }
 
     @Test
     void testChangeVirtualKey() {

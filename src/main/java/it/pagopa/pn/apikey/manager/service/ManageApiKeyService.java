@@ -6,6 +6,8 @@ import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
@@ -21,6 +23,7 @@ import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,13 +55,14 @@ public class ManageApiKeyService {
         this.externalRegistriesClient = externalRegistriesClient;
     }
 
-    public Mono<Void> changePdnd(List<ApiPdndDto> apiPdndDtos){
+    public Mono<ResponsePdndDto> changePdnd(List<ApiPdndDto> apiPdndDtos){
         return Flux.fromIterable(apiPdndDtos)
-                .flatMap(apiPdndDto -> apiKeyRepository.findById(apiPdndDto.getId())
-                        .map(apiKeyModel -> {
-                            apiKeyModel.setPdnd(apiPdndDto.getPdnd());
-                            return apiKeyRepository.save(apiKeyModel);
-                        })).then();
+                .flatMap(apiPdndDto -> apiKeyRepository.changePdnd(apiPdndDto.getId(),apiPdndDto.getPdnd())
+                        .onErrorResume(throwable -> Mono.empty())
+                        .map(apiKeyModel -> apiPdndDto)
+                )
+                .collectList()
+                .map(apiPdndChanged -> apiKeyConverter.convertToResponsePdnd(apiPdndDtos,apiPdndChanged));
     }
 
     public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey){

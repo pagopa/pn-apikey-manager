@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
@@ -21,5 +22,7 @@ public interface ApiKeyRepository {
     Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable);
 
     Mono<Integer> countWithFilters(String xPagopaPnCxId, List<String> xPagopaPnCxGroups);
+
+    Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd);
 
 }

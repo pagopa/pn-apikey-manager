@@ -2,6 +2,8 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyRowDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusHistoryDto;
@@ -14,11 +16,23 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Date.from;
 
 @Component
 public class ApiKeyConverter {
+
+    public ResponsePdndDto convertToResponsePdnd(List<ApiPdndDto> apiPdndDtos, List<ApiPdndDto> apiPdndChangedDtos){
+        apiPdndDtos.removeIf(apiPdndChangedDtos::contains);
+
+        ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
+        if(!apiPdndDtos.isEmpty()){
+            apiKeyResponsePdndDto.setApikeyNonModificate(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
+        }
+
+        return apiKeyResponsePdndDto;
+    }
 
     public ApiKeysResponseDto convertResponsetoDto(Page<ApiKeyModel> pageApiKeyModels, Boolean showVirtualKey){
 

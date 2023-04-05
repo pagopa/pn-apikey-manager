@@ -193,24 +193,6 @@ public class ApiKeysController implements ApiKeysApi {
                 .publishOn(scheduler);
     }
 
-
-    /**
-     * POST /api-key-self/api-keys/changePdnd : Cambio valore pdnd
-     * servizio che cambia il valore del flag pdnd di un aggregato
-     *
-     * @param apiKeyRequestPdndDto  (required)
-     * @return OK (status code 200)
-     *         or Bad request (status code 400)
-     *         or Not found (status code 404)
-     *         or Internal error (status code 500)
-     */
-    @Override
-    public Mono<ResponseEntity<Void>> changePdnd(ApiKeyRequestPdndDto apiKeyRequestPdndDto, ServerWebExchange exchange) {
-        return manageApiKeyService.changePdnd(apiKeyRequestPdndDto.getItems())
-                .publishOn(scheduler)
-                .map(a -> ResponseEntity.ok().build());
-    }
-
     private PnAuditLogBuilder buildAuditLogForChangeStatus(RequestApiKeyStatusDto.StatusEnum status, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnUid) {
         if (status.equals(ROTATE)) {
             return auditLogBuilder

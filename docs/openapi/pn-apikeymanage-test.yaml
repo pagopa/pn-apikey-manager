@@ -4,7 +4,7 @@ info:
   title: 'Gestione Aggregati'
   version: '3.0.0'
 tags:
-  - name: Aggregate
+  - name: ApiKeyManage
     description: >-
       Invocazioni utilizzabili dai mittenti per la gestione degli aggregati
 paths:
@@ -413,6 +413,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/api-key-bo/changePdnd":
+    post:
+      summary: Cambio valore pdnd
+      description: >-
+        servizio che cambia il valore del flag pdnd di una api key
+      tags:
+        - Pdnd
+      operationId: changePdnd
+      x-api-permissions:
+        - 'api-key-write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestPdnd'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ResponsePdnd'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 
 components:
   parameters:
@@ -630,3 +671,41 @@ components:
           default: []
           items:
             $ref: '#/components/schemas/PaDetail'
+
+
+    RequestPdnd:
+      title: Elenco di api keys da cambiare pdnd
+      description: >-
+        Dto contenente la lista delle api keys per cui bisogna cambiare il valore del pdnd
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiPdnd'
+
+    ResponsePdnd:
+      title: Elenco di api keys non trovate per cambiare il pdnd
+      description: >-
+        Dto contenente la lista delle api keys che non sono state trovate su Dynamo
+      type: object
+      required:
+        - items
+      properties:
+        apikey non modificate:
+          type: array
+          default: []
+          items:
+            type: string
+
+    ApiPdnd:
+      properties:
+        id:
+          type: string
+        pdnd:
+          type: boolean
+      required:
+        - id
+        - pdnd

@@ -14,6 +14,7 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.ArrayList;
@@ -38,6 +39,15 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                                 @Value("${pn.apikey.manager.dynamodb.tablename.apikey}") String tableName) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyModel.class));
         this.gsiLastUpdate = gsiLastUpdate;
+    }
+
+    @Override
+    public Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd) {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId(id);
+        apiKeyModel.setPdnd(flagPdnd);
+
+        return Mono.fromFuture(table.updateItem(createUpdateItemEnhancedRequest(apiKeyModel)));
     }
 
     @Override
@@ -66,7 +76,6 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
         Key key = Key.builder()
                 .partitionValue(id)
                 .build();
-
         return Mono.fromFuture(table.getItem(key))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(APIKEY_DOES_NOT_EXISTS, HttpStatus.NOT_FOUND)));
     }
@@ -190,5 +199,34 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
             expressionGroup.append("attribute_exists(" + ApiKeyConstant.GROUPS + ")");
         }
         return expressionGroup.toString();
+    }
+
+    private UpdateItemEnhancedRequest<ApiKeyModel> createUpdateItemEnhancedRequest(ApiKeyModel apiKeyModel) {
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#id", "id");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":id", AttributeValue.builder().s(apiKeyModel.getId()).build());
+
+        return UpdateItemEnhancedRequest
+                .builder(ApiKeyModel.class)
+                .conditionExpression(expressionBuilder("#id = :id",expressionValues,expressionNames))
+                .item(apiKeyModel)
+                .ignoreNulls(true)
+                .build();
+    }
+
+    private Expression expressionBuilder(String expression, Map<String, AttributeValue> expressionValues, Map<String, String> expressionNames) {
+        Expression.Builder expressionBuilder = Expression.builder();
+        if (expression != null) {
+            expressionBuilder.expression(expression);
+        }
+        if (expressionValues != null) {
+            expressionBuilder.expressionValues(expressionValues);
+        }
+        if (expressionNames != null) {
+            expressionBuilder.expressionNames(expressionNames);
+        }
+        return expressionBuilder.build();
     }
 }

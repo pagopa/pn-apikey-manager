@@ -34,7 +34,8 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @TestPropertySource(properties = {
         "pn.apikey.manager.pn-external-registries.base-path=path",
-        "aws.region=eu-south-1"
+        "aws.region=eu-south-1",
+        "pn.apikey.manager.flag.pdnd=true"
 })
 @ExtendWith(SpringExtension.class)
 class CreateApiKeyServiceTest {
