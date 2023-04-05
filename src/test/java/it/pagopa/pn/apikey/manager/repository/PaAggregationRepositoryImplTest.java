@@ -26,6 +26,17 @@ class PaAggregationRepositoryImplTest {
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
     @Test
+    void getAll() {
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        PaAggregationRepositoryImpl paAggregationRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+
+        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
+        StepVerifier.create(paAggregationRepository.getAll(new PaAggregationPageable(10,"id")))
+                .expectNextCount(0);
+    }
+
+    @Test
     void searchAggregation() {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");

@@ -1,9 +1,5 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
@@ -32,6 +28,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
 @ContextConfiguration(classes = {PaService.class})
 @ExtendWith(SpringExtension.class)
 class PaServiceTest {
@@ -50,6 +50,21 @@ class PaServiceTest {
 
     @MockBean
     private AggregateRepository aggregateRepository;
+
+    @Test
+    void getPaList(){
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        List<PaAggregationModel> paAggregationModels = new ArrayList<>();
+        paAggregationModels.add(paAggregationModel);
+        GetPaResponseDto getPaResponseDto = new GetPaResponseDto();
+        List<PaDetailDto> list = new ArrayList<>();
+        list.add(new PaDetailDto());
+        getPaResponseDto.setItems(list);
+        when(paAggregationRepository.getAll(any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
+        StepVerifier.create(paService.getPaList(10,"lastKey"))
+                .expectNext(getPaResponseDto)
+                .verifyComplete();
+    }
 
     @Test
     void testGetAssociablePa() {

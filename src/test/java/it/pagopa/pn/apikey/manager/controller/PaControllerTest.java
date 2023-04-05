@@ -1,11 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.RequestPdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
-import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.GetPaResponseDto;
+import it.pagopa.pn.apikey.manager.service.PaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,28 +24,20 @@ import reactor.core.scheduler.Scheduler;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.mockito.Mockito.*;
 
-@ContextConfiguration(classes = {PdndController.class})
+@ContextConfiguration(classes = {PaController.class})
 @ExtendWith(SpringExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PdndControllerTest {
+class PaControllerTest {
 
     @MockBean
-    private ManageApiKeyService manageApiKeyService;
+    private PaService paService;
 
 
     @Autowired
-    private PdndController pdndController;
+    private PaController paController;
 
-    @MockBean
-    private PnAuditLogBuilder auditLogBuilder;
-
-    @MockBean
-    private PnAuditLogEvent pnAuditLogEvent;
 
     @Qualifier("apikeyManagerScheduler")
     @MockBean
@@ -62,7 +50,7 @@ class PdndControllerTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient1 = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient1.table(any(), any())).thenReturn(null);
 
-        PdndController pdndController = new PdndController(manageApiKeyService, auditLogBuilder, scheduler);
+        PaController pdndController = new PaController(paService, scheduler);
 
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -73,24 +61,11 @@ class PdndControllerTest {
         MockServerHttpResponse response = new MockServerHttpResponse();
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
 
+        GetPaResponseDto getPaResponseDto = new GetPaResponseDto();
+        when(paService.getPaList(any(),any())).thenReturn(Mono.just(getPaResponseDto));
 
-        RequestPdndDto apiKeyRequestPdndDto = new RequestPdndDto();
-        ApiPdndDto apiPdndDto = new ApiPdndDto();
-        apiPdndDto.setId("id");
-        apiPdndDto.setPdnd(true);
-        List<ApiPdndDto> apiPdndDtos = new ArrayList<>();
-        apiPdndDtos.add(apiPdndDto);
-        apiKeyRequestPdndDto.setItems(apiPdndDtos);
 
-        ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
-        apiKeyResponsePdndDto.setUnprocessedKey(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
-
-        when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
-        when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
-
-        when(manageApiKeyService.changePdnd(any())).thenReturn(Mono.just(apiKeyResponsePdndDto));
-
-        StepVerifier.create(pdndController.changePdnd(apiKeyRequestPdndDto,
+        StepVerifier.create(paController.getPa(10,"lastKey",
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

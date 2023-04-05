@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.NONE)
 public final class PaAggregationConstant {
+    public static final String PK = "x-pagopa-pn-cx-id";
     public static final String AGGREGATE_ID = "aggregateId";
     public static final String GSI_AGGREGATE_ID = "paAggregations-aggregateId-index";
 }

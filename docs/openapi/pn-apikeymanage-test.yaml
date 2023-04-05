@@ -413,6 +413,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/api-key-bo/pa":
+    get:
+      summary: Ricerca pa
+      description: >-
+        servizio di consultazione della lista delle pa
+      tags:
+        - Pa
+      operationId: getPa
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: lastKey
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/GetPaResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
   "/api-key-bo/changePdnd":
     post:
       summary: Cambio valore pdnd
@@ -501,6 +539,15 @@ components:
                 type: string
               detail:
                 type: string
+    GetPaResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaDetail'
     PaAggregateResponse:
       type: object
       properties:
@@ -694,7 +741,7 @@ components:
       required:
         - items
       properties:
-        apikey non modificate:
+        unprocessedKey:
           type: array
           default: []
           items:

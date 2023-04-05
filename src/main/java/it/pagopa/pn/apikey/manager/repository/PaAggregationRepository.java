@@ -11,6 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import java.util.List;
 
 public interface PaAggregationRepository {
+    Mono<Page<PaAggregationModel>> getAll(PaAggregationPageable pageable);
 
     Mono<PaAggregationModel> searchAggregation(String xPagopaPnCxId);
 

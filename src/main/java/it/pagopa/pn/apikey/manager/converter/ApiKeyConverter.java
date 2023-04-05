@@ -28,7 +28,7 @@ public class ApiKeyConverter {
 
         ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
         if(!apiPdndDtos.isEmpty()){
-            apiKeyResponsePdndDto.setApikeyNonModificate(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
+            apiKeyResponsePdndDto.setUnprocessedKey(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
         }
 
         return apiKeyResponsePdndDto;

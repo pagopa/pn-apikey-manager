@@ -69,7 +69,7 @@ class ManageApiKeyServiceTest {
         apiPdndDtos.add(apiPdndDto);
 
         ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
-        apiKeyResponsePdndDto.setApikeyNonModificate(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
+        apiKeyResponsePdndDto.setUnprocessedKey(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
 
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");

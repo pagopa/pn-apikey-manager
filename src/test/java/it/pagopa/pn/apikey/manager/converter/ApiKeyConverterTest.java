@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -21,10 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {ApiKeyConverter.class})
 @ExtendWith(MockitoExtension.class)
@@ -33,19 +29,23 @@ class ApiKeyConverterTest {
     @InjectMocks
     private ApiKeyConverter apiKeyConverter;
 
-
     /**
      * Method under test: {@link ApiKeyConverter#convertToResponsePdnd(List, List)}
      */
     @Test
-    void testConvertToResponsePdnd4() {
+    void testConvertToResponsePdnd5() {
+        ApiPdndDto apiPdndDto = mock(ApiPdndDto.class);
+        when(apiPdndDto.getId()).thenReturn("42");
+
         ArrayList<ApiPdndDto> apiPdndDtoList = new ArrayList<>();
-        apiPdndDtoList.add(mock(ApiPdndDto.class));
+        apiPdndDtoList.add(apiPdndDto);
 
         ArrayList<ApiPdndDto> apiPdndDtoList1 = new ArrayList<>();
         apiPdndDtoList1.add(new ApiPdndDto());
         assertEquals(1,
-                apiKeyConverter.convertToResponsePdnd(apiPdndDtoList, apiPdndDtoList1).getApikeyNonModificate().size());
+                apiKeyConverter.convertToResponsePdnd(apiPdndDtoList, apiPdndDtoList1).getUnprocessedKey().size());
+        verify(apiPdndDto).getId();
+        assertEquals(1, apiPdndDtoList.size());
     }
 
     @Test

@@ -7,14 +7,16 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.PnBatchGetItemResponse;
 import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
+import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import it.pagopa.pn.apikey.manager.utils.DynamoBatchResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +41,22 @@ public class PaService {
         this.aggregateRepository = aggregateRepository;
         this.paAggregationRepository = paAggregationRepository;
         this.externalRegistriesClient = externalRegistriesClient;
+    }
+
+    public Mono<GetPaResponseDto> getPaList(@Nullable Integer limit,
+                                            @Nullable String lastEvaluatedKey){
+        PaAggregationPageable pageable = toPaPageable(limit, lastEvaluatedKey);
+        return paAggregationRepository.getAll(pageable)
+                .map(paAggregationModels -> {
+                    GetPaResponseDto dto = new GetPaResponseDto();
+                    dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
+                        PaDetailDto paDetailDto = new PaDetailDto();
+                        paDetailDto.setName(paAggregationModel.getPaName());
+                        paDetailDto.setId(paAggregationModel.getPaId());
+                        return paDetailDto;
+                    }).toList());
+                    return dto;
+                });
     }
 
     public Mono<AssociablePaResponseDto> getAssociablePa(String name) {
@@ -162,5 +180,12 @@ public class PaService {
             list.add(paAggregationModel);
         }
         return list;
+    }
+
+    private PaAggregationPageable toPaPageable(Integer limit, String lastEvaluatedLastKey) {
+        return PaAggregationPageable.builder()
+                .limit(limit)
+                .lastEvaluatedKey(lastEvaluatedLastKey)
+                .build();
     }
 }
