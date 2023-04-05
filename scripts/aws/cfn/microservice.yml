@@ -186,13 +186,9 @@ Parameters:
     Type: Number
     Description: maximum autoscaling number of tasks
 
-  ApiKeyTableEncryptKeyArn:
+  ApiKeyTablesEncryptKeyId:
     Type: String
-    Description: 'ARN KMS key for ApiKeyTable'
-
-  AggregatesTableEncryptKeyArn:
-    Type: String
-    Description: 'ARN KMS key for AggregatesTable'
+    Description: 'KMS ID for apikey manager tables'
 
   # Log group parameters
   EcsLogGroup:
@@ -284,8 +280,7 @@ Resources:
               - kms:Encrypt
               - kms:Decrypt
             Resource:
-              - !Ref ApiKeyTableEncryptKeyArn
-              - !Ref AggregatesTableEncryptKeyArn
+              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${ApiKeyTablesEncryptKeyId}
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
