@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.RequestPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponseApiKeysDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
@@ -33,17 +34,17 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
-@ContextConfiguration(classes = {PdndController.class})
+@ContextConfiguration(classes = {ApiKeyBoController.class})
 @ExtendWith(SpringExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PdndControllerTest {
+class ApiKeyBoControllerTest {
 
     @MockBean
     private ManageApiKeyService manageApiKeyService;
 
 
     @Autowired
-    private PdndController pdndController;
+    private ApiKeyBoController apiKeyBoController;
 
     @MockBean
     private PnAuditLogBuilder auditLogBuilder;
@@ -62,7 +63,7 @@ class PdndControllerTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient1 = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient1.table(any(), any())).thenReturn(null);
 
-        PdndController pdndController = new PdndController(manageApiKeyService, auditLogBuilder, scheduler);
+        ApiKeyBoController apiKeyBoController = new ApiKeyBoController(manageApiKeyService, auditLogBuilder, scheduler);
 
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
@@ -90,7 +91,38 @@ class PdndControllerTest {
 
         when(manageApiKeyService.changePdnd(any())).thenReturn(Mono.just(apiKeyResponsePdndDto));
 
-        StepVerifier.create(pdndController.changePdnd(apiKeyRequestPdndDto,
+        StepVerifier.create(apiKeyBoController.changePdnd(apiKeyRequestPdndDto,
+                new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
+                        new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
+    }
+
+    @Test
+    void testGetApiKeys() {
+        DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
+        DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient1 = mock(DynamoDbEnhancedAsyncClient.class);
+        when(dynamoDbEnhancedAsyncClient1.table(any(), any())).thenReturn(null);
+
+        ApiKeyBoController apiKeyBoController = new ApiKeyBoController(manageApiKeyService, auditLogBuilder, scheduler);
+
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+        MockServerHttpResponse response = new MockServerHttpResponse();
+        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+
+        ResponseApiKeysDto responseApiKeysDto = new ResponseApiKeysDto();
+        responseApiKeysDto.setItems(new ArrayList<>());
+
+        when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
+        when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
+
+        when(manageApiKeyService.getBoApiKeyList(any())).thenReturn(Mono.just(responseApiKeysDto));
+
+        StepVerifier.create(apiKeyBoController.getBoApiKeys("id",
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

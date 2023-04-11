@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {ApiKeyConverter.class})
 @ExtendWith(MockitoExtension.class)
@@ -28,25 +25,6 @@ class ApiKeyConverterTest {
 
     @InjectMocks
     private ApiKeyConverter apiKeyConverter;
-
-    /**
-     * Method under test: {@link ApiKeyConverter#convertToResponsePdnd(List, List)}
-     */
-    @Test
-    void testConvertToResponsePdnd5() {
-        ApiPdndDto apiPdndDto = mock(ApiPdndDto.class);
-        when(apiPdndDto.getId()).thenReturn("42");
-
-        ArrayList<ApiPdndDto> apiPdndDtoList = new ArrayList<>();
-        apiPdndDtoList.add(apiPdndDto);
-
-        ArrayList<ApiPdndDto> apiPdndDtoList1 = new ArrayList<>();
-        apiPdndDtoList1.add(new ApiPdndDto());
-        assertEquals(1,
-                apiKeyConverter.convertToResponsePdnd(apiPdndDtoList, apiPdndDtoList1).getUnprocessedKey().size());
-        verify(apiPdndDto).getId();
-        assertEquals(1, apiPdndDtoList.size());
-    }
 
     @Test
     void testConvertResponsetoDto() {

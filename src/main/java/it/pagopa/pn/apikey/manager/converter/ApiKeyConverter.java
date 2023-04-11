@@ -23,17 +23,6 @@ import static java.util.Date.from;
 @Component
 public class ApiKeyConverter {
 
-    public ResponsePdndDto convertToResponsePdnd(List<ApiPdndDto> apiPdndDtos, List<ApiPdndDto> apiPdndChangedDtos){
-        apiPdndDtos.removeIf(apiPdndChangedDtos::contains);
-
-        ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
-        if(!apiPdndDtos.isEmpty()){
-            apiKeyResponsePdndDto.setUnprocessedKey(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
-        }
-
-        return apiKeyResponsePdndDto;
-    }
-
     public ApiKeysResponseDto convertResponsetoDto(Page<ApiKeyModel> pageApiKeyModels, Boolean showVirtualKey){
 
         List<ApiKeyModel> apiKeyModels = pageApiKeyModels.items();

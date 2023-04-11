@@ -2,13 +2,18 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
+import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponseApiKeysDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
@@ -23,7 +28,6 @@ import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,12 +50,14 @@ public class ManageApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
+    private final ApiKeyBoConverter apiKeyBoConverter;
     private final ExternalRegistriesClient externalRegistriesClient;
 
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ExternalRegistriesClient externalRegistriesClient) {
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ApiKeyBoConverter apiKeyBoConverter, ExternalRegistriesClient externalRegistriesClient) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
+        this.apiKeyBoConverter = apiKeyBoConverter;
         this.externalRegistriesClient = externalRegistriesClient;
     }
 
@@ -62,7 +68,7 @@ public class ManageApiKeyService {
                         .map(apiKeyModel -> apiPdndDto)
                 )
                 .collectList()
-                .map(apiPdndChanged -> apiKeyConverter.convertToResponsePdnd(apiPdndDtos,apiPdndChanged));
+                .map(apiPdndChanged -> apiKeyBoConverter.convertToResponsePdnd(apiPdndDtos,apiPdndChanged));
     }
 
     public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey){
@@ -116,6 +122,11 @@ public class ManageApiKeyService {
                         return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, apiKeyModel.getStatus()), HttpStatus.CONFLICT));
                     }
                 });
+    }
+
+    public Mono<ResponseApiKeysDto> getBoApiKeyList(@NonNull String xPagopaPnCxId){
+        return apiKeyRepository.findByCxId(xPagopaPnCxId)
+                .map(apiKeyBoConverter::convertResponsetoDto);
     }
 
     public Mono<ApiKeysResponseDto> getApiKeyList(@NonNull String xPagopaPnCxId,

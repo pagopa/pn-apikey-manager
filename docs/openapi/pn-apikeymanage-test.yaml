@@ -457,7 +457,7 @@ paths:
       description: >-
         servizio che cambia il valore del flag pdnd di una api key
       tags:
-        - Pdnd
+        - ApiKeysBo
       operationId: changePdnd
       x-api-permissions:
         - 'api-key-write'
@@ -474,6 +474,47 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ResponsePdnd'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+
+  "/api-key-bo/api-keys/{id}":
+    get:
+      summary: Ricerca api keys
+      description: >-
+        servizio di consultazione della lista delle api keys dato un id della PA
+      tags:
+        - ApiKeysBo
+      operationId: getBoApiKeys
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ResponseApiKeys'
         '400':
           description: Bad request
           content:
@@ -756,3 +797,65 @@ components:
       required:
         - id
         - pdnd
+
+    ResponseApiKeys:
+      title: Elenco di api keys
+      description: >-
+        Dto contenente la lista delle api keys associate ad un utente.
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKeyRow'
+        total:
+          type: integer
+
+    ApiKeyRow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Id dell'api key
+        name:
+          type: string
+          description: Nome dell'api key
+        value:
+          type: string
+          description: Valore dell'api key
+        lastUpdate:
+          type: string
+          description: Data ultima modifica
+          format: date-time
+        groups:
+          type: array
+          description: Gruppi a cui appartiene l'api key
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/ApiKeyStatus'
+        statusHistory:
+          type: array
+          description: Storico degli stati dell'api key
+          items:
+            $ref: '#/components/schemas/ApiKeyStatusHistory'
+
+    ApiKeyStatus:
+      description: Stato dell'api key
+      type: string
+      enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED' ]
+
+    ApiKeyStatusHistory:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ApiKeyStatus'
+        date:
+          type: string
+          description: data a cui corrisponde il cambio di stato
+          format: date-time
+        changedByDenomination:
+          type: string
+          description: nome dell'utente che ha effettuato il cambio di stato
