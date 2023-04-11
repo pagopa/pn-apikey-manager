@@ -13,6 +13,8 @@ import java.util.List;
 public interface PaAggregationRepository {
     Mono<Page<PaAggregationModel>> getAll(PaAggregationPageable pageable);
 
+    Mono<Page<PaAggregationModel>> getAllWithFilter(PaAggregationPageable pageable, String paName);
+
     Mono<PaAggregationModel> searchAggregation(String xPagopaPnCxId);
 
     Mono<PaAggregationModel> savePaAggregation(PaAggregationModel toSave);

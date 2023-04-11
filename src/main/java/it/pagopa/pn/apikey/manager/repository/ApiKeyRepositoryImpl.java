@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_DOES_NOT_EXISTS;
+import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
 
 @Slf4j
 @Component
@@ -217,17 +218,4 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .build();
     }
 
-    private Expression expressionBuilder(String expression, Map<String, AttributeValue> expressionValues, Map<String, String> expressionNames) {
-        Expression.Builder expressionBuilder = Expression.builder();
-        if (expression != null) {
-            expressionBuilder.expression(expression);
-        }
-        if (expressionValues != null) {
-            expressionBuilder.expressionValues(expressionValues);
-        }
-        if (expressionNames != null) {
-            expressionBuilder.expressionNames(expressionNames);
-        }
-        return expressionBuilder.build();
-    }
 }

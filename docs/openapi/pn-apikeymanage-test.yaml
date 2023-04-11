@@ -422,6 +422,10 @@ paths:
         - Pa
       operationId: getPa
       parameters:
+        - name: paName
+          in: query
+          schema:
+            type: string
         - name: limit
           in: query
           schema:

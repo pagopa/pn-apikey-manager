@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -19,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
 
 @Slf4j
 @Component
@@ -47,6 +46,33 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
         }
         ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
                 .exclusiveStartKey(attributeValue)
+                .limit(pageable.getLimit())
+                .build();
+        if (pageable.hasLimit()) {
+            return Mono.from(table.scan(scanEnhancedRequest));
+        } else {
+            return Flux.from(table.scan(scanEnhancedRequest).items())
+                    .collectList()
+                    .map(Page::create);
+        }
+    }
+
+    @Override
+    public  Mono<Page<PaAggregationModel>> getAllWithFilter(PaAggregationPageable pageable, String paName){
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#paName", "paName");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":paName", AttributeValue.builder().s(paName).build());
+
+        Map<String, AttributeValue> attributeValue = null;
+        if (pageable.isPage()) {
+            attributeValue = new HashMap<>();
+            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedKey()).build());
+        }
+        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
+                .exclusiveStartKey(attributeValue)
+                .filterExpression(expressionBuilder("#paName = :paName",expressionValues,expressionNames))
                 .limit(pageable.getLimit())
                 .build();
         if (pageable.hasLimit()) {
@@ -154,4 +180,5 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                             .then(deferred);
                 });
     }
+
 }

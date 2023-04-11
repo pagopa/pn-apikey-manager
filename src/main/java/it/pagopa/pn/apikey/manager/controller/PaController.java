@@ -31,15 +31,16 @@ public class PaController implements PaApi {
      * GET /api-key-bo/pa : Ricerca pa
      * servizio di consultazione della lista delle pa
      *
-     * @param limit  (optional, default to 10)
+     * @param paName  (optional)
+     * @param limit  (optional)
      * @param lastKey  (optional)
      * @return OK (status code 200)
      *         or Bad request (status code 400)
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<GetPaResponseDto>> getPa(Integer limit, String lastKey, ServerWebExchange exchange) {
-        return paService.getPaList(limit,lastKey)
+    public Mono<ResponseEntity<GetPaResponseDto>> getPa(String paName, Integer limit, String lastKey, ServerWebExchange exchange) {
+        return paService.getPaList(paName,limit,lastKey)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }

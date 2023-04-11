@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -14,8 +15,34 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class QueryUtilsTest {
+
+    /**
+     * Method under test: {@link QueryUtils#expressionBuilder(String, Map, Map)}
+     */
+    @Test
+    void testExpressionBuilder() {
+        HashMap<String, AttributeValue> expressionValues = new HashMap<>();
+        Expression actualExpressionBuilderResult = QueryUtils.expressionBuilder("Expression", expressionValues,
+                new HashMap<>());
+        assertEquals("Expression", actualExpressionBuilderResult.expression());
+        Map<String, AttributeValue> expressionValuesResult = actualExpressionBuilderResult.expressionValues();
+        assertTrue(expressionValuesResult.isEmpty());
+    }
+
+    /**
+     * Method under test: {@link QueryUtils#expressionBuilder(String, Map, Map)}
+     */
+    @Test
+    void testExpressionBuilder2() {
+        Expression actualExpressionBuilderResult = QueryUtils.expressionBuilder(null, null, null);
+        assertNull(actualExpressionBuilderResult.expression());
+        assertNull(actualExpressionBuilderResult.expressionValues());
+        assertNull(actualExpressionBuilderResult.expressionNames());
+    }
 
     @Test
     void testGetNewPageable() {
