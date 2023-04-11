@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,16 +48,19 @@ public class PaService {
                                             @Nullable String lastEvaluatedKey){
         PaAggregationPageable pageable = toPaPageable(limit, lastEvaluatedKey);
         return paAggregationRepository.getAll(pageable)
-                .map(paAggregationModels -> {
-                    GetPaResponseDto dto = new GetPaResponseDto();
-                    dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
-                        PaDetailDto paDetailDto = new PaDetailDto();
-                        paDetailDto.setName(paAggregationModel.getPaName());
-                        paDetailDto.setId(paAggregationModel.getPaId());
-                        return paDetailDto;
-                    }).toList());
-                    return dto;
-                });
+                .map(Page::items)
+                .map(this::convertToGetPaResponse);
+    }
+
+    private GetPaResponseDto convertToGetPaResponse(List<PaAggregationModel> paAggregationModels){
+        GetPaResponseDto dto = new GetPaResponseDto();
+        dto.setItems(paAggregationModels.stream().map(paAggregationModel -> {
+            PaDetailDto paDetailDto = new PaDetailDto();
+            paDetailDto.setName(paAggregationModel.getPaName());
+            paDetailDto.setId(paAggregationModel.getPaId());
+            return paDetailDto;
+        }).collect(Collectors.toList()));
+        return dto;
     }
 
     public Mono<AssociablePaResponseDto> getAssociablePa(String name) {
@@ -98,7 +102,7 @@ public class PaService {
                     PaDetailDto paDetailDto = new PaDetailDto();
                     paDetailDto.setId(paMoveDetailDto.getId());
                     return paDetailDto;
-                }).toList();
+                }).collect(Collectors.toList());
         addPaListRequestDto.setItems(paDetailDtos);
         log.debug("start movePa for {} PA to aggregate: {}", addPaListRequestDto.getItems().size(), id);
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()

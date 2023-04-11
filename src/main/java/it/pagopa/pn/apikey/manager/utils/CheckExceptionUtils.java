@@ -12,9 +12,11 @@ public class CheckExceptionUtils {
     }
 
     public static void logAuditOnErrorOrWarnLevel(Throwable throwable, PnAuditLogEvent logEvent) {
-        if(checkExceptionStatusForLogLevel(throwable))
+        if(checkExceptionStatusForLogLevel(throwable)){
             logEvent.generateWarning(throwable.getMessage()).log();
-        else
+        }
+        else{
             logEvent.generateFailure(throwable.getMessage()).log();
+        }
     }
 }

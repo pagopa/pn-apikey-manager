@@ -30,6 +30,7 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
 
     private final ExceptionHelper exceptionHelper;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final int STATUS_500 = 500;
 
     public PnWebExceptionHandler(ExceptionHelper exceptionHelper){
         this.exceptionHelper = exceptionHelper;
@@ -52,7 +53,7 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
                 problem = handleException(throwable);
             }
 
-            if(problem.getStatus() >= 500) {
+            if(problem.getStatus() >= STATUS_500) {
                 log.error("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage());
                 log.error("Exception uri: {}, error: {}", serverWebExchange.getRequest().getURI(), throwable);
             } else {
@@ -84,7 +85,7 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
     private Problem handleException(Throwable throwable) {
         Problem problem = new Problem();
         problem.setTitle("ERROR");
-        problem.setStatus(500);
+        problem.setStatus(STATUS_500);
         problem.setDetail(throwable.getMessage());
         return problem;
     }

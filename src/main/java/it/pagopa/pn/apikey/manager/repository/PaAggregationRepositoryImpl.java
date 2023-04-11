@@ -141,7 +141,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     public Flux<BatchGetResultPage>  batchGetItem(AddPaListRequestDto addPaListRequestDto) {
         log.info("List of PaAggreggationModel in AddPaListRequestDto size: {}", addPaListRequestDto.getItems().size());
         return Flux.fromIterable(addPaListRequestDto.getItems())
-                .window(25)
+                .window(MAX_BATCH_SIZE)
                 .flatMap(chunk -> {
                     ReadBatch.Builder<PaAggregationModel> builder = ReadBatch.builder(PaAggregationModel.class)
                             .mappedTableResource(table);

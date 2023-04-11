@@ -23,6 +23,7 @@ public class AggregationController implements AggregateApi {
     private final Scheduler scheduler;
     private final AggregationService aggregationService;
     private final PaService paService;
+    private static final int MAX_ASSOCIABLE_PA = 3;
 
     public AggregationController(@Qualifier("apikeyManagerScheduler") Scheduler scheduler,
                                  AggregationService aggregationService,
@@ -156,7 +157,7 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, final ServerWebExchange exchange) {
-        if (name != null && name.length() < 3) {
+        if (name != null && name.length() < MAX_ASSOCIABLE_PA) {
             throw new ApiKeyManagerException(INVALID_NAME_LENGTH, HttpStatus.BAD_REQUEST);
         }
         return paService.getAssociablePa(name)

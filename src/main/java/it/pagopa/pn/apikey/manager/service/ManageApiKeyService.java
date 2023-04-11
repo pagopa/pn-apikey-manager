@@ -177,7 +177,7 @@ public class ManageApiKeyService {
     private List<String> getGroupNamesByGroupIds(List<String> groups, Map<String, String> mapGroupsIdToName) {
         return groups.stream()
                 .map(group -> mapGroupsIdToName.getOrDefault(group, group))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private Mono<ApiKeyModel> saveAndCheckIfRotate(ApiKeyModel apiKeyModel, ApiKeyModel oldApiKey, String status, String xPagopaPnUid) {

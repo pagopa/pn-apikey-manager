@@ -15,16 +15,18 @@ public class CorsGlobalConfiguration implements WebFluxConfigurer {
 
     @Value("${cors.allowed.domains:}")
     private List<String> corsAllowedDomains;
+    private static final int MAX_AGE = 3600;
 
     @Override
     public void addCorsMappings(CorsRegistry corsRegistry) {
 
-        if (log.isInfoEnabled())
+        if (log.isInfoEnabled()){
             log.info("allowed domains:" + String.join(", ", corsAllowedDomains));
+        }
 
         corsRegistry.addMapping("/**")
                 .allowedOrigins( corsAllowedDomains.toArray( new String[0] ) )
                 .allowedMethods("GET", "HEAD", "OPTIONS", "POST", "PUT", "DELETE", "PATCH")
-                .maxAge(3600);
+                .maxAge(MAX_AGE);
     }
 }

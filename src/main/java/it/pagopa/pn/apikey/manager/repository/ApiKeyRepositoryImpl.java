@@ -33,6 +33,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     private final String gsiLastUpdate;
 
     private static final int MIN_LIMIT = 100;
+    private static final int EXPRESSION_GROUP = 2;
 
     public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                 @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.pa-id}") String gsiLastUpdate,
@@ -194,7 +195,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 expressionValues.put(":group" + i, pnCxGroup);
                 expressionGroup.append(" contains(" + ApiKeyConstant.GROUPS + ",:group").append(i).append(") OR");
             }
-            expressionGroup.replace(expressionGroup.length() - 2, expressionGroup.length(), "");
+            expressionGroup.replace(expressionGroup.length() - EXPRESSION_GROUP, expressionGroup.length(), "");
         } else {
             expressionGroup.append("attribute_exists(" + ApiKeyConstant.GROUPS + ")");
         }

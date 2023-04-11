@@ -30,7 +30,8 @@ public class RequestResponseLoggingFilter implements WebFilter {
         ServerHttpRequest httpRequest = exchange.getRequest();
         final String httpUrl = httpRequest.getURI().toString();
 
-        if (httpRequest.getURI().getPath().equalsIgnoreCase("/actuator/health")) {
+
+        if ("/actuator/health".equalsIgnoreCase(httpRequest.getURI().getPath())) {
             log.trace("request to health-check actuator");
             return chain.filter(exchange);
         }
