@@ -11,6 +11,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.Respo
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -259,6 +260,17 @@ class ManageApiKeyServiceTest {
         when(apiKeyRepository.findByCxId(any()))
                 .thenThrow(new ApiKeyManagerException("An error occurred", HttpStatus.CONTINUE));
         assertThrows(ApiKeyManagerException.class, () -> manageApiKeyService.getBoApiKeyList("42"));
+        verify(apiKeyRepository).findByCxId(any());
+    }
+    
+
+    /**
+     * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
+     */
+    @Test
+    void testGetBoApiKeyList4() {
+        when(apiKeyRepository.findByCxId(any())).thenReturn((Mono<List<ApiKeyModel>>) mock(Mono.class));
+        manageApiKeyService.getBoApiKeyList("42");
         verify(apiKeyRepository).findByCxId(any());
     }
 
