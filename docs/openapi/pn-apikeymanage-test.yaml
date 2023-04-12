@@ -826,13 +826,9 @@ components:
         name:
           type: string
           description: Nome dell'api key
-        value:
-          type: string
-          description: Valore dell'api key
-        lastUpdate:
-          type: string
-          description: Data ultima modifica
-          format: date-time
+        pdnd:
+          type: boolean
+          description: Pdnd dell'api key
         groups:
           type: array
           description: Gruppi a cui appartiene l'api key
@@ -840,26 +836,8 @@ components:
             type: string
         status:
           $ref: '#/components/schemas/ApiKeyStatus'
-        statusHistory:
-          type: array
-          description: Storico degli stati dell'api key
-          items:
-            $ref: '#/components/schemas/ApiKeyStatusHistory'
 
     ApiKeyStatus:
       description: Stato dell'api key
       type: string
       enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED' ]
-
-    ApiKeyStatusHistory:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/ApiKeyStatus'
-        date:
-          type: string
-          description: data a cui corrisponde il cambio di stato
-          format: date-time
-        changedByDenomination:
-          type: string
-          description: nome dell'utente che ha effettuato il cambio di stato

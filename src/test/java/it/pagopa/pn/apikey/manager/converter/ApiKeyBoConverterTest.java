@@ -1,7 +1,8 @@
 package it.pagopa.pn.apikey.manager.converter;
 
-import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiKeyRowDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,8 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,11 +20,12 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(classes = {ApiKeyBoConverter.class})
 @ExtendWith(SpringExtension.class)
 class ApiKeyBoConverterTest {
+
     @Autowired
     private ApiKeyBoConverter apiKeyBoConverter;
 
     /**
-     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(List, List)}
+     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(Collection, List)}
      */
     @Test
     void testConvertToResponsePdnd() {
@@ -33,7 +35,7 @@ class ApiKeyBoConverterTest {
     }
 
     /**
-     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(List, List)}
+     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(Collection, List)}
      */
     @Test
     void testConvertToResponsePdnd2() {
@@ -44,9 +46,8 @@ class ApiKeyBoConverterTest {
         assertEquals(1, apiPdndDtoList.size());
     }
 
-
     /**
-     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(List, List)}
+     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(Collection, List)}
      */
     @Test
     void testConvertToResponsePdnd4() {
@@ -62,7 +63,7 @@ class ApiKeyBoConverterTest {
     }
 
     /**
-     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(List, List)}
+     * Method under test: {@link ApiKeyBoConverter#convertToResponsePdnd(Collection, List)}
      */
     @Test
     void testConvertToResponsePdnd5() {
@@ -84,59 +85,31 @@ class ApiKeyBoConverterTest {
      * Method under test: {@link ApiKeyBoConverter#convertResponsetoDto(List)}
      */
     @Test
-    void testConvertResponsetoDto4() {
-        ApiKeyModel apiKeyModel = mock(ApiKeyModel.class);
-        when(apiKeyModel.getStatusHistory()).thenReturn(new ArrayList<>());
-        when(apiKeyModel.getStatus()).thenReturn("CREATED");
-        when(apiKeyModel.getGroups()).thenReturn(new ArrayList<>());
-        when(apiKeyModel.getId()).thenReturn("42");
-        when(apiKeyModel.getName()).thenReturn("Name");
-        when(apiKeyModel.getVirtualKey()).thenReturn("Virtual Key");
-        when(apiKeyModel.getLastUpdate()).thenReturn(LocalDateTime.of(1, 1, 1, 1, 1));
-
-        ArrayList<ApiKeyModel> apiKeyModelList = new ArrayList<>();
-        apiKeyModelList.add(apiKeyModel);
-        assertEquals(1, apiKeyBoConverter.convertResponsetoDto(apiKeyModelList).getItems().size());
-        verify(apiKeyModel).getId();
-        verify(apiKeyModel).getName();
-        verify(apiKeyModel).getStatus();
-        verify(apiKeyModel).getVirtualKey();
-        verify(apiKeyModel).getLastUpdate();
-        verify(apiKeyModel).getGroups();
-        verify(apiKeyModel).getStatusHistory();
-    }
-
-    /**
-     * Method under test: {@link ApiKeyBoConverter#convertResponsetoDto(List)}
-     */
-    @Test
     void testConvertResponsetoDto5() {
-        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
-        apiKeyHistoryModel.setChangeByDenomination("CREATED");
-        apiKeyHistoryModel.setDate(LocalDateTime.of(1, 1, 1, 1, 1));
-        apiKeyHistoryModel.setStatus("CREATED");
-
-        ArrayList<ApiKeyHistoryModel> apiKeyHistoryModelList = new ArrayList<>();
-        apiKeyHistoryModelList.add(apiKeyHistoryModel);
         ApiKeyModel apiKeyModel = mock(ApiKeyModel.class);
-        when(apiKeyModel.getStatusHistory()).thenReturn(apiKeyHistoryModelList);
-        when(apiKeyModel.getStatus()).thenReturn("CREATED");
-        when(apiKeyModel.getGroups()).thenReturn(new ArrayList<>());
+        when(apiKeyModel.isPdnd()).thenReturn(true);
         when(apiKeyModel.getId()).thenReturn("42");
         when(apiKeyModel.getName()).thenReturn("Name");
-        when(apiKeyModel.getVirtualKey()).thenReturn("Virtual Key");
-        when(apiKeyModel.getLastUpdate()).thenReturn(LocalDateTime.of(1, 1, 1, 1, 1));
+        when(apiKeyModel.getStatus()).thenReturn("CREATED");
+        when(apiKeyModel.getGroups()).thenReturn(new ArrayList<>());
 
         ArrayList<ApiKeyModel> apiKeyModelList = new ArrayList<>();
         apiKeyModelList.add(apiKeyModel);
-        assertEquals(1, apiKeyBoConverter.convertResponsetoDto(apiKeyModelList).getItems().size());
+        List<ApiKeyRowDto> items = apiKeyBoConverter.convertResponsetoDto(apiKeyModelList).getItems();
+        assertEquals(1, items.size());
+        ApiKeyRowDto getResult = items.get(0);
+        assertTrue(getResult.getGroups().isEmpty());
+        assertEquals(ApiKeyStatusDto.CREATED, getResult.getStatus());
+        assertTrue(getResult.getPdnd());
+        assertEquals("Name", getResult.getName());
+        assertEquals("42", getResult.getId());
+        verify(apiKeyModel).isPdnd();
         verify(apiKeyModel).getId();
         verify(apiKeyModel).getName();
         verify(apiKeyModel).getStatus();
-        verify(apiKeyModel).getVirtualKey();
-        verify(apiKeyModel).getLastUpdate();
         verify(apiKeyModel).getGroups();
-        verify(apiKeyModel).getStatusHistory();
     }
+
+
 }
 
