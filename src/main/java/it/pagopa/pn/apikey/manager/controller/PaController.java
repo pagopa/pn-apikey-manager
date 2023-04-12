@@ -40,7 +40,7 @@ public class PaController implements PaApi {
      */
     @Override
     public Mono<ResponseEntity<GetPaResponseDto>> getPa(String paName, Integer limit, String lastKey, ServerWebExchange exchange) {
-        return paService.getPaList(paName,limit,lastKey)
+        return paService.getPa(paName,limit,lastKey)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }

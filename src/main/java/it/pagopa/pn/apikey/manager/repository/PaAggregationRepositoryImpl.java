@@ -38,47 +38,29 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public  Mono<Page<PaAggregationModel>> getAll(PaAggregationPageable pageable){
+    public  Mono<Page<PaAggregationModel>> getAllPageableWithFilter(PaAggregationPageable pageable, String paName){
         Map<String, AttributeValue> attributeValue = null;
         if (pageable.isPage()) {
             attributeValue = new HashMap<>();
             attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedKey()).build());
         }
-        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
+        ScanEnhancedRequest.Builder scanEnhancedRequest = ScanEnhancedRequest.builder()
                 .exclusiveStartKey(attributeValue)
-                .limit(pageable.getLimit())
-                .build();
-        if (pageable.hasLimit()) {
-            return Mono.from(table.scan(scanEnhancedRequest));
-        } else {
-            return Flux.from(table.scan(scanEnhancedRequest).items())
-                    .collectList()
-                    .map(Page::create);
+                .limit(pageable.getLimit());
+
+        if(paName!=null){
+            Map<String, String> expressionNames = new HashMap<>();
+            expressionNames.put("#paName", "paName");
+
+            Map<String, AttributeValue> expressionValues = new HashMap<>();
+            expressionValues.put(":paName", AttributeValue.builder().s(paName).build());
+            scanEnhancedRequest.filterExpression(expressionBuilder("#paName = :paName",expressionValues,expressionNames));
         }
-    }
 
-    @Override
-    public  Mono<Page<PaAggregationModel>> getAllWithFilter(PaAggregationPageable pageable, String paName){
-        Map<String, String> expressionNames = new HashMap<>();
-        expressionNames.put("#paName", "paName");
-
-        Map<String, AttributeValue> expressionValues = new HashMap<>();
-        expressionValues.put(":paName", AttributeValue.builder().s(paName).build());
-
-        Map<String, AttributeValue> attributeValue = null;
-        if (pageable.isPage()) {
-            attributeValue = new HashMap<>();
-            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedKey()).build());
-        }
-        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
-                .exclusiveStartKey(attributeValue)
-                .filterExpression(expressionBuilder("#paName = :paName",expressionValues,expressionNames))
-                .limit(pageable.getLimit())
-                .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.scan(scanEnhancedRequest));
+            return Mono.from(table.scan(scanEnhancedRequest.build()));
         } else {
-            return Flux.from(table.scan(scanEnhancedRequest).items())
+            return Flux.from(table.scan(scanEnhancedRequest.build()).items())
                     .collectList()
                     .map(Page::create);
         }

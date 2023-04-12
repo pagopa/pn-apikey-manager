@@ -62,7 +62,7 @@ class PaControllerTest {
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
 
         GetPaResponseDto getPaResponseDto = new GetPaResponseDto();
-        when(paService.getPaList(any(),any(),any())).thenReturn(Mono.just(getPaResponseDto));
+        when(paService.getPa(any(),any(),any())).thenReturn(Mono.just(getPaResponseDto));
 
 
         StepVerifier.create(paController.getPa("",10,"lastKey",

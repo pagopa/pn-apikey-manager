@@ -7,8 +7,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.core.async.SdkPublisher;
-import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.model.*;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncIndex;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -25,16 +31,6 @@ class PaAggregationRepositoryImplTest {
     @MockBean
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
-    @Test
-    void getAll() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PaAggregationRepositoryImpl paAggregationRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
-
-        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
-        StepVerifier.create(paAggregationRepository.getAll(new PaAggregationPageable(10,"id")))
-                .expectNextCount(0);
-    }
 
     @Test
     void getAllWithFilter() {
@@ -43,7 +39,7 @@ class PaAggregationRepositoryImplTest {
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
         when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
-        StepVerifier.create(paAggregationRepository.getAllWithFilter(new PaAggregationPageable(10,"id"),"paName"))
+        StepVerifier.create(paAggregationRepository.getAllPageableWithFilter(new PaAggregationPageable(10,"id"),"paName"))
                 .expectNextCount(0);
     }
 

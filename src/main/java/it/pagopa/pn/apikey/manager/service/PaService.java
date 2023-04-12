@@ -44,12 +44,10 @@ public class PaService {
         this.externalRegistriesClient = externalRegistriesClient;
     }
 
-    public Mono<GetPaResponseDto> getPaList(String paName,
+    public Mono<GetPaResponseDto> getPa(String paName,
                                             @Nullable Integer limit,
                                             @Nullable String lastEvaluatedKey){
-        PaAggregationPageable pageable = toPaPageable(limit, lastEvaluatedKey);
-        Mono<Page<PaAggregationModel>> pageMono = paName == null ? paAggregationRepository.getAll(pageable) : paAggregationRepository.getAllWithFilter(pageable,paName);
-        return pageMono
+        return paAggregationRepository.getAllPageableWithFilter(toPaPageable(limit, lastEvaluatedKey),paName)
                 .map(Page::items)
                 .map(this::convertToGetPaResponse);
     }
