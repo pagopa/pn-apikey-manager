@@ -91,7 +91,7 @@ class ApiKeyBoControllerTest {
 
         when(manageApiKeyService.changePdnd(any())).thenReturn(Mono.just(apiKeyResponsePdndDto));
 
-        StepVerifier.create(apiKeyBoController.changePdnd(apiKeyRequestPdndDto,
+        StepVerifier.create(apiKeyBoController.interop(apiKeyRequestPdndDto,
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

@@ -455,14 +455,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-bo/changePdnd":
-    post:
+  "/api-key-bo/interop":
+    put:
       summary: Cambio valore pdnd
       description: >-
         servizio che cambia il valore del flag pdnd di una api key
       tags:
         - ApiKeysBo
-      operationId: changePdnd
+      operationId: interop
       x-api-permissions:
         - 'api-key-write'
       requestBody:

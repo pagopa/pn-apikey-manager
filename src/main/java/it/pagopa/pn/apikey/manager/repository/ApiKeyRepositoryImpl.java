@@ -100,6 +100,31 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     }
 
     @Override
+    public Mono<List<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId){
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#status", "status");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":statusEnabled", AttributeValue.builder().s("ENABLED").build());
+        expressionValues.put(":statusRotated", AttributeValue.builder().s("ROTATED").build());
+
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
+                        .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(expressionBuilder("(#status = :statusEnabled OR #status = :statusRotated)",expressionValues,expressionNames))
+                .scanIndexForward(false)
+                .build();
+
+        return Mono.from(
+                table.index(gsiLastUpdate)
+                        .query(queryEnhancedRequest)
+                        .map(Page::items));
+    }
+
+    @Override
     public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable) {
         return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, new ArrayList<>(), pageable);
     }

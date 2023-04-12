@@ -139,6 +139,24 @@ class ApiKeyRepositoryImplTest {
     }
 
     @Test
+    void findByCxIdAndStatusRotateAndEnabled(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
+        apiKeyModelList.add(apiKeyModel);
+
+        StepVerifier.create(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled("cxId"))
+                .expectNextCount(0);
+
+    }
+
+    @Test
     void getAllWithFilter() {
         Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");

@@ -252,15 +252,16 @@ class ManageApiKeyServiceTest {
                 .verify();
     }
 
+
     /**
      * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
      */
     @Test
     void testGetBoApiKeyList2() {
-        when(apiKeyRepository.findByCxId(any()))
+        when(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(any()))
                 .thenThrow(new ApiKeyManagerException("An error occurred", HttpStatus.CONTINUE));
         assertThrows(ApiKeyManagerException.class, () -> manageApiKeyService.getBoApiKeyList("42"));
-        verify(apiKeyRepository).findByCxId(any());
+        verify(apiKeyRepository).findByCxIdAndStatusRotateAndEnabled(any());
     }
     
 
@@ -269,9 +270,9 @@ class ManageApiKeyServiceTest {
      */
     @Test
     void testGetBoApiKeyList4() {
-        when(apiKeyRepository.findByCxId(any())).thenReturn((Mono<List<ApiKeyModel>>) mock(Mono.class));
+        when(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(any())).thenReturn((Mono<List<ApiKeyModel>>) mock(Mono.class));
         manageApiKeyService.getBoApiKeyList("42");
-        verify(apiKeyRepository).findByCxId(any());
+        verify(apiKeyRepository).findByCxIdAndStatusRotateAndEnabled(any());
     }
 
     @Test

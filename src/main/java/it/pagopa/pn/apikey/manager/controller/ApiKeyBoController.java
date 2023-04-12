@@ -77,7 +77,7 @@ public class ApiKeyBoController implements ApiKeysBoApi {
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<ResponsePdndDto>> changePdnd(RequestPdndDto requestPdndDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ResponsePdndDto>> interop(RequestPdndDto requestPdndDto, ServerWebExchange exchange) {
 
         String logMessage = String.format("Cambio valore Pdnd di una o più API Key - Ids=%s - Pdnd=%s",
                 requestPdndDto.getItems().stream().map(ApiPdndDto::getId).collect(Collectors.toList()),

@@ -125,7 +125,7 @@ public class ManageApiKeyService {
     }
 
     public Mono<ResponseApiKeysDto> getBoApiKeyList(@NonNull String xPagopaPnCxId){
-        return apiKeyRepository.findByCxId(xPagopaPnCxId)
+        return apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(xPagopaPnCxId)
                 .map(apiKeyBoConverter::convertResponsetoDto);
     }
 
