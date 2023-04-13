@@ -60,6 +60,7 @@ class PaServiceTest {
         List<PaDetailDto> list = new ArrayList<>();
         list.add(new PaDetailDto());
         getPaResponseDto.setItems(list);
+        getPaResponseDto.setTotal(1);
         when(paAggregationRepository.getAllPageableWithFilter(any(),any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
         StepVerifier.create(paService.getPa("paName",10,"lastKey"))
                 .expectNext(getPaResponseDto)

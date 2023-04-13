@@ -62,6 +62,7 @@ public class PaService {
             paDetailDto.setId(paAggregationModel.getPaId());
             return paDetailDto;
         }).collect(Collectors.toList()));
+        dto.setTotal(paAggregationModels.items().size());
         return dto;
     }
 
