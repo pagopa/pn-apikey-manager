@@ -48,13 +48,15 @@ public class PaService {
                                             @Nullable Integer limit,
                                             @Nullable String lastEvaluatedKey){
         return paAggregationRepository.getAllPageableWithFilter(toPaPageable(limit, lastEvaluatedKey),paName)
-                .map(Page::items)
                 .map(this::convertToGetPaResponse);
     }
 
-    private GetPaResponseDto convertToGetPaResponse(List<PaAggregationModel> paAggregationModels){
+    private GetPaResponseDto convertToGetPaResponse(Page<PaAggregationModel> paAggregationModels){
         GetPaResponseDto dto = new GetPaResponseDto();
-        dto.setItems(paAggregationModels.stream().map(paAggregationModel -> {
+        if(paAggregationModels.lastEvaluatedKey()!=null){
+            dto.setLastEvaluatedKey(paAggregationModels.lastEvaluatedKey().get("x-pagopa-pn-cx-id").s());
+        }
+        dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
             PaDetailDto paDetailDto = new PaDetailDto();
             paDetailDto.setName(paAggregationModel.getPaName());
             paDetailDto.setId(paAggregationModel.getPaId());
