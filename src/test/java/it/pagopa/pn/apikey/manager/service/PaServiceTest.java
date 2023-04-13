@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
+import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
@@ -21,12 +22,10 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPage;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.BatchGetItemResponse;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.any;
@@ -61,7 +60,13 @@ class PaServiceTest {
         list.add(new PaDetailDto());
         getPaResponseDto.setItems(list);
         getPaResponseDto.setTotal(1);
-        when(paAggregationRepository.getAllPa(any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
+        getPaResponseDto.setLastEvaluatedName("name");
+        getPaResponseDto.setLastEvaluatedId("id");
+        Map<String, AttributeValue> map = new HashMap<>();
+        map.put(PaAggregationConstant.PA_ID,AttributeValue.builder().s("id").build());
+        map.put(PaAggregationConstant.PA_NAME,AttributeValue.builder().s("name").build());
+
+        when(paAggregationRepository.getAllPa(any())).thenReturn(Mono.just(Page.create(paAggregationModels,map)));
         StepVerifier.create(paService.getPa(null,10,""))
                 .expectNext(getPaResponseDto)
                 .verifyComplete();

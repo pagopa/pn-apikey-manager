@@ -31,6 +31,41 @@ class PaAggregationRepositoryImplTest {
     @MockBean
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
+    @Test
+    void getAllPa() {
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+        when(index.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
+
+        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
+
+        PaPageable pageable = PaPageable.builder().limit(10).lastEvaluatedId("id").lastEvaluatedName("name").build();
+
+        StepVerifier.create(paRepository.getAllPa(pageable))
+                .expectNextCount(0);
+    }
+
+    @Test
+    void getAllPaByPaName() {
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(pagePublisher);
+
+        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
+
+        PaPageable pageable = PaPageable.builder().limit(10).lastEvaluatedId("id").lastEvaluatedName("name").build();
+
+        StepVerifier.create(paRepository.getAllPaByPaName(pageable,"name"))
+                .expectNextCount(0);
+    }
 
 
     @Test
