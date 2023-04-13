@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
+import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
@@ -9,6 +10,7 @@ import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationPageable;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
+import it.pagopa.pn.apikey.manager.repository.PaPageable;
 import it.pagopa.pn.apikey.manager.utils.DynamoBatchResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -44,17 +46,18 @@ public class PaService {
         this.externalRegistriesClient = externalRegistriesClient;
     }
 
-    public Mono<GetPaResponseDto> getPa(String paName,
+    public Mono<GetPaResponseDto> getPa(@Nullable String paName,
                                             @Nullable Integer limit,
-                                            @Nullable String lastEvaluatedKey){
-        return paAggregationRepository.getAllPageableWithFilter(toPaPageable(limit, lastEvaluatedKey),paName)
+                                            @Nullable String lastEvaluatedId){
+        return (paName == null ? paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, paName)) : paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, paName),paName))
                 .map(this::convertToGetPaResponse);
     }
 
     private GetPaResponseDto convertToGetPaResponse(Page<PaAggregationModel> paAggregationModels){
         GetPaResponseDto dto = new GetPaResponseDto();
         if(paAggregationModels.lastEvaluatedKey()!=null){
-            dto.setLastEvaluatedKey(paAggregationModels.lastEvaluatedKey().get("x-pagopa-pn-cx-id").s());
+            dto.setLastEvaluatedId(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_ID).s());
+            dto.setLastEvaluatedName(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_NAME).s());
         }
         dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
             PaDetailDto paDetailDto = new PaDetailDto();
@@ -189,10 +192,11 @@ public class PaService {
         return list;
     }
 
-    private PaAggregationPageable toPaPageable(Integer limit, String lastEvaluatedLastKey) {
-        return PaAggregationPageable.builder()
+    private PaPageable toPaPageable(Integer limit, String lastEvaluatedId, String lastEvaluatedName) {
+        return PaPageable.builder()
                 .limit(limit)
-                .lastEvaluatedKey(lastEvaluatedLastKey)
+                .lastEvaluatedId(lastEvaluatedId)
+                .lastEvaluatedName(lastEvaluatedName)
                 .build();
     }
 }

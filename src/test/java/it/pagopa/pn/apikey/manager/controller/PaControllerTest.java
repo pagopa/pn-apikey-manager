@@ -65,7 +65,7 @@ class PaControllerTest {
         when(paService.getPa(any(),any(),any())).thenReturn(Mono.just(getPaResponseDto));
 
 
-        StepVerifier.create(paController.getPa("",10,"lastKey",
+        StepVerifier.create(paController.getPa("",10,"",
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

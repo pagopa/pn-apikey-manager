@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -17,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
-
 @Slf4j
 @Component
 public class PaAggregationRepositoryImpl implements PaAggregationRepository {
@@ -26,41 +27,61 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     private final DynamoDbAsyncTable<PaAggregationModel> table;
     private final DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient;
     private final String gsiAggregateId;
+    private final String gsiPaName;
 
     public static final int MAX_BATCH_SIZE = 25;
 
     public PaAggregationRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                        @Value("${pn.apikey.manager.dynamodb.pa-aggregations.gsi-name.aggregate-id}") String gsiAggregateId,
+                                       @Value("${pn.apikey.manager.dynamodb.pa-aggregations.gsi-name.pa-name}") String gsiPaName,
                                        @Value("${pn.apikey.manager.dynamodb.tablename.pa-aggregations}") String tableName) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PaAggregationModel.class));
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
         this.gsiAggregateId = gsiAggregateId;
+        this.gsiPaName = gsiPaName;
     }
 
     @Override
-    public  Mono<Page<PaAggregationModel>> getAllPageableWithFilter(PaAggregationPageable pageable, String paName){
+    public  Mono<Page<PaAggregationModel>> getAllPa(PaPageable pageable){
         Map<String, AttributeValue> attributeValue = null;
         if (pageable.isPage()) {
             attributeValue = new HashMap<>();
-            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedKey()).build());
+            attributeValue.put(PaAggregationConstant.PA_ID, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            attributeValue.put(PaAggregationConstant.PA_NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
         }
         ScanEnhancedRequest.Builder scanEnhancedRequest = ScanEnhancedRequest.builder()
                 .exclusiveStartKey(attributeValue)
                 .limit(pageable.getLimit());
 
-        if(paName!=null){
-            Map<String, String> expressionNames = new HashMap<>();
-            expressionNames.put("#paName", "paName");
-
-            Map<String, AttributeValue> expressionValues = new HashMap<>();
-            expressionValues.put(":paName", AttributeValue.builder().s(paName).build());
-            scanEnhancedRequest.filterExpression(expressionBuilder("#paName = :paName",expressionValues,expressionNames));
+        if (pageable.hasLimit()) {
+            return Mono.from(table.index(gsiPaName).scan(scanEnhancedRequest.build()));
+        } else {
+            return Flux.from(table.index(gsiPaName).scan(scanEnhancedRequest.build()).flatMapIterable(Page::items))
+                    .collectList()
+                    .map(Page::create);
         }
+    }
+
+    @Override
+    public  Mono<Page<PaAggregationModel>> getAllPaByPaName(PaPageable pageable, String paName){
+
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder().partitionValue(paName).build());
+
+        Map<String, AttributeValue> attributeValue = null;
+        if (pageable.isPage()) {
+            attributeValue = new HashMap<>();
+            attributeValue.put(PaAggregationConstant.PA_ID, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            attributeValue.put(PaAggregationConstant.PA_NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
+        }
+        QueryEnhancedRequest.Builder queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .exclusiveStartKey(attributeValue)
+                .limit(pageable.getLimit());
 
         if (pageable.hasLimit()) {
-            return Mono.from(table.scan(scanEnhancedRequest.build()));
+            return Mono.from(table.index(gsiPaName).query(queryEnhancedRequest.build()));
         } else {
-            return Flux.from(table.scan(scanEnhancedRequest.build()).items())
+            return Flux.from(table.index(gsiPaName).query(queryEnhancedRequest.build()).flatMapIterable(Page::items))
                     .collectList()
                     .map(Page::create);
         }

@@ -52,6 +52,22 @@ class PaServiceTest {
     private AggregateRepository aggregateRepository;
 
     @Test
+    void getPaList1(){
+        PaAggregationModel paAggregationModel = new PaAggregationModel();
+        List<PaAggregationModel> paAggregationModels = new ArrayList<>();
+        paAggregationModels.add(paAggregationModel);
+        GetPaResponseDto getPaResponseDto = new GetPaResponseDto();
+        List<PaDetailDto> list = new ArrayList<>();
+        list.add(new PaDetailDto());
+        getPaResponseDto.setItems(list);
+        getPaResponseDto.setTotal(1);
+        when(paAggregationRepository.getAllPa(any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
+        StepVerifier.create(paService.getPa(null,10,""))
+                .expectNext(getPaResponseDto)
+                .verifyComplete();
+    }
+
+    @Test
     void getPaList2(){
         PaAggregationModel paAggregationModel = new PaAggregationModel();
         List<PaAggregationModel> paAggregationModels = new ArrayList<>();
@@ -61,8 +77,8 @@ class PaServiceTest {
         list.add(new PaDetailDto());
         getPaResponseDto.setItems(list);
         getPaResponseDto.setTotal(1);
-        when(paAggregationRepository.getAllPageableWithFilter(any(),any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
-        StepVerifier.create(paService.getPa("paName",10,"lastKey"))
+        when(paAggregationRepository.getAllPaByPaName(any(),any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
+        StepVerifier.create(paService.getPa("paName",10,""))
                 .expectNext(getPaResponseDto)
                 .verifyComplete();
     }

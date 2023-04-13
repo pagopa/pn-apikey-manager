@@ -12,7 +12,7 @@ public class PaAggregationModel {
     @Getter(onMethod=@__({
             @DynamoDbPartitionKey,
             @DynamoDbAttribute("x-pagopa-pn-cx-id"),
-            @DynamoDbSecondarySortKey(indexNames = PaAggregationConstant.GSI_AGGREGATE_ID)
+            @DynamoDbSecondarySortKey(indexNames = {PaAggregationConstant.GSI_AGGREGATE_ID, PaAggregationConstant.GSI_PA_NAME})
     }))
     private String paId;
 
@@ -22,6 +22,9 @@ public class PaAggregationModel {
     }))
     private String aggregateId;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute("paName")}))
+    @Getter(onMethod = @__({
+            @DynamoDbAttribute(PaAggregationConstant.PA_NAME),
+            @DynamoDbSecondaryPartitionKey(indexNames = PaAggregationConstant.GSI_PA_NAME)
+    }))
     private String paName;
 }

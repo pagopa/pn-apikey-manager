@@ -33,14 +33,14 @@ public class PaController implements PaApi {
      *
      * @param paName  (optional)
      * @param limit  (optional)
-     * @param lastKey  (optional)
+     * @param lastEvaluatedId  (optional)
      * @return OK (status code 200)
      *         or Bad request (status code 400)
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<GetPaResponseDto>> getPa(String paName, Integer limit, String lastKey, ServerWebExchange exchange) {
-        return paService.getPa(paName,limit,lastKey)
+    public Mono<ResponseEntity<GetPaResponseDto>> getPa(String paName, Integer limit, String lastEvaluatedId, ServerWebExchange exchange) {
+        return paService.getPa(paName,limit,lastEvaluatedId)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }
