@@ -31,6 +31,7 @@ public class ApiKeyBoConverter {
         List<ApiKeyRowDto> apiKeyRowDtos = getApiKeyRowDtosFromApiKeyModel(apiKeyModels);
 
         responseApiKeysDto.setItems(apiKeyRowDtos);
+        responseApiKeysDto.setTotal(apiKeyModels.size());
 
         return responseApiKeysDto;
     }
