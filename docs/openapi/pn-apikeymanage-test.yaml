@@ -595,8 +595,6 @@ components:
             $ref: '#/components/schemas/PaDetail'
         lastEvaluatedId:
           type: string
-        lastEvaluatedName:
-          type: string
         total:
           type: integer
     PaAggregateResponse:

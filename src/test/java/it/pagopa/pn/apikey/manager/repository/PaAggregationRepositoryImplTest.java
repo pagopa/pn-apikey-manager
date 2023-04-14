@@ -34,12 +34,9 @@ class PaAggregationRepositoryImplTest {
     @Test
     void getAllPa() {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
-        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
-        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
-        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        when(index.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
+        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
 
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
 

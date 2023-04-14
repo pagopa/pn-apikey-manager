@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
+import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
@@ -27,18 +28,18 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     private final DynamoDbAsyncTable<PaAggregationModel> table;
     private final DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient;
     private final String gsiAggregateId;
-    private final String gsiPaName;
+    private final String gsiPageablePaName;
 
     public static final int MAX_BATCH_SIZE = 25;
 
     public PaAggregationRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                        @Value("${pn.apikey.manager.dynamodb.pa-aggregations.gsi-name.aggregate-id}") String gsiAggregateId,
-                                       @Value("${pn.apikey.manager.dynamodb.pa-aggregations.gsi-name.pa-name}") String gsiPaName,
+                                       @Value("${pn.apikey.manager.dynamodb.pa-aggregations.gsi-name.pageable-pa-name}") String gsiPageablePaName,
                                        @Value("${pn.apikey.manager.dynamodb.tablename.pa-aggregations}") String tableName) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PaAggregationModel.class));
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
         this.gsiAggregateId = gsiAggregateId;
-        this.gsiPaName = gsiPaName;
+        this.gsiPageablePaName = gsiPageablePaName;
     }
 
     @Override
@@ -46,17 +47,16 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
         Map<String, AttributeValue> attributeValue = null;
         if (pageable.isPage()) {
             attributeValue = new HashMap<>();
-            attributeValue.put(PaAggregationConstant.PA_ID, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
-            attributeValue.put(PaAggregationConstant.PA_NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
+            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
         }
-        ScanEnhancedRequest.Builder scanEnhancedRequest = ScanEnhancedRequest.builder()
+        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
                 .exclusiveStartKey(attributeValue)
-                .limit(pageable.getLimit());
-
+                .limit(pageable.getLimit())
+                .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.index(gsiPaName).scan(scanEnhancedRequest.build()));
+            return Mono.from(table.scan(scanEnhancedRequest));
         } else {
-            return Flux.from(table.index(gsiPaName).scan(scanEnhancedRequest.build()).flatMapIterable(Page::items))
+            return Flux.from(table.scan(scanEnhancedRequest).items())
                     .collectList()
                     .map(Page::create);
         }
@@ -64,24 +64,29 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
 
     @Override
     public  Mono<Page<PaAggregationModel>> getAllPaByPaName(PaPageable pageable, String paName){
-
-        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder().partitionValue(paName).build());
-
         Map<String, AttributeValue> attributeValue = null;
-        if (pageable.isPage()) {
+        if (pageable.isPageByName()) {
             attributeValue = new HashMap<>();
-            attributeValue.put(PaAggregationConstant.PA_ID, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
             attributeValue.put(PaAggregationConstant.PA_NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
+            attributeValue.put(PaAggregationConstant.PAGEABLE, AttributeValue.builder().s(AggregationConstant.PAGEABLE_VALUE).build());
         }
-        QueryEnhancedRequest.Builder queryEnhancedRequest = QueryEnhancedRequest.builder()
+
+        QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
+                .partitionValue(AggregationConstant.PAGEABLE_VALUE)
+                .sortValue(paName)
+                .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .exclusiveStartKey(attributeValue)
-                .limit(pageable.getLimit());
+                .limit(pageable.getLimit())
+                .build();
 
         if (pageable.hasLimit()) {
-            return Mono.from(table.index(gsiPaName).query(queryEnhancedRequest.build()));
+            return Mono.from(table.index(gsiPageablePaName).query(queryEnhancedRequest));
         } else {
-            return Flux.from(table.index(gsiPaName).query(queryEnhancedRequest.build()).flatMapIterable(Page::items))
+            return Flux.from(table.index(gsiPageablePaName).query(queryEnhancedRequest).flatMapIterable(Page::items))
                     .collectList()
                     .map(Page::create);
         }

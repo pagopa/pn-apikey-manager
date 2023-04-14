@@ -60,7 +60,6 @@ class PaServiceTest {
         list.add(new PaDetailDto());
         getPaResponseDto.setItems(list);
         getPaResponseDto.setTotal(1);
-        getPaResponseDto.setLastEvaluatedName("name");
         getPaResponseDto.setLastEvaluatedId("id");
         Map<String, AttributeValue> map = new HashMap<>();
         map.put(PaAggregationConstant.PA_ID,AttributeValue.builder().s("id").build());

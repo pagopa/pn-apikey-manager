@@ -48,7 +48,7 @@ public class PaService {
     public Mono<GetPaResponseDto> getPa(@Nullable String paName,
                                             @Nullable Integer limit,
                                             @Nullable String lastEvaluatedId){
-        return (paName == null ? paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, paName)) : paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, paName),paName))
+        return (StringUtils.hasText(paName) ? paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, paName),paName) : paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, paName)))
                 .map(this::convertToGetPaResponse);
     }
 
@@ -56,7 +56,6 @@ public class PaService {
         GetPaResponseDto dto = new GetPaResponseDto();
         if(paAggregationModels.lastEvaluatedKey()!=null){
             dto.setLastEvaluatedId(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_ID).s());
-            dto.setLastEvaluatedName(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_NAME).s());
         }
         dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
             PaDetailDto paDetailDto = new PaDetailDto();
