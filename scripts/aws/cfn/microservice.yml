@@ -47,6 +47,10 @@ Parameters:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
   
+  VpcEgressSubnetsIds:
+    Type: String
+    Description: subnets where to install PN-CORE
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -231,7 +235,7 @@ Resources:
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
-        Subnets: !Ref SubnetsIds
+        Subnets: !Ref VpcEgressSubnetsIds
         VpcId: !Ref VpcId
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
