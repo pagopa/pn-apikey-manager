@@ -11,7 +11,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.Respo
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -253,6 +252,7 @@ class ManageApiKeyServiceTest {
     }
 
 
+
     /**
      * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
      */
@@ -263,17 +263,20 @@ class ManageApiKeyServiceTest {
         assertThrows(ApiKeyManagerException.class, () -> manageApiKeyService.getBoApiKeyList("42"));
         verify(apiKeyRepository).findByCxIdAndStatusRotateAndEnabled(any());
     }
-    
 
     /**
      * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
      */
     @Test
-    void testGetBoApiKeyList4() {
-        when(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(any())).thenReturn((Mono<List<ApiKeyModel>>) mock(Mono.class));
-        manageApiKeyService.getBoApiKeyList("42");
+    void testGetBoApiKeyList3() {
+        when(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(any())).thenReturn(null);
+        when(externalRegistriesClient.getPaGroupsById(any(), any()))
+                .thenThrow(new ApiKeyManagerException("An error occurred", HttpStatus.CONTINUE));
+        assertThrows(ApiKeyManagerException.class, () -> manageApiKeyService.getBoApiKeyList("42"));
         verify(apiKeyRepository).findByCxIdAndStatusRotateAndEnabled(any());
+        verify(externalRegistriesClient).getPaGroupsById(any(), any());
     }
+
 
     @Test
     void testDelete1() {

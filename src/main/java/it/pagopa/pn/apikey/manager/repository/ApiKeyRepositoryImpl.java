@@ -100,7 +100,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     }
 
     @Override
-    public Mono<List<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId){
+    public Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId){
         Map<String, String> expressionNames = new HashMap<>();
         expressionNames.put("#status", "status");
 
@@ -120,8 +120,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
         return Mono.from(
                 table.index(gsiLastUpdate)
-                        .query(queryEnhancedRequest)
-                        .map(Page::items));
+                        .query(queryEnhancedRequest));
     }
 
     @Override

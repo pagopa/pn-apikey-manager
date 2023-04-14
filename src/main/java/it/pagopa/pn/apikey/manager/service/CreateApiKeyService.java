@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
+import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -149,6 +150,7 @@ public class CreateApiKeyService {
         paAggregationModel.setAggregateId(aggregateId);
         paAggregationModel.setPaId(internalPaDetailDto.getId());
         paAggregationModel.setPaName(internalPaDetailDto.getName());
+        paAggregationModel.setPageable(PaAggregationConstant.PAGEABLE_VALUE);
         return paAggregationModel;
     }
 }
