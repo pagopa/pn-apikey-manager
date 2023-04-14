@@ -20,4 +20,6 @@ public interface PaAggregationRepository {
     Mono<Page<PaAggregationModel>> findByAggregateId(String aggregateId, PaAggregationPageable pageable);
     Mono<Integer> countByAggregateId(String aggregateId);
     Flux<BatchGetResultPage>  batchGetItem(AddPaListRequestDto addPaListRequestDto);
+    Mono<Integer> count();
+    Mono<Integer> countByName(String name);
 }

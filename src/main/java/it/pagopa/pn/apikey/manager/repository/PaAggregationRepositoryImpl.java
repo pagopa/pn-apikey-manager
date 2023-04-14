@@ -93,6 +93,35 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
+    public Mono<Integer> count() {
+        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
+                .addAttributeToProject(AggregationConstant.PK)
+                .build();
+        AtomicInteger counter = new AtomicInteger(0);
+        return Flux.from(table.scan(scanEnhancedRequest))
+                .doOnNext(page -> counter.getAndAdd(page.items().size()))
+                .then(Mono.defer(() -> Mono.just(counter.get())));
+    }
+
+    @Override
+    public Mono<Integer> countByName(String name) {
+        QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
+                .partitionValue(PaAggregationConstant.PAGEABLE_VALUE)
+                .sortValue(name)
+                .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .addAttributeToProject(PaAggregationConstant.PK)
+                .build();
+
+        AtomicInteger counter = new AtomicInteger(0);
+        return Flux.from(table.index(gsiPageablePaName).query(queryEnhancedRequest))
+                .doOnNext(page -> counter.getAndAdd(page.items().size()))
+                .then(Mono.defer(() -> Mono.just(counter.get())));
+    }
+
+    @Override
     public Mono<PaAggregationModel> searchAggregation(String xPagopaPnCxId) {
         Key key = Key.builder()
                 .partitionValue(xPagopaPnCxId)

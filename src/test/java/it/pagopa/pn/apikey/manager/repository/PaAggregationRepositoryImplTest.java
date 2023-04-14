@@ -32,6 +32,26 @@ class PaAggregationRepositoryImplTest {
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
     @Test
+    void testCount(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
+        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
+        StepVerifier.create(paRepository.count()).expectNext(0);
+    }
+
+    @Test
+    void testCountByName(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        StepVerifier.create(paRepository.countByName("name")).expectNext(0);
+    }
+
+    @Test
     void getAllPa() {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
 
@@ -178,7 +198,7 @@ class PaAggregationRepositoryImplTest {
     }
 
     @Test
-    void testCount(){
+    void testCountByAgregateId(){
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
         SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);

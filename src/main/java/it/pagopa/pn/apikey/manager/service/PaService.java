@@ -17,6 +17,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
@@ -48,8 +49,18 @@ public class PaService {
     public Mono<GetPaResponseDto> getPa(@Nullable String paName,
                                             @Nullable Integer limit,
                                             @Nullable String lastEvaluatedId){
-        return (StringUtils.hasText(paName) ? paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, paName),paName) : paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, paName)))
-                .map(this::convertToGetPaResponse);
+        if (StringUtils.hasText(paName)) {
+            return paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, paName),paName)
+                    .map(this::convertToGetPaResponse)
+                    .zipWhen(dto -> paAggregationRepository.countByName(paName))
+                    .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
+                    .map(Tuple2::getT1);
+        }
+        return paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, paName))
+                .map(this::convertToGetPaResponse)
+                .zipWhen(dto -> paAggregationRepository.count())
+                .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
+                .map(Tuple2::getT1);
     }
 
     private GetPaResponseDto convertToGetPaResponse(Page<PaAggregationModel> paAggregationModels){
