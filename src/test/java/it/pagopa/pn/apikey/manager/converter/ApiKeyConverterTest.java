@@ -27,7 +27,7 @@ class ApiKeyConverterTest {
     private ApiKeyConverter apiKeyConverter;
 
     @Test
-    void testConvertResponsetoDto() {
+    void testConvertResponseToDto() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         List<String> groups = new ArrayList<>();
         List<ApiKeyHistoryModel> apiKeyHistories = new ArrayList<>();
@@ -57,12 +57,11 @@ class ApiKeyConverterTest {
 
         Page<ApiKeyModel> page = Page.create(apiKeyModels, lastKey);
 
-        Assertions.assertNotNull(apiKeyConverter.convertResponsetoDto(page, true));
+        Assertions.assertNotNull(apiKeyConverter.convertResponseToDto(page, true));
     }
 
-
     @Test
-    void testConvertResponsetoDtoExc2() {
+    void testConvertResponseToDtoExc2() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         List<String> groups = new ArrayList<>();
         List<ApiKeyHistoryModel> apiKeyHistories = new ArrayList<>();
@@ -91,11 +90,10 @@ class ApiKeyConverterTest {
         Page<ApiKeyModel> page = Page.create(apiKeyModels, lastKey);
 
         try {
-            apiKeyConverter.convertResponsetoDto(page, true);
+            apiKeyConverter.convertResponseToDto(page, true);
             fail("My method didn't throw when I expected it to");
         } catch (Exception expectedException) {
             System.out.println("Test passed");
         }
     }
 }
-

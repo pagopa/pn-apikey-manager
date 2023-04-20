@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 
@@ -19,6 +20,7 @@ public class ApiGatewayConfig {
     public ApiGatewayAsyncClient apiGatewayAsync() {
         return ApiGatewayAsyncClient.builder()
                 .region(Region.of(awsRegion))
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
     }
 

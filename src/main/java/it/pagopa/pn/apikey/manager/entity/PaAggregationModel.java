@@ -11,7 +11,7 @@ public class PaAggregationModel {
 
     @Getter(onMethod=@__({
             @DynamoDbPartitionKey,
-            @DynamoDbAttribute("x-pagopa-pn-cx-id"),
+            @DynamoDbAttribute(PaAggregationConstant.PA_ID),
             @DynamoDbSecondarySortKey(indexNames = {PaAggregationConstant.GSI_AGGREGATE_ID})
     }))
     private String paId;

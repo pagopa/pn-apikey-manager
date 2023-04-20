@@ -25,22 +25,25 @@ public class PaController implements PaApi {
         this.paService = paService;
     }
 
-
-
     /**
      * GET /api-key-bo/pa : Ricerca pa
-     * servizio di consultazione della lista delle pa
+     * Servizio di consultazione della lista delle PA
      *
      * @param paName  (optional)
      * @param limit  (optional)
      * @param lastEvaluatedId  (optional)
+     * @param lastEvaluatedName  (optional)
      * @return OK (status code 200)
      *         or Bad request (status code 400)
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<GetPaResponseDto>> getPa(String paName, Integer limit, String lastEvaluatedId, ServerWebExchange exchange) {
-        return paService.getPa(paName,limit,lastEvaluatedId)
+    public Mono<ResponseEntity<GetPaResponseDto>> getPa(String paName,
+                                                        Integer limit,
+                                                        String lastEvaluatedId,
+                                                        String lastEvaluatedName,
+                                                        final ServerWebExchange exchange) {
+        return paService.getPa(paName, limit, lastEvaluatedId, lastEvaluatedName)
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }

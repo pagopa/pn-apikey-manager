@@ -23,7 +23,6 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.AGGREGATE_NOT_FOUND;
 
@@ -47,10 +46,11 @@ public class PaService {
     }
 
     public Mono<GetPaResponseDto> getPa(@Nullable String paName,
-                                            @Nullable Integer limit,
-                                            @Nullable String lastEvaluatedId){
+                                        @Nullable Integer limit,
+                                        @Nullable String lastEvaluatedId,
+                                        @Nullable String lastEvaluatedName) {
         if (StringUtils.hasText(paName)) {
-            return paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, paName),paName)
+            return paAggregationRepository.getAllPaByPaName(toPaPageable(limit, lastEvaluatedId, lastEvaluatedName), paName)
                     .map(this::convertToGetPaResponse)
                     .zipWhen(dto -> paAggregationRepository.countByName(paName))
                     .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
@@ -63,17 +63,18 @@ public class PaService {
                 .map(Tuple2::getT1);
     }
 
-    private GetPaResponseDto convertToGetPaResponse(Page<PaAggregationModel> paAggregationModels){
+    private GetPaResponseDto convertToGetPaResponse(Page<PaAggregationModel> paAggregationModels) {
         GetPaResponseDto dto = new GetPaResponseDto();
-        if(paAggregationModels.lastEvaluatedKey()!=null){
+        if (paAggregationModels.lastEvaluatedKey() != null) {
             dto.setLastEvaluatedId(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_ID).s());
+            dto.setLastEvaluatedName(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_NAME).s());
         }
         dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
             PaDetailDto paDetailDto = new PaDetailDto();
             paDetailDto.setName(paAggregationModel.getPaName());
             paDetailDto.setId(paAggregationModel.getPaId());
             return paDetailDto;
-        }).collect(Collectors.toList()));
+        }).toList());
         dto.setTotal(paAggregationModels.items().size());
         return dto;
     }
@@ -89,10 +90,10 @@ public class PaService {
         return paAggregationRepository.getAllPaAggregations()
                 .map(paAggregationModels -> {
                     AssociablePaResponseDto dto = new AssociablePaResponseDto();
-                    dto.setItems(list.stream().filter(paDetailDto ->
-                            paAggregationModels.items().stream().noneMatch(paAggregationModel ->
-                                    paAggregationModel.getPaId().equalsIgnoreCase(paDetailDto.getId())
-                            )).collect(Collectors.toList()));
+                    dto.setItems(list.stream()
+                            .filter(paDetailDto -> paAggregationModels.items().stream()
+                                    .noneMatch(paAggregationModel -> paAggregationModel.getPaId().equalsIgnoreCase(paDetailDto.getId())))
+                            .toList());
                     return dto;
                 });
     }
@@ -102,44 +103,38 @@ public class PaService {
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
                 .distinct()
                 .filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId()))
-                .collect(Collectors.toList()));
+                .toList());
         MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
         return savePaAggregation(aggregateId, createPaAggregationModel(aggregateId, addPaListRequestDto.getItems()), movePaResponseDto);
     }
 
-
     public Mono<MovePaResponseDto> movePa(String id, MovePaListRequestDto movePaListRequestDto) {
         AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
-        List<PaDetailDto> paDetailDtos = movePaListRequestDto
-                .getItems()
-                .stream().map(paMoveDetailDto -> {
+        List<PaDetailDto> paDetailDtos = movePaListRequestDto.getItems().stream()
+                .map(paMoveDetailDto -> {
                     PaDetailDto paDetailDto = new PaDetailDto();
                     paDetailDto.setId(paMoveDetailDto.getId());
                     return paDetailDto;
-                }).collect(Collectors.toList());
+                }).toList();
         addPaListRequestDto.setItems(paDetailDtos);
         log.debug("start movePa for {} PA to aggregate: {}", addPaListRequestDto.getItems().size(), id);
         addPaListRequestDto.setItems(addPaListRequestDto.getItems().stream()
                 .distinct()
                 .filter(paDetailDto -> StringUtils.hasText(paDetailDto.getId()))
-                .collect(Collectors.toList()));
+                .toList());
         return paAggregationRepository.batchGetItem(addPaListRequestDto).collectList()
                 .doOnNext(batchGetResultPages -> log.info("BatchGetResultPage size: {}", batchGetResultPages.size()))
                 .flatMap(batchGetResultPage -> {
                     MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
                     movePaResponseDto.setUnprocessedPA(new ArrayList<>());
-                    ArrayList<PaAggregationModel> paAggregationModelsToSave = new ArrayList<>();
+                    List<PaAggregationModel> paAggregationModelsToSave = new ArrayList<>();
                     batchGetResultPage.forEach(result -> {
                         PnBatchGetItemResponse pnBatchGetItemResponse = dynamoBatchResponseUtils.convertPaAggregationsBatchGetItemResponse(result);
-                        paAggregationModelsToSave.addAll(pnBatchGetItemResponse.getFounded()
-                                .stream().map(paAggregationModel -> {
-                                    paAggregationModel.setAggregateId(id);
-                                    return paAggregationModel;
-                                }).toList());
+                        pnBatchGetItemResponse.getFounded().forEach(model -> model.setAggregateId(id));
+                        paAggregationModelsToSave.addAll(pnBatchGetItemResponse.getFounded());
                         countAndConvertUnprocessedGetItem(movePaResponseDto, pnBatchGetItemResponse, addPaListRequestDto.getItems());
                     });
-                    addPaListRequestDto.getItems().removeIf(paDetailDto -> movePaResponseDto.getUnprocessedPA().contains(paDetailDto));
                     return savePaAggregation(id, paAggregationModelsToSave, movePaResponseDto);
                 });
     }
@@ -170,7 +165,7 @@ public class PaService {
     private void countAndConvertUnprocessedGetItem(MovePaResponseDto movePaResponseDto, PnBatchGetItemResponse pnBatchGetItemResponse, List<PaDetailDto> items) {
         List<PaDetailDto> unprocessedList = items.stream()
                 .filter(paDetailDto -> pnBatchGetItemResponse.getFounded().stream().noneMatch(paAggregationModel -> paDetailDto.getId().equalsIgnoreCase(paAggregationModel.getPaId())))
-                .collect(Collectors.toList());
+                .toList();
         movePaResponseDto.getUnprocessedPA().addAll(unprocessedList);
         movePaResponseDto.getUnprocessedPA().addAll(convertUnprocessedKey(pnBatchGetItemResponse.getUnprocessed(), items));
         movePaResponseDto.setUnprocessed(pnBatchGetItemResponse.getUnprocessed().size() + unprocessedList.size());
@@ -178,15 +173,15 @@ public class PaService {
     }
 
     private List<PaDetailDto> convertUnprocessedKey(List<Key> unprocessedKeysForTable, List<PaDetailDto> list) {
-        return list.stream().filter(paDetailDto ->
-                unprocessedKeysForTable.stream().anyMatch(key ->
-                        paDetailDto.getId().equalsIgnoreCase(key.partitionKeyValue().s()))).collect(Collectors.toList());
+        return list.stream().filter(paDetailDto -> unprocessedKeysForTable.stream()
+                .anyMatch(key -> paDetailDto.getId().equalsIgnoreCase(key.partitionKeyValue().s())))
+                .toList();
     }
 
     private List<PaDetailDto> convertUnprocessedModel(List<PaAggregationModel> unprocessedKeysForTable, List<PaDetailDto> list) {
-        return list.stream().filter(paDetailDto ->
-                unprocessedKeysForTable.stream().anyMatch(key ->
-                        paDetailDto.getId().equalsIgnoreCase(key.getPaId()))).collect(Collectors.toList());
+        return list.stream().filter(paDetailDto -> unprocessedKeysForTable.stream()
+                .anyMatch(key -> paDetailDto.getId().equalsIgnoreCase(key.getPaId())))
+                .toList();
     }
 
     private List<PaAggregationModel> createPaAggregationModel(String id, List<PaDetailDto> items) {

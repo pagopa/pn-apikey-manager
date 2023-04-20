@@ -100,7 +100,7 @@ Parameters:
     Description: 'Name of dynamodb table containing apikey'
 
   FlagPdnd:
-    Type: boolean
+    Type: String
     Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
 
   # OpenApi Bucket params
@@ -322,7 +322,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         OpenApiBucketName: !Ref MicroserviceBucketName
-        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-apikeymanage-test.yaml
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-apikey-manager-bo.yaml
 
   ApiKeyManagerApiGatewayAggregateWaf:
     Type: AWS::CloudFormation::Stack

@@ -18,8 +18,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import java.util.stream.Collectors;
-
 @RestController
 @Slf4j
 public class ApiKeyBoController implements ApiKeysBoApi {
@@ -38,18 +36,18 @@ public class ApiKeyBoController implements ApiKeysBoApi {
     }
 
     /**
-     * GET /api-key-bo/api-keys/{id} : Ricerca api keys
-     * servizio di consultazione della lista delle api keys dato un id della PA
+     * GET /api-key-bo/api-keys : Ricerca api keys
+     * Servizio di consultazione della lista delle virtual API Keys dato l&#39;id della PA
      *
-     * @param id (required)
+     * @param paId  (required)
      * @return OK (status code 200)
-     * or Bad request (status code 400)
-     * or Not found (status code 404)
-     * or Internal error (status code 500)
+     *         or Bad request (status code 400)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<ResponseApiKeysDto>> getBoApiKeys(String id, ServerWebExchange exchange) {
-        String logMessage = String.format("Visualizzazione di una API Key - xPagopaPnCxId=%s", id);
+    public Mono<ResponseEntity<ResponseApiKeysDto>> getBoApiKeys(String paId, ServerWebExchange exchange) {
+        String logMessage = String.format("Visualizzazione di una API Key - xPagopaPnCxId=%s", paId);
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)
@@ -57,7 +55,7 @@ public class ApiKeyBoController implements ApiKeysBoApi {
 
         logEvent.log();
 
-        return manageApiKeyService.getBoApiKeyList(id)
+        return manageApiKeyService.getBoApiKeyList(paId)
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
@@ -67,8 +65,8 @@ public class ApiKeyBoController implements ApiKeysBoApi {
     }
 
     /**
-     * POST /api-key-bo/changePdnd : Cambio valore pdnd
-     * servizio che cambia il valore del flag pdnd di una api key
+     * PUT /api-key-bo/api-keys/interop : Cambio valore pdnd
+     * Servizio che cambia il valore del flag pdnd di una o più virtual API Key
      *
      * @param requestPdndDto  (required)
      * @return OK (status code 200)
@@ -78,10 +76,9 @@ public class ApiKeyBoController implements ApiKeysBoApi {
      */
     @Override
     public Mono<ResponseEntity<ResponsePdndDto>> interop(RequestPdndDto requestPdndDto, ServerWebExchange exchange) {
-
         String logMessage = String.format("Cambio valore Pdnd di una o più API Key - Ids=%s - Pdnd=%s",
-                requestPdndDto.getItems().stream().map(ApiPdndDto::getId).collect(Collectors.toList()),
-                requestPdndDto.getItems().stream().map(ApiPdndDto::getPdnd).collect(Collectors.toList()));
+                requestPdndDto.getItems().stream().map(ApiPdndDto::getId).toList(),
+                requestPdndDto.getItems().stream().map(ApiPdndDto::getPdnd).toList());
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)

@@ -34,10 +34,8 @@ class PaControllerTest {
     @MockBean
     private PaService paService;
 
-
     @Autowired
     private PaController paController;
-
 
     @Qualifier("apikeyManagerScheduler")
     @MockBean
@@ -50,8 +48,6 @@ class PaControllerTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient1 = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient1.table(any(), any())).thenReturn(null);
 
-        PaController pdndController = new PaController(paService, scheduler);
-
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -62,10 +58,9 @@ class PaControllerTest {
         DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
 
         GetPaResponseDto getPaResponseDto = new GetPaResponseDto();
-        when(paService.getPa(any(),any(),any())).thenReturn(Mono.just(getPaResponseDto));
+        when(paService.getPa(any(),any(),any(),any())).thenReturn(Mono.just(getPaResponseDto));
 
-
-        StepVerifier.create(paController.getPa("",10,"",
+        StepVerifier.create(paController.getPa("",10,"", "",
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

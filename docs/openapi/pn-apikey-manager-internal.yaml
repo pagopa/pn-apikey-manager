@@ -356,6 +356,7 @@ components:
             - 'ENABLE'
             - 'ROTATE'
 
+
 #  securitySchemes:                                      # ONLY EXTERNAL
 #    bearerAuth:                                         # ONLY EXTERNAL
 #      type: http                                        # ONLY EXTERNAL

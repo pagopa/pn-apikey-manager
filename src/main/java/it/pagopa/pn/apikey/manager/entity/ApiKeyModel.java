@@ -66,7 +66,6 @@ public class ApiKeyModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("correlationId")}))
     private String correlationId;
 
-
     @Getter(onMethod = @__({@DynamoDbAttribute("pdnd")}))
     private boolean pdnd;
 

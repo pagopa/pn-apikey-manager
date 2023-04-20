@@ -43,11 +43,11 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public  Mono<Page<PaAggregationModel>> getAllPa(PaPageable pageable){
+    public Mono<Page<PaAggregationModel>> getAllPa(PaPageable pageable) {
         Map<String, AttributeValue> attributeValue = null;
         if (pageable.isPage()) {
             attributeValue = new HashMap<>();
-            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            attributeValue.put(PaAggregationConstant.PA_ID, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
         }
         ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
                 .exclusiveStartKey(attributeValue)
@@ -63,11 +63,11 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public  Mono<Page<PaAggregationModel>> getAllPaByPaName(PaPageable pageable, String paName){
+    public Mono<Page<PaAggregationModel>> getAllPaByPaName(PaPageable pageable, String paName) {
         Map<String, AttributeValue> attributeValue = null;
         if (pageable.isPageByName()) {
             attributeValue = new HashMap<>();
-            attributeValue.put(PaAggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            attributeValue.put(PaAggregationConstant.PA_ID, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
             attributeValue.put(PaAggregationConstant.PA_NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
             attributeValue.put(PaAggregationConstant.PAGEABLE, AttributeValue.builder().s(AggregationConstant.PAGEABLE_VALUE).build());
         }
@@ -112,7 +112,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
 
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
-                .addAttributeToProject(PaAggregationConstant.PK)
+                .addAttributeToProject(PaAggregationConstant.PA_ID)
                 .build();
 
         AtomicInteger counter = new AtomicInteger(0);
@@ -155,7 +155,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
 
     @Override
     public Mono<Page<PaAggregationModel>> getAllPaAggregations() {
-        return Mono.from(table.scan());
+        return getAllPa(PaPageable.builder().build());
     }
 
     @Override
@@ -201,7 +201,7 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
     }
 
     @Override
-    public Flux<BatchGetResultPage>  batchGetItem(AddPaListRequestDto addPaListRequestDto) {
+    public Flux<BatchGetResultPage> batchGetItem(AddPaListRequestDto addPaListRequestDto) {
         log.info("List of PaAggreggationModel in AddPaListRequestDto size: {}", addPaListRequestDto.getItems().size());
         return Flux.fromIterable(addPaListRequestDto.getItems())
                 .window(MAX_BATCH_SIZE)

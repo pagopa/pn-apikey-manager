@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncIndex;
@@ -84,7 +85,6 @@ class PaAggregationRepositoryImplTest {
                 .expectNextCount(0);
     }
 
-
     @Test
     void searchAggregation() {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
@@ -118,62 +118,15 @@ class PaAggregationRepositoryImplTest {
                 .verifyComplete();
     }
 
-   /* @Test
-    void savePaAggregationList() {
-        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
-        when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        BatchWriteResult batchWriteResult = BatchWriteResult.builder().unprocessedRequests(new HashMap<>()).build();
-
-        PaAggregationModel paAggregationModel = new PaAggregationModel();
-        paAggregationModel.setAggregateId("id");
-        StepVerifier.create(paRepository.savePaAggregation(List.of(paAggregationModel)))
-                .expectNext(batchWriteResult).verifyComplete();
-    }
-
-    @Test
-    void batchGetItemTest() {
-        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
-        when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-
-        BatchGetResultPagePublisher batchGetResultPagePublisher = mock(BatchGetResultPagePublisher.class);
-        when(dynamoDbEnhancedAsyncClient.batchGetItem((BatchGetItemEnhancedRequest) any())).thenReturn(batchGetResultPagePublisher);
-
-       PaDetailDto paDetailDto = new PaDetailDto();
-       paDetailDto.setName("name");
-       paDetailDto.setId("id");
-        AddPaListRequestDto addPaListRequestDto = new AddPaListRequestDto();
-        addPaListRequestDto.setItems(List.of(paDetailDto));
-        StepVerifier.create(paRepository.batchGetItem(addPaListRequestDto)).verifyComplete();
-    }
-
-    @Test
-    void testSavePaAggregation() {
-        when(dynamoDbAsyncTable.tableName()).thenReturn("tableName");
-        TableSchema tableSchema = mock(TableSchema.class);
-        when(dynamoDbAsyncTable.tableSchema()).thenReturn(tableSchema);
-        DynamoDbEnhancedClientExtension extension = mock(DynamoDbEnhancedClientExtension.class);
-        when(dynamoDbAsyncTable.mapperExtension()).thenReturn(extension);
-        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
-
-        CompletableFuture<BatchWriteResult> completableFuture = new CompletableFuture<>();
-        completableFuture.completeAsync(() -> BatchWriteResult.builder().build());
-        when(dynamoDbEnhancedAsyncClient.batchWriteItem((BatchWriteItemEnhancedRequest) any()))
-                .thenReturn(completableFuture);
-
-        PaAggregationModel model = new PaAggregationModel();
-        model.setPaId("id");
-        StepVerifier.create(paRepository.savePaAggregation(List.of(model)))
-                .verifyComplete();
-    }*/
-
     @Test
     void getAllPaAggregation() {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         PaAggregationRepositoryImpl paRepository = new PaAggregationRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "", "");
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        when(dynamoDbAsyncTable.scan()).thenReturn(pagePublisher);
+        when(dynamoDbAsyncTable.scan(any(ScanEnhancedRequest.class))).thenReturn(pagePublisher);
+        SdkPublisher<Object> sdkPublisher = SdkPublisher.adapt(Mono.empty());
+        when(pagePublisher.items()).thenReturn(sdkPublisher);
 
         StepVerifier.create(paRepository.getAllPaAggregations())
                 .expectNextCount(0);

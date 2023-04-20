@@ -15,7 +15,7 @@ public abstract class CommonWebClient extends CommonBaseClient {
     @Autowired
     ResponseExchangeFilter responseExchangeFilter;
 
-    protected final WebClient initWebClient(HttpClient httpClient,String baseUrl) {
+    protected final WebClient initWebClient(HttpClient httpClient, String baseUrl) {
 
         ExchangeStrategies strategies = ExchangeStrategies.builder().codecs(configurer -> {
             configurer.registerDefaults(true);
@@ -24,10 +24,10 @@ public abstract class CommonWebClient extends CommonBaseClient {
 
         return super.enrichBuilder(WebClient.builder()
                         .baseUrl(baseUrl)
-                .exchangeStrategies(strategies)
-                .codecs(c ->
-                        c.defaultCodecs().enableLoggingRequestDetails(true))
-                .filters(exchangeFilterFunctions -> exchangeFilterFunctions.add(responseExchangeFilter))
-                .clientConnector(new ReactorClientHttpConnector(httpClient))).build();
+                        .exchangeStrategies(strategies)
+                        .codecs(c -> c.defaultCodecs().enableLoggingRequestDetails(true))
+                        .filters(exchangeFilterFunctions -> exchangeFilterFunctions.add(responseExchangeFilter))
+                        .clientConnector(new ReactorClientHttpConnector(httpClient)))
+                .build();
     }
 }

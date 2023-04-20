@@ -83,24 +83,22 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     }
 
     @Override
-    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId){
-        QueryConditional queryConditional = QueryConditional
-                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
-                        .build());
+    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(xPagopaPnCxId)
+                .build());
 
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .scanIndexForward(false)
                 .build();
 
-        return Mono.from(
-                table.index(gsiLastUpdate)
-                        .query(queryEnhancedRequest)
-                        .map(Page::items));
+        return Flux.from(table.index(gsiLastUpdate).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList();
     }
 
     @Override
-    public Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId){
+    public Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId) {
         Map<String, String> expressionNames = new HashMap<>();
         expressionNames.put("#status", "status");
 
@@ -108,26 +106,25 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
         expressionValues.put(":statusEnabled", AttributeValue.builder().s("ENABLED").build());
         expressionValues.put(":statusRotated", AttributeValue.builder().s("ROTATED").build());
 
-        QueryConditional queryConditional = QueryConditional
-                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
-                        .build());
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(xPagopaPnCxId)
+                .build());
 
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
-                .filterExpression(expressionBuilder("(#status = :statusEnabled OR #status = :statusRotated)",expressionValues,expressionNames))
+                .filterExpression(expressionBuilder("(#status = :statusEnabled OR #status = :statusRotated)", expressionValues, expressionNames))
                 .scanIndexForward(false)
                 .build();
 
-        return Mono.from(
-                table.index(gsiLastUpdate)
-                        .query(queryEnhancedRequest));
+        return Flux.from(table.index(gsiLastUpdate).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList()
+                .map(Page::create);
     }
 
     @Override
     public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable) {
         return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, new ArrayList<>(), pageable);
     }
-
 
     private Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId,
                                                      List<String> xPagopaPnCxGroups,
@@ -236,7 +233,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
         return UpdateItemEnhancedRequest
                 .builder(ApiKeyModel.class)
-                .conditionExpression(expressionBuilder("#id = :id",expressionValues,expressionNames))
+                .conditionExpression(expressionBuilder("#id = :id", expressionValues, expressionNames))
                 .item(apiKeyModel)
                 .ignoreNulls(true)
                 .build();

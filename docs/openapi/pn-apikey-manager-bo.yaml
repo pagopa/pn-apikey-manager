@@ -1,12 +1,18 @@
 openapi: 3.0.3
 info:
   x-summary: 'Piattaforma Notifiche: API per il Front End del BackOffice'
-  title: 'Gestione Aggregati'
+  title: 'Gestione Aggregati, API Key virtuali e PA per il BackOffice'
   version: '3.0.0'
 tags:
-  - name: ApiKeyManage
+  - name: Aggregate
     description: >-
       Invocazioni utilizzabili dai mittenti per la gestione degli aggregati
+  - name: Pa
+    description: >-
+      Invocazioni utilizzabili dai mittenti per la gestione delle PA
+  - name: ApiKeysBo
+    description: >-
+      Invocazioni utilizzabili dai mittenti per la gestione delle API Key virtuali
 paths:
   "/api-key-bo/aggregate":
     get:
@@ -39,7 +45,6 @@ paths:
           required: false
           schema:
             type: string
-
       responses:
         '200':
           description: OK
@@ -417,10 +422,12 @@ paths:
     get:
       summary: Ricerca pa
       description: >-
-        servizio di consultazione della lista delle pa
+        Servizio di consultazione della lista delle PA
       tags:
         - Pa
       operationId: getPa
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
         - name: paName
           in: query
@@ -431,6 +438,11 @@ paths:
           schema:
             type: integer
         - name: lastEvaluatedId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lastEvaluatedName
           in: query
           required: false
           schema:
@@ -455,11 +467,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-bo/interop":
+  "/api-key-bo/api-keys/interop":
     put:
       summary: Cambio valore pdnd
       description: >-
-        servizio che cambia il valore del flag pdnd di una api key
+        Servizio che cambia il valore del flag pdnd di una o più virtual API Key
       tags:
         - ApiKeysBo
       operationId: interop
@@ -497,18 +509,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-
-  "/api-key-bo/api-keys/{id}":
+  "/api-key-bo/api-keys":
     get:
       summary: Ricerca api keys
       description: >-
-        servizio di consultazione della lista delle api keys dato un id della PA
+        Servizio di consultazione della lista delle virtual API Keys dato l'id della PA
       tags:
         - ApiKeysBo
       operationId: getBoApiKeys
+      x-api-permissions:
+        - 'api-key-read'
       parameters:
-        - name: id
-          in: path
+        - name: paId
+          in: query
           required: true
           schema:
             type: string
@@ -594,6 +607,8 @@ components:
           items:
             $ref: '#/components/schemas/PaDetail'
         lastEvaluatedId:
+          type: string
+        lastEvaluatedName:
           type: string
         total:
           type: integer

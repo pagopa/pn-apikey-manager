@@ -30,7 +30,7 @@ class ApiKeyBoConverterTest {
     @Test
     void testConvertToResponsePdnd() {
         ArrayList<ApiPdndDto> apiPdndDtoList = new ArrayList<>();
-        assertNull(apiKeyBoConverter.convertToResponsePdnd(apiPdndDtoList, new ArrayList<>()).getUnprocessedKey());
+        assertTrue(apiKeyBoConverter.convertToResponsePdnd(apiPdndDtoList, new ArrayList<>()).getUnprocessedKey().isEmpty());
         assertTrue(apiPdndDtoList.isEmpty());
     }
 
@@ -82,7 +82,7 @@ class ApiKeyBoConverterTest {
     }
 
     /**
-     * Method under test: {@link ApiKeyBoConverter#convertResponsetoDto(List)}
+     * Method under test: {@link ApiKeyBoConverter#convertResponseToDto(List)}
      */
     @Test
     void testConvertResponsetoDto5() {
@@ -95,7 +95,7 @@ class ApiKeyBoConverterTest {
 
         ArrayList<ApiKeyModel> apiKeyModelList = new ArrayList<>();
         apiKeyModelList.add(apiKeyModel);
-        List<ApiKeyRowDto> items = apiKeyBoConverter.convertResponsetoDto(apiKeyModelList).getItems();
+        List<ApiKeyRowDto> items = apiKeyBoConverter.convertResponseToDto(apiKeyModelList).getItems();
         assertEquals(1, items.size());
         ApiKeyRowDto getResult = items.get(0);
         assertTrue(getResult.getGroups().isEmpty());
@@ -109,7 +109,4 @@ class ApiKeyBoConverterTest {
         verify(apiKeyModel).getStatus();
         verify(apiKeyModel).getGroups();
     }
-
-
 }
-

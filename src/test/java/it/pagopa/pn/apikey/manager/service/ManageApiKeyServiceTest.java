@@ -356,7 +356,7 @@ class ManageApiKeyServiceTest {
                 .thenReturn(Mono.just(page));
         when(apiKeyRepository.countWithFilters(anyString(), anyList()))
                 .thenReturn(Mono.just(1));
-        when(apiKeyConverter.convertResponsetoDto(any(), anyBoolean())).thenReturn(apiKeysResponseDto);
+        when(apiKeyConverter.convertResponseToDto(any(), anyBoolean())).thenReturn(apiKeysResponseDto);
         when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
         StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, CxTypeAuthFleetDto.PA))
                 .expectNext(apiKeysResponseDto)

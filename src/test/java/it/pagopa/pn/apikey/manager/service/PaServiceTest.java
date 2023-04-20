@@ -61,12 +61,13 @@ class PaServiceTest {
         getPaResponseDto.setItems(list);
         getPaResponseDto.setTotal(1);
         getPaResponseDto.setLastEvaluatedId("id");
+        getPaResponseDto.setLastEvaluatedName("name");
         Map<String, AttributeValue> map = new HashMap<>();
         map.put(PaAggregationConstant.PA_ID,AttributeValue.builder().s("id").build());
         map.put(PaAggregationConstant.PA_NAME,AttributeValue.builder().s("name").build());
         when(paAggregationRepository.count()).thenReturn(Mono.just(1));
         when(paAggregationRepository.getAllPa(any())).thenReturn(Mono.just(Page.create(paAggregationModels,map)));
-        StepVerifier.create(paService.getPa(null,10,""))
+        StepVerifier.create(paService.getPa(null,10,"",""))
                 .expectNext(getPaResponseDto)
                 .verifyComplete();
     }
@@ -83,7 +84,7 @@ class PaServiceTest {
         getPaResponseDto.setTotal(1);
         when(paAggregationRepository.countByName(any())).thenReturn(Mono.just(1));
         when(paAggregationRepository.getAllPaByPaName(any(),any())).thenReturn(Mono.just(Page.create(paAggregationModels)));
-        StepVerifier.create(paService.getPa("paName",10,""))
+        StepVerifier.create(paService.getPa("paName",10,"",""))
                 .expectNext(getPaResponseDto)
                 .verifyComplete();
     }
@@ -155,7 +156,6 @@ class PaServiceTest {
                 .expectNext(movePaResponseDto)
                 .verifyComplete();
     }
-
 
     @Test
     void testCreateNewPaAggregation(){
