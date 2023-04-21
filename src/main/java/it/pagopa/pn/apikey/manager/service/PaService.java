@@ -56,7 +56,7 @@ public class PaService {
                     .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
                     .map(Tuple2::getT1);
         }
-        return paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, paName))
+        return paAggregationRepository.getAllPa(toPaPageable(limit, lastEvaluatedId, lastEvaluatedName))
                 .map(this::convertToGetPaResponse)
                 .zipWhen(dto -> paAggregationRepository.count())
                 .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
@@ -67,7 +67,9 @@ public class PaService {
         GetPaResponseDto dto = new GetPaResponseDto();
         if (paAggregationModels.lastEvaluatedKey() != null) {
             dto.setLastEvaluatedId(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_ID).s());
-            dto.setLastEvaluatedName(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_NAME).s());
+            if (paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_NAME) != null) {
+                dto.setLastEvaluatedName(paAggregationModels.lastEvaluatedKey().get(PaAggregationConstant.PA_NAME).s());
+            }
         }
         dto.setItems(paAggregationModels.items().stream().map(paAggregationModel -> {
             PaDetailDto paDetailDto = new PaDetailDto();
