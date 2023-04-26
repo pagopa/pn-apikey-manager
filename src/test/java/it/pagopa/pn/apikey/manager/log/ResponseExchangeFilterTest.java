@@ -12,10 +12,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import static org.mockito.Mockito.mock;
@@ -35,10 +37,8 @@ class ResponseExchangeFilterTest {
                         .build();
         ClientResponse response = ClientResponse.create(HttpStatus.OK).build();
         long startTime = System.currentTimeMillis();
-        DataBuffer dataBuffer = mock(DataBuffer.class);
-        when(dataBuffer.toString(StandardCharsets.UTF_8)).thenReturn("test");
 
-        responseExchangeFilter.logResponseBody(startTime, dataBuffer, response, request);
+        responseExchangeFilter.logResponseBody(startTime, "test", response, request);
         Assertions.assertEquals(HttpStatus.OK,response.statusCode());
     }
 
@@ -58,6 +58,18 @@ class ResponseExchangeFilterTest {
                 .expectNextMatches(
                         clientResponse -> clientResponse.statusCode().equals(HttpStatus.OK))
                 .verifyComplete();
+    }
+
+    @Test
+    void logResponseBodyInError() {
+        ClientRequest request = ClientRequest.create(HttpMethod.GET, URI.create("http://localhost:8080/test")).build();
+        ExchangeFunction exchangeFunction = clientRequest -> Mono.error(new WebClientResponseException(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                null, "test".getBytes(), Charset.defaultCharset()));
+        Mono<ClientResponse> clientResponseMono = responseExchangeFilter.filter(request, exchangeFunction);
+        StepVerifier.create(clientResponseMono)
+                .verifyError(WebClientResponseException.class);
     }
 
     @Test

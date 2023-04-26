@@ -2,12 +2,14 @@ package it.pagopa.pn.apikey.manager.log;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.codec.support.DefaultServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.mock.http.server.reactive.MockServerHttpResponse;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
 import org.springframework.web.server.WebSession;
@@ -17,13 +19,18 @@ import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.net.URI;
 import java.nio.file.Paths;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@TestPropertySource(properties = {
+        "pn.apikey.manager.health-check-path=/actuator/health"
+})
+@ContextConfiguration(classes = {RequestResponseLoggingFilter.class})
+@ExtendWith(SpringExtension.class)
 class RequestResponseLoggingFilterTest {
 
-    @InjectMocks
+    @Autowired
     private RequestResponseLoggingFilter requestResponseLoggingFilter;
 
     /**
@@ -71,5 +78,23 @@ class RequestResponseLoggingFilterTest {
         when(webFilterChain.filter(any())).thenReturn(Mono.empty());
        StepVerifier.create(requestResponseLoggingFilter.filter(exchange, webFilterChain)).verifyComplete();
     }
-}
 
+    @Test
+    void testFilter3() {
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getURI()).thenReturn(URI.create("/actuator/health"));
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+        MockServerHttpResponse response = new MockServerHttpResponse();
+        DefaultServerCodecConfigurer codecConfigurer = new DefaultServerCodecConfigurer();
+        DefaultServerWebExchange exchange = new DefaultServerWebExchange(serverHttpRequestDecorator, response,
+                webSessionManager, codecConfigurer, new AcceptHeaderLocaleContextResolver());
+
+        WebFilterChain webFilterChain = mock(WebFilterChain.class);
+        when(webFilterChain.filter(any())).thenReturn(Mono.empty());
+        StepVerifier.create(requestResponseLoggingFilter.filter(exchange, webFilterChain)).verifyComplete();
+    }
+}

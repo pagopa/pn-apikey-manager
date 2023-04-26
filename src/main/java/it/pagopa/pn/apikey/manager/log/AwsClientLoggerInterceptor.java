@@ -29,31 +29,26 @@ public class AwsClientLoggerInterceptor implements ExecutionInterceptor {
         Object operationName = executionAttributes.getAttributes().get(OPERATION_NAME);
 
         String maskedRequest = MaskDataUtils.maskInformation(context.request().toString());
-        if (context.response() instanceof ScanResponse) {
-            ScanResponse scanResponse = (ScanResponse) context.response();
+        if (context.response() instanceof ScanResponse response) {
             log.info("END - {}.{} request: {} count: {} timelapse: {} ms", serviceName, operationName, maskedRequest,
-                    scanResponse.count(), elapsed);
-        } else if (context.response() instanceof QueryResponse) {
-            QueryResponse queryResponse = (QueryResponse) context.response();
+                    response.count(), elapsed);
+        } else if (context.response() instanceof QueryResponse response) {
             log.info("END - {}.{} request: {} count: {} timelapse: {} ms", serviceName, operationName, maskedRequest,
-                    queryResponse.count(), elapsed);
-        } else if (context.response() instanceof GetItemResponse) {
-            GetItemResponse getItemResponse = (GetItemResponse) context.response();
+                    response.count(), elapsed);
+        } else if (context.response() instanceof GetItemResponse response) {
             String maskedResponse = MaskDataUtils.maskInformation(context.response().toString());
             log.info("END - {}.{} request: {} hasItem: {} response: {} timelapse: {} ms", serviceName, operationName,
-                    maskedRequest, getItemResponse.hasItem(), maskedResponse, elapsed);
+                    maskedRequest, response.hasItem(), maskedResponse, elapsed);
         } else if (context.response() instanceof PutItemResponse) {
             log.info("END - {}.{} request: {} timelapse: {} ms", serviceName, operationName, maskedRequest, elapsed);
         } else if (context.response() instanceof DeleteItemResponse) {
             log.info("END - {}.{} request: {} timelapse: {} ms", serviceName, operationName, maskedRequest, elapsed);
-        } else if (context.response() instanceof BatchGetItemResponse) {
-            BatchGetItemResponse batchGetItemResponse = (BatchGetItemResponse) context.response();
+        } else if (context.response() instanceof BatchGetItemResponse response) {
             log.info("END - {}.{} request: {} hasUnprocessedKeys: {} timelapse: {} ms", serviceName, operationName,
-                    maskedRequest, batchGetItemResponse.hasUnprocessedKeys(), elapsed);
-        } else if (context.response() instanceof BatchWriteItemResponse) {
-            BatchWriteItemResponse batchWriteItemResponse = (BatchWriteItemResponse) context.response();
+                    maskedRequest, response.hasUnprocessedKeys(), elapsed);
+        } else if (context.response() instanceof BatchWriteItemResponse response) {
             log.info("END - {}.{} request: {} hasUnprocessedItems: {} timelapse: {} ms", serviceName, operationName,
-                    maskedRequest, batchWriteItemResponse.hasUnprocessedItems(), elapsed);
+                    maskedRequest, response.hasUnprocessedItems(), elapsed);
         }
     }
 
