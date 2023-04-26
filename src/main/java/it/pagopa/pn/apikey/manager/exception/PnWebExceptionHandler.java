@@ -22,16 +22,20 @@ import reactor.util.annotation.NonNull;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 
-@Configuration
-@Order(-2)
-@Import(ExceptionHelper.class)
+import static it.pagopa.pn.commons.log.MDCWebFilter.MDC_TRACE_ID_KEY;
+
 @Slf4j
+@Order(-2)
+@Configuration
+@Import(ExceptionHelper.class)
 public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
 
     private final ExceptionHelper exceptionHelper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PnWebExceptionHandler(ExceptionHelper exceptionHelper){
+    private static final int STATUS_500 = 500;
+
+    public PnWebExceptionHandler(ExceptionHelper exceptionHelper) {
         this.exceptionHelper = exceptionHelper;
         objectMapper.findAndRegisterModules();
         objectMapper
@@ -44,23 +48,21 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
     public Mono<Void> handle(@NonNull ServerWebExchange serverWebExchange, @NonNull Throwable throwable) {
         DataBuffer dataBuffer;
         DataBufferFactory bufferFactory = serverWebExchange.getResponse().bufferFactory();
-        Problem problem;
         try {
-            if(throwable instanceof ApiKeyManagerException apiKeyManagerException){
-                problem = handleApiKeyException(apiKeyManagerException);
-            }else {
+            Problem problem;
+            if (throwable instanceof ApiKeyManagerException exception) {
+                problem = handleApiKeyException(exception);
+            } else {
                 problem = handleException(throwable);
             }
 
-            if(problem.getStatus() >= 500) {
-                log.error("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage());
-                log.error("Exception uri: {}, error: {}", serverWebExchange.getRequest().getURI(), throwable);
+            if (problem.getStatus() >= STATUS_500) {
+                log.error("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage(), throwable);
             } else {
-                log.warn("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage());
-                log.warn("Exception uri: {}, error: {}", serverWebExchange.getRequest().getURI(), throwable);
+                log.warn("Exception uri: {}, message: {}", serverWebExchange.getRequest().getURI(), throwable.getMessage(), throwable);
             }
 
-            problem.setTraceId(MDC.get("trace_id"));
+            problem.setTraceId(MDC.get(MDC_TRACE_ID_KEY));
             problem.setTimestamp(OffsetDateTime.now());
             serverWebExchange.getResponse().setStatusCode(HttpStatus.resolve(problem.getStatus()));
 
@@ -73,18 +75,18 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
         return serverWebExchange.getResponse().writeWith(Mono.just(dataBuffer));
     }
 
-    private Problem handleApiKeyException(ApiKeyManagerException apiKeyManagerException) {
+    private Problem handleApiKeyException(ApiKeyManagerException exception) {
         Problem problem = new Problem();
-        problem.setStatus(apiKeyManagerException.getStatus().value());
+        problem.setStatus(exception.getStatus().value());
         problem.setTitle("ERROR");
-        problem.setDetail(apiKeyManagerException.getMessage());
+        problem.setDetail(exception.getMessage());
         return problem;
     }
 
     private Problem handleException(Throwable throwable) {
         Problem problem = new Problem();
         problem.setTitle("ERROR");
-        problem.setStatus(500);
+        problem.setStatus(STATUS_500);
         problem.setDetail(throwable.getMessage());
         return problem;
     }
