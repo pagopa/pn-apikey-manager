@@ -142,6 +142,10 @@ Parameters:
     Type: Number
     Default: 2
 
+  HealthCheckPath:
+    Type: String
+    Default: '/actuator/health'
+
   # Instance parameters
   # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
   # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
@@ -211,13 +215,13 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        HealthCheckPath: /actuator/health
         CpuValue: !Ref CpuValue
         MemoryAmount: !Ref MemoryAmount
         HealthCheckTimeout: !Ref HealthCheckTimeout
         HealthCheckInterval: !Ref HealthCheckInterval
         HealthyThresholdCount: !Ref HealthyThresholdCount
         UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
+        HealthCheckPath: !Ref HealthCheckPath
         AutoscalingThreshold: !Ref AutoscalingThreshold
         AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
         MinTasksNumber: !Ref MinTasksNumber
@@ -229,6 +233,10 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
+        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
+        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry6: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'

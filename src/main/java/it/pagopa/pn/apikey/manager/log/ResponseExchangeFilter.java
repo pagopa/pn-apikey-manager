@@ -7,14 +7,10 @@ import org.reactivestreams.Publisher;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.client.reactive.ClientHttpRequestDecorator;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.ClientRequest;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
-import org.springframework.web.reactive.function.client.ExchangeFunction;
+import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 @Slf4j
 @Component
@@ -26,24 +22,36 @@ public class ResponseExchangeFilter implements ExchangeFilterFunction {
     public @NotNull Mono<ClientResponse> filter(@NotNull ClientRequest request, ExchangeFunction next) {
         long start = System.currentTimeMillis();
         return next.exchange(interceptBody(request))
+                .doOnError(WebClientResponseException.class, e -> logResponseBody(start, e, request))
                 .map(response -> interceptBody(start, response, request));
     }
 
     private ClientResponse interceptBody(long startTime, ClientResponse response, ClientRequest request) {
+        StringBuilder body = new StringBuilder();
         return response.mutate()
                 .body(data -> data
-                        .doOnNext(dataBuffer ->
-                                logResponseBody(startTime, dataBuffer, response, request)))
+                        .doOnNext(dataBuffer -> body.append(dataBuffer.toString(StandardCharsets.UTF_8)))
+                        .doOnComplete(() -> logResponseBody(startTime, body.toString(), response, request)))
                 .build();
     }
 
-    public void logResponseBody(long startTime, DataBuffer dataBuffer, ClientResponse response, ClientRequest request) {
+    public void logResponseBody(long startTime, String body, ClientResponse response, ClientRequest request) {
         long duration = System.currentTimeMillis() - startTime;
         log.info("Response HTTP from {} {} {} - body: {} - timelapse: {}ms",
                 request.url(),
                 response.statusCode().value(),
-                Objects.requireNonNull(response.statusCode().name()),
-                MaskDataUtils.maskInformation(String.format("%1."+MAX_LOGGED_BODY_SIZE+"s", dataBuffer.toString(StandardCharsets.UTF_8))),
+                response.statusCode().name(),
+                MaskDataUtils.maskInformation(String.format("%1."+MAX_LOGGED_BODY_SIZE+"s", body)),
+                duration);
+    }
+
+    public void logResponseBody(long startTime, WebClientResponseException exception, ClientRequest request) {
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("Response HTTP from {} {} {} - body: {} - timelapse: {}ms",
+                request.url(),
+                exception.getStatusCode().value(),
+                exception.getStatusCode().name(),
+                exception.getResponseBodyAsString(),
                 duration);
     }
 
