@@ -34,7 +34,9 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final int STATUS_500 = 500;
 
-    public PnWebExceptionHandler(ExceptionHelper exceptionHelper){
+    private static final int STATUS_500 = 500;
+
+    public PnWebExceptionHandler(ExceptionHelper exceptionHelper) {
         this.exceptionHelper = exceptionHelper;
         objectMapper.findAndRegisterModules();
         objectMapper
@@ -47,11 +49,11 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
     public Mono<Void> handle(@NonNull ServerWebExchange serverWebExchange, @NonNull Throwable throwable) {
         DataBuffer dataBuffer;
         DataBufferFactory bufferFactory = serverWebExchange.getResponse().bufferFactory();
-        Problem problem;
         try {
-            if(throwable instanceof ApiKeyManagerException apiKeyManagerException){
-                problem = handleApiKeyException(apiKeyManagerException);
-            }else {
+            Problem problem;
+            if (throwable instanceof ApiKeyManagerException exception) {
+                problem = handleApiKeyException(exception);
+            } else {
                 problem = handleException(throwable);
             }
 
