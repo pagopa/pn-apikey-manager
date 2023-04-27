@@ -34,8 +34,6 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final int STATUS_500 = 500;
 
-    private static final int STATUS_500 = 500;
-
     public PnWebExceptionHandler(ExceptionHelper exceptionHelper) {
         this.exceptionHelper = exceptionHelper;
         objectMapper.findAndRegisterModules();
