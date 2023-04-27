@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
+import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -14,6 +15,7 @@ import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -36,17 +38,20 @@ public class CreateApiKeyService {
     private final PaAggregationsService paAggregationsService;
     private final ManageApiKeyService manageApiKeyService;
     private final ExternalRegistriesClient externalRegistriesClient;
+    private final String flagPdnd;
 
     public CreateApiKeyService(ApiKeyRepository apiKeyRepository,
                                AggregationService aggregationService,
                                PaAggregationsService paAggregationsService,
                                ManageApiKeyService manageApiKeyService,
-                               ExternalRegistriesClient externalRegistriesClient) {
+                               ExternalRegistriesClient externalRegistriesClient,
+                               @Value("${pn.apikey.manager.flag.pdnd}") String flagPdnd) {
         this.apiKeyRepository = apiKeyRepository;
         this.aggregationService = aggregationService;
         this.paAggregationsService = paAggregationsService;
         this.manageApiKeyService = manageApiKeyService;
         this.externalRegistriesClient = externalRegistriesClient;
+        this.flagPdnd = flagPdnd;
     }
 
     public Mono<ResponseNewApiKeyDto> createApiKey(@NonNull String xPagopaPnUid,
@@ -131,6 +136,7 @@ public class CreateApiKeyService {
         apiKeyModel.setCxId(xPagopaPnCxId);
         apiKeyModel.setCxType(xPagopaPnCxType.getValue());
         apiKeyModel.getStatusHistory().add(manageApiKeyService.createNewApiKeyHistory(CREATE, xPagopaPnUid));
+        apiKeyModel.setPdnd(Boolean.getBoolean(flagPdnd));
         log.debug("constructed apiKeyModel: {}", apiKeyModel.getId());
         return apiKeyModel;
     }
@@ -144,6 +150,7 @@ public class CreateApiKeyService {
         paAggregationModel.setAggregateId(aggregateId);
         paAggregationModel.setPaId(internalPaDetailDto.getId());
         paAggregationModel.setPaName(internalPaDetailDto.getName());
+        paAggregationModel.setPageable(PaAggregationConstant.PAGEABLE_VALUE);
         return paAggregationModel;
     }
 }

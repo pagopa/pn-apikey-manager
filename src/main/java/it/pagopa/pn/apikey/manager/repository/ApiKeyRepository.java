@@ -18,8 +18,12 @@ public interface ApiKeyRepository {
 
     Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId);
 
+    Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId);
+
     Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable);
 
     Mono<Integer> countWithFilters(String xPagopaPnCxId, List<String> xPagopaPnCxGroups);
+
+    Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd);
 
 }

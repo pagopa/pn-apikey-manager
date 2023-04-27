@@ -22,7 +22,7 @@ public class ExternalRegistriesWebClient extends CommonWebClient {
     public ExternalRegistriesWebClient(@Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-max-poolsize}") Integer tcpMaxPoolSize,
                                        @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-max-queued-connections}") Integer tcpMaxQueuedConnections,
                                        @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-pending-acquired-timeout}") Integer tcpPendingAcquireTimeout,
-                                       @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-pool-idle-timeout}")Integer tcpPoolIdleTimeout,
+                                       @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-pool-idle-timeout}") Integer tcpPoolIdleTimeout,
                                        @Value("${pn.apikey.manager.pn-external-registries.base-path}") String basePath) {
         this.tcpMaxPoolSize = tcpMaxPoolSize;
         this.tcpMaxQueuedConnections = tcpMaxQueuedConnections;
@@ -40,6 +40,6 @@ public class ExternalRegistriesWebClient extends CommonWebClient {
 
         HttpClient httpClient = HttpClient.create(provider);
 
-        return super.initWebClient(httpClient,basePath);
+        return super.initWebClient(httpClient, basePath);
     }
 }

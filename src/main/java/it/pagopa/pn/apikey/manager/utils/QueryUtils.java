@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -16,6 +17,21 @@ import java.util.Map;
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class QueryUtils {
+
+
+    public static Expression expressionBuilder(String expression, Map<String, AttributeValue> expressionValues, Map<String, String> expressionNames) {
+        Expression.Builder expressionBuilder = Expression.builder();
+        if (expression != null) {
+            expressionBuilder.expression(expression);
+        }
+        if (expressionValues != null) {
+            expressionBuilder.expressionValues(expressionValues);
+        }
+        if (expressionNames != null) {
+            expressionBuilder.expressionNames(expressionNames);
+        }
+        return expressionBuilder.build();
+    }
 
     public static ApiKeyPageable getNewPageable(Page<ApiKeyModel> page, ApiKeyPageable pageable) {
         return ApiKeyPageable.builder()

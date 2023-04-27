@@ -2,10 +2,14 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
+import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponseApiKeysDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
@@ -18,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
@@ -45,28 +50,42 @@ public class ManageApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyConverter apiKeyConverter;
+    private final ApiKeyBoConverter apiKeyBoConverter;
     private final ExternalRegistriesClient externalRegistriesClient;
 
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ExternalRegistriesClient externalRegistriesClient) {
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ApiKeyBoConverter apiKeyBoConverter, ExternalRegistriesClient externalRegistriesClient) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
+        this.apiKeyBoConverter = apiKeyBoConverter;
         this.externalRegistriesClient = externalRegistriesClient;
     }
 
-    public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey){
+    public Mono<ResponsePdndDto> changePdnd(List<ApiPdndDto> apiPdndDtos) {
+        return Flux.fromIterable(apiPdndDtos)
+                .flatMap(apiPdndDto -> apiKeyRepository.changePdnd(apiPdndDto.getId(), apiPdndDto.getPdnd())
+                        .onErrorResume(throwable -> {
+                            log.warn("can not update pdnd flag of key {} to {}", apiPdndDto.getId(), apiPdndDto.getPdnd(), throwable);
+                            return Mono.empty();
+                        })
+                        .map(apiKeyModel -> apiPdndDto))
+                .collectList()
+                .map(apiPdndChanged -> apiKeyBoConverter.convertToResponsePdnd(apiPdndDtos, apiPdndChanged));
+    }
+
+    public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey) {
         return apiKeyRepository.findByCxId(xPagopaPnCxId)
                 .map(apiKeyModels -> {
-                    if(apiKeyModels.isEmpty()){
+                    if (apiKeyModels.isEmpty()) {
                         throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
                     }
-                    if(apiKeyModels.size() > 1){
+                    if (apiKeyModels.size() > 1) {
                         throw new ApiKeyManagerException("Already exist a virtual key associated for this cxId", HttpStatus.BAD_REQUEST);
                     }
                     return apiKeyModels;
                 })
-                .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels,virtualKey))
-                .doOnNext(apiKeyModels -> log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}",virtualKey,xPagopaPnCxId));
+                .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels, virtualKey))
+                .doOnNext(apiKeyModels -> log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}", virtualKey, xPagopaPnCxId));
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
@@ -107,6 +126,13 @@ public class ManageApiKeyService {
                 });
     }
 
+    public Mono<ResponseApiKeysDto> getBoApiKeyList(@NonNull String xPagopaPnCxId) {
+        return apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(xPagopaPnCxId)
+                .zipWith(externalRegistriesClient.getPaGroupsById(xPagopaPnCxId, null))
+                .map(this::decodeGroupIdsToGroupNames)
+                .map(apiKeyModelPage -> apiKeyBoConverter.convertResponseToDto(apiKeyModelPage.items()));
+    }
+
     public Mono<ApiKeysResponseDto> getApiKeyList(@NonNull String xPagopaPnCxId,
                                                   @Nullable List<String> xPagopaPnCxGroups,
                                                   @Nullable Integer limit,
@@ -123,7 +149,7 @@ public class ManageApiKeyService {
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
                 .zipWith(externalRegistriesClient.getPaGroupsById(xPagopaPnCxId, null))
                 .map(this::decodeGroupIdsToGroupNames)
-                .map(apiKeyModelPage -> apiKeyConverter.convertResponsetoDto(apiKeyModelPage, showVirtualKey))
+                .map(apiKeyModelPage -> apiKeyConverter.convertResponseToDto(apiKeyModelPage, showVirtualKey))
                 .zipWhen(page -> apiKeyRepository.countWithFilters(xPagopaPnCxId, xPagopaPnCxGroups))
                 .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
                 .map(Tuple2::getT1);
@@ -133,7 +159,7 @@ public class ManageApiKeyService {
         Page<ApiKeyModel> apiKeysFound = tuple.getT1();
         List<PaGroup> paGroups = tuple.getT2();
 
-        if(paGroups.isEmpty() || apiKeysFound.items().isEmpty()) {
+        if (paGroups.isEmpty() || apiKeysFound.items().isEmpty()) {
             return apiKeysFound;
         }
 
@@ -152,6 +178,7 @@ public class ManageApiKeyService {
     private Map<String, String> convertPaGroupsToMap(List<PaGroup> paGroups) {
         return paGroups.stream().collect(Collectors.toMap(PaGroup::getId, PaGroup::getName));
     }
+
     private List<String> getGroupNamesByGroupIds(List<String> groups, Map<String, String> mapGroupsIdToName) {
         return groups.stream()
                 .map(group -> mapGroupsIdToName.getOrDefault(group, group))
@@ -218,22 +245,19 @@ public class ManageApiKeyService {
 
     private ApiKeyStatusDto decodeStatus(String status, boolean history) {
         log.debug("Requested operation: {}", status);
-        switch (status) {
-            case BLOCK:
-                return BLOCKED;
-            case ENABLE:
-                return ApiKeyStatusDto.ENABLED;
-            case CREATE:
+        return switch (status) {
+            case BLOCK -> ApiKeyStatusDto.BLOCKED;
+            case ENABLE -> ApiKeyStatusDto.ENABLED;
+            case CREATE -> {
                 if (history) {
-                    return ApiKeyStatusDto.CREATED;
+                    yield ApiKeyStatusDto.CREATED;
                 } else {
-                    return ApiKeyStatusDto.ENABLED;
+                    yield ApiKeyStatusDto.ENABLED;
                 }
-            case ROTATE:
-                return ApiKeyStatusDto.ROTATED;
-            default:
-                throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
-        }
+            }
+            case ROTATE -> ApiKeyStatusDto.ROTATED;
+            default -> throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
+        };
     }
 
     private ApiKeyPageable toApiKeyPageable(Integer limit, String lastEvaluatedLastKey, String lastEvaluatedLastUpdate) {

@@ -1,12 +1,18 @@
 openapi: 3.0.3
 info:
   x-summary: 'Piattaforma Notifiche: API per il Front End del BackOffice'
-  title: 'Gestione Aggregati'
+  title: 'Gestione Aggregati, API Key virtuali e PA per il BackOffice'
   version: '3.0.0'
 tags:
   - name: Aggregate
     description: >-
       Invocazioni utilizzabili dai mittenti per la gestione degli aggregati
+  - name: Pa
+    description: >-
+      Invocazioni utilizzabili dai mittenti per la gestione delle PA
+  - name: ApiKeysBo
+    description: >-
+      Invocazioni utilizzabili dai mittenti per la gestione delle API Key virtuali
 paths:
   "/api-key-bo/aggregate":
     get:
@@ -39,7 +45,6 @@ paths:
           required: false
           schema:
             type: string
-
       responses:
         '200':
           description: OK
@@ -307,7 +312,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddPaListRequest"
+              $ref: "#/components/schemas/MovePaListRequest"
         required: true
       responses:
         '200':
@@ -413,6 +418,139 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/api-key-bo/pa":
+    get:
+      summary: Ricerca pa
+      description: >-
+        Servizio di consultazione della lista delle PA
+      tags:
+        - Pa
+      operationId: getPa
+      x-api-permissions:
+        - 'api-key-read'
+      parameters:
+        - name: paName
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: lastEvaluatedId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lastEvaluatedName
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/GetPaResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/api-key-bo/api-keys/interop":
+    put:
+      summary: Cambio valore pdnd
+      description: >-
+        Servizio che cambia il valore del flag pdnd di una o più virtual API Key
+      tags:
+        - ApiKeysBo
+      operationId: interop
+      x-api-permissions:
+        - 'api-key-write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestPdnd'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ResponsePdnd'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/api-key-bo/api-keys":
+    get:
+      summary: Ricerca api keys
+      description: >-
+        Servizio di consultazione della lista delle virtual API Keys dato l'id della PA
+      tags:
+        - ApiKeysBo
+      operationId: getBoApiKeys
+      x-api-permissions:
+        - 'api-key-read'
+      parameters:
+        - name: paId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ResponseApiKeys'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
 components:
   parameters:
     pathAggregate:
@@ -459,6 +597,21 @@ components:
                 type: string
               detail:
                 type: string
+    GetPaResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaDetail'
+        lastEvaluatedId:
+          type: string
+        lastEvaluatedName:
+          type: string
+        total:
+          type: integer
     PaAggregateResponse:
       type: object
       properties:
@@ -481,6 +634,18 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/PaDetail'
+    MovePaListRequest:
+      title: Lista Pa da Spostare
+      description: >-
+        Dto contenente la lista delle Pa da spostare all'aggregato selezionato
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaMoveDetail'
     AddPaListRequest:
       title: Lista Pa da Associare
       description: >-
@@ -586,6 +751,11 @@ components:
           type: string
         name:
           type: string
+    PaMoveDetail:
+      type: object
+      properties:
+        id:
+          type: string
     UsagePlanResponse:
       title: elenco usagePlan template
       description: >-
@@ -612,3 +782,81 @@ components:
           default: []
           items:
             $ref: '#/components/schemas/PaDetail'
+
+
+    RequestPdnd:
+      title: Elenco di api keys da cambiare pdnd
+      description: >-
+        Dto contenente la lista delle api keys per cui bisogna cambiare il valore del pdnd
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiPdnd'
+
+    ResponsePdnd:
+      title: Elenco di api keys non trovate per cambiare il pdnd
+      description: >-
+        Dto contenente la lista delle api keys che non sono state trovate su Dynamo
+      type: object
+      required:
+        - items
+      properties:
+        unprocessedKey:
+          type: array
+          default: []
+          items:
+            type: string
+
+    ApiPdnd:
+      properties:
+        id:
+          type: string
+        pdnd:
+          type: boolean
+      required:
+        - id
+        - pdnd
+
+    ResponseApiKeys:
+      title: Elenco di api keys
+      description: >-
+        Dto contenente la lista delle api keys associate ad un utente.
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKeyRow'
+        total:
+          type: integer
+
+    ApiKeyRow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Id dell'api key
+        name:
+          type: string
+          description: Nome dell'api key
+        pdnd:
+          type: boolean
+          description: Pdnd dell'api key
+        groups:
+          type: array
+          description: Gruppi a cui appartiene l'api key
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/ApiKeyStatus'
+
+    ApiKeyStatus:
+      description: Stato dell'api key
+      type: string
+      enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED' ]

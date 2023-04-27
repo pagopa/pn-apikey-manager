@@ -12,6 +12,10 @@ import java.util.List;
 
 public interface PaAggregationRepository {
 
+    Mono<Page<PaAggregationModel>> getAllPa(PaPageable pageable);
+
+    Mono<Page<PaAggregationModel>> getAllPaByPaName(PaPageable pageable, String paName);
+
     Mono<PaAggregationModel> searchAggregation(String xPagopaPnCxId);
 
     Mono<PaAggregationModel> savePaAggregation(PaAggregationModel toSave);
@@ -25,4 +29,8 @@ public interface PaAggregationRepository {
     Mono<Integer> countByAggregateId(String aggregateId);
 
     Flux<BatchGetResultPage>  batchGetItem(AddPaListRequestDto addPaListRequestDto);
+
+    Mono<Integer> count();
+
+    Mono<Integer> countByName(String name);
 }

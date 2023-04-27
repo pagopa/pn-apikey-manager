@@ -11,29 +11,31 @@ import java.util.regex.Pattern;
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class MaskDataUtils {
 
-    public static String maskInformation(String data) {
-        Pattern virtualKey1 = Pattern.compile("(\"value\")\\s*:\\s*\"(.*?)\"");
-        Pattern virtualKey2 = Pattern.compile("(\"apiKey\")\\s*:\\s*\"(.*?)\"");
+    private static final Pattern VIRTUAL_KEY_1 = Pattern.compile("(\"value\")\\s*:\\s*\"(.*?)\"");
+    private static final Pattern VIRTUAL_KEY_2 = Pattern.compile("(\"apiKey\")\\s*:\\s*\"(.*?)\"");
+    private static final Pattern MASK_VALUE = Pattern.compile("([v|V]alue)=(.*?),");
+    private static final int MATCHER_GROUP = 2;
+    private static final int MASK_STRING_LENGTH = 3;
 
+    public static String maskInformation(String data) {
         String dynamoDbPrefix = "(" + ApiKeyConstant.VIRTUAL_KEY + "|" + AggregationConstant.AWS_API_KEY + ")";
         Pattern dynamoDb = Pattern.compile(dynamoDbPrefix + "=AttributeValue\\(S=(.*?)\\)");
 
-        data = maskMatcher(virtualKey1, data);
-        data = maskMatcher(virtualKey2, data);
+        data = maskMatcher(VIRTUAL_KEY_1, data);
+        data = maskMatcher(VIRTUAL_KEY_2, data);
         data = maskMatcher(dynamoDb, data);
 
         return data;
     }
 
     public static String maskValue(String data) {
-        Pattern pattern = Pattern.compile("([v|V]alue)=(.*?),");
-        return maskMatcher(pattern, data);
+        return maskMatcher(MASK_VALUE, data);
     }
 
     private static String maskMatcher(Pattern pattern, String dataBuffered) {
         Matcher matcher = pattern.matcher(dataBuffered);
         while (matcher.find()) {
-            String toBeMasked = matcher.group(2);
+            String toBeMasked = matcher.group(MATCHER_GROUP);
             String valueMasked = mask(toBeMasked);
             if (!toBeMasked.isBlank()) {
                 dataBuffered = dataBuffered.replace(toBeMasked, valueMasked);
@@ -64,10 +66,10 @@ public class MaskDataUtils {
         int end = strText.length() - 1;
         String maskChar = String.valueOf('*');
 
-        if (strText.equals("")) {
+        if ("".equals(strText)) {
             return "";
         }
-        if (strText.length() <= 3) {
+        if (strText.length() <= MASK_STRING_LENGTH) {
             return maskChar.repeat(strText.length());
         }
         int maskLength = end - start;

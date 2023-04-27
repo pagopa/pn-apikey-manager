@@ -1,27 +1,22 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-
-import java.util.ArrayList;
-
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
@@ -30,13 +25,25 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.*;
+
 @SpringBootTest
 @TestPropertySource(properties = {
         "pn.apikey.manager.pn-external-registries.base-path=path",
-        "aws.region=eu-south-1"
+        "aws.region=eu-south-1",
+        "pn.apikey.manager.flag.pdnd=true"
 })
 @ExtendWith(SpringExtension.class)
 class ManageApiKeyServiceTest {
+
+    @Autowired
+    private ManageApiKeyService manageApiKeyService;
 
     @MockBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
@@ -54,10 +61,35 @@ class ManageApiKeyServiceTest {
     private ApiKeyConverter apiKeyConverter;
 
     @MockBean
+    private ApiKeyBoConverter apiKeyBoConverter;
+
+    @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
+
+    @Test
+    void changePdnd() {
+        List<ApiPdndDto> apiPdndDtos = new ArrayList<>();
+        ApiPdndDto apiPdndDto = new ApiPdndDto();
+        apiPdndDto.setPdnd(true);
+        apiPdndDto.setId("id");
+        apiPdndDtos.add(apiPdndDto);
+
+        ResponsePdndDto apiKeyResponsePdndDto = new ResponsePdndDto();
+        apiKeyResponsePdndDto.setUnprocessedKey(apiPdndDtos.stream().map(ApiPdndDto::getId).toList());
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+
+        when(apiKeyRepository.changePdnd("id", true)).thenReturn(Mono.just(apiKeyModel));
+        when(apiKeyBoConverter.convertToResponsePdnd(any(), any())).thenReturn(apiKeyResponsePdndDto);
+
+        StepVerifier.create(apiKeyService.changePdnd(apiPdndDtos))
+                .expectNext(apiKeyResponsePdndDto)
+                .verifyComplete();
+    }
 
     @Test
     void testChangeVirtualKey() {
@@ -68,7 +100,7 @@ class ManageApiKeyServiceTest {
         apiKeyModels.add(apiKeyModel);
 
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
-        when(apiKeyRepository.setNewVirtualKey(anyList(),any())).thenReturn(Mono.just(apiKeyModels));
+        when(apiKeyRepository.setNewVirtualKey(anyList(), any())).thenReturn(Mono.just(apiKeyModels));
 
         StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
                 .expectNext(apiKeyModels)
@@ -219,6 +251,33 @@ class ManageApiKeyServiceTest {
                 .verify();
     }
 
+
+
+    /**
+     * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
+     */
+    @Test
+    void testGetBoApiKeyList2() {
+        when(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(any()))
+                .thenThrow(new ApiKeyManagerException("An error occurred", HttpStatus.CONTINUE));
+        assertThrows(ApiKeyManagerException.class, () -> manageApiKeyService.getBoApiKeyList("42"));
+        verify(apiKeyRepository).findByCxIdAndStatusRotateAndEnabled(any());
+    }
+
+    /**
+     * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
+     */
+    @Test
+    void testGetBoApiKeyList3() {
+        when(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled(any())).thenReturn(null);
+        when(externalRegistriesClient.getPaGroupsById(any(), any()))
+                .thenThrow(new ApiKeyManagerException("An error occurred", HttpStatus.CONTINUE));
+        assertThrows(ApiKeyManagerException.class, () -> manageApiKeyService.getBoApiKeyList("42"));
+        verify(apiKeyRepository).findByCxIdAndStatusRotateAndEnabled(any());
+        verify(externalRegistriesClient).getPaGroupsById(any(), any());
+    }
+
+
     @Test
     void testDelete1() {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
@@ -297,7 +356,7 @@ class ManageApiKeyServiceTest {
                 .thenReturn(Mono.just(page));
         when(apiKeyRepository.countWithFilters(anyString(), anyList()))
                 .thenReturn(Mono.just(1));
-        when(apiKeyConverter.convertResponsetoDto(any(),anyBoolean())).thenReturn(apiKeysResponseDto);
+        when(apiKeyConverter.convertResponseToDto(any(), anyBoolean())).thenReturn(apiKeysResponseDto);
         when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
         StepVerifier.create(apiKeyService.getApiKeyList(xPagopaPnUid, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, CxTypeAuthFleetDto.PA))
                 .expectNext(apiKeysResponseDto)

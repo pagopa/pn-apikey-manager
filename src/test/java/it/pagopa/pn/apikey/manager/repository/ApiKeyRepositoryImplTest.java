@@ -15,6 +15,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,21 @@ class ApiKeyRepositoryImplTest {
 
     @MockBean
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
+
+    @Test
+    void changePdnd(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        ApiKeyModel apiKeyModel= new ApiKeyModel();
+        apiKeyModel.setId("42");
+        CompletableFuture<Object> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> apiKeyModel);
+        when(dynamoDbAsyncTable.updateItem((UpdateItemEnhancedRequest<Object>) any())).thenReturn(completableFuture);
+
+        StepVerifier.create(apiKeyRepository.changePdnd("42",true)).expectNext(apiKeyModel)
+                .verifyComplete();
+    }
 
     @Test
     void delete(){
@@ -118,6 +134,24 @@ class ApiKeyRepositoryImplTest {
         apiKeyModelList.add(apiKeyModel);
 
         StepVerifier.create(apiKeyRepository.findByCxId("cxId"))
+                .expectNextCount(0);
+
+    }
+
+    @Test
+    void findByCxIdAndStatusRotateAndEnabled(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
+        apiKeyModelList.add(apiKeyModel);
+
+        StepVerifier.create(apiKeyRepository.findByCxIdAndStatusRotateAndEnabled("cxId"))
                 .expectNextCount(0);
 
     }

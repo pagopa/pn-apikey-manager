@@ -3,8 +3,8 @@ package it.pagopa.pn.apikey.manager.controller;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.AggregateApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
-import it.pagopa.pn.apikey.manager.service.PaService;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
+import it.pagopa.pn.apikey.manager.service.PaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,8 @@ public class AggregationController implements AggregateApi {
     private final Scheduler scheduler;
     private final AggregationService aggregationService;
     private final PaService paService;
+
+    private static final int MIN_NAME_FILTER_LENGTH = 3;
 
     public AggregationController(@Qualifier("apikeyManagerScheduler") Scheduler scheduler,
                                  AggregationService aggregationService,
@@ -90,19 +92,18 @@ public class AggregationController implements AggregateApi {
      * servizio che si occupa dello spostamento di una PA da un aggregato a un altro
      *
      * @param id                  Identificativo univoco dell&#39;aggregato (required)
-     * @param addPaListRequestDto (required)
+     * @param movePaListRequestDto (required)
      * @return OK (status code 200)
      * or Bad request (status code 400)
      * or Not found (status code 404)
      * or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, AddPaListRequestDto addPaListRequestDto, final ServerWebExchange exchange) {
-        return paService.movePa(id, addPaListRequestDto)
+    public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, MovePaListRequestDto movePaListRequestDto, final ServerWebExchange exchange) {
+        return paService.movePa(id, movePaListRequestDto)
                 .publishOn(scheduler)
                 .map(a -> ResponseEntity.ok().body(a));
     }
-
     /**
      * POST /aggregate/{id}/add-pa : Associazione PA - Aggregato
      * servizio che associa una lista di PA a un determinato aggregato
@@ -157,7 +158,7 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, final ServerWebExchange exchange) {
-        if (name != null && name.length() < 3) {
+        if (name != null && name.length() < MIN_NAME_FILTER_LENGTH) {
             throw new ApiKeyManagerException(INVALID_NAME_LENGTH, HttpStatus.BAD_REQUEST);
         }
         return paService.getAssociablePa(name)
@@ -183,4 +184,5 @@ public class AggregationController implements AggregateApi {
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }
+
 }

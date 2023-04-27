@@ -14,6 +14,7 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_DOES_NOT_EXISTS;
+import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
 
 @Slf4j
 @Component
@@ -32,12 +34,22 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     private final String gsiLastUpdate;
 
     private static final int MIN_LIMIT = 100;
+    private static final int EXPRESSION_GROUP = 2;
 
     public ApiKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                 @Value("${pn.apikey.manager.dynamodb.apikey.gsi-name.pa-id}") String gsiLastUpdate,
                                 @Value("${pn.apikey.manager.dynamodb.tablename.apikey}") String tableName) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyModel.class));
         this.gsiLastUpdate = gsiLastUpdate;
+    }
+
+    @Override
+    public Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd) {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId(id);
+        apiKeyModel.setPdnd(flagPdnd);
+
+        return Mono.fromFuture(table.updateItem(createUpdateItemEnhancedRequest(apiKeyModel)));
     }
 
     @Override
@@ -66,33 +78,53 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
         Key key = Key.builder()
                 .partitionValue(id)
                 .build();
-
         return Mono.fromFuture(table.getItem(key))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(APIKEY_DOES_NOT_EXISTS, HttpStatus.NOT_FOUND)));
     }
 
     @Override
-    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId){
-        QueryConditional queryConditional = QueryConditional
-                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
-                        .build());
+    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(xPagopaPnCxId)
+                .build());
 
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
                 .scanIndexForward(false)
                 .build();
 
-        return Mono.from(
-                table.index(gsiLastUpdate)
-                        .query(queryEnhancedRequest)
-                        .map(Page::items));
+        return Flux.from(table.index(gsiLastUpdate).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList();
+    }
+
+    @Override
+    public Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId) {
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#status", "status");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":statusEnabled", AttributeValue.builder().s("ENABLED").build());
+        expressionValues.put(":statusRotated", AttributeValue.builder().s("ROTATED").build());
+
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(xPagopaPnCxId)
+                .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(expressionBuilder("(#status = :statusEnabled OR #status = :statusRotated)", expressionValues, expressionNames))
+                .scanIndexForward(false)
+                .build();
+
+        return Flux.from(table.index(gsiLastUpdate).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList()
+                .map(Page::create);
     }
 
     @Override
     public Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable) {
         return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, new ArrayList<>(), pageable);
     }
-
 
     private Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId,
                                                      List<String> xPagopaPnCxGroups,
@@ -185,10 +217,26 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 expressionValues.put(":group" + i, pnCxGroup);
                 expressionGroup.append(" contains(" + ApiKeyConstant.GROUPS + ",:group").append(i).append(") OR");
             }
-            expressionGroup.replace(expressionGroup.length() - 2, expressionGroup.length(), "");
+            expressionGroup.replace(expressionGroup.length() - EXPRESSION_GROUP, expressionGroup.length(), "");
         } else {
             expressionGroup.append("attribute_exists(" + ApiKeyConstant.GROUPS + ")");
         }
         return expressionGroup.toString();
     }
+
+    private UpdateItemEnhancedRequest<ApiKeyModel> createUpdateItemEnhancedRequest(ApiKeyModel apiKeyModel) {
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#id", "id");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":id", AttributeValue.builder().s(apiKeyModel.getId()).build());
+
+        return UpdateItemEnhancedRequest
+                .builder(ApiKeyModel.class)
+                .conditionExpression(expressionBuilder("#id = :id", expressionValues, expressionNames))
+                .item(apiKeyModel)
+                .ignoreNulls(true)
+                .build();
+    }
+
 }
