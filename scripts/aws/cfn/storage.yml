@@ -29,6 +29,10 @@ Parameters:
     Type: String
     Description: Dynamo table encryption key
 
+  LogRetention:
+    Type: Number
+    Default: 14
+
 Resources:
 
   # pn-apiKey DynamoDB table
@@ -208,6 +212,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
       Parameters:
         LogGroupName: !Sub '${ProjectName}-apikey-manager'
+        LogGroupRetention: !Ref LogRetention
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
 Outputs:
 
