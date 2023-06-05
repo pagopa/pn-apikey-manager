@@ -7,17 +7,22 @@ import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponseApiKeysDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.RequestPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponseApiKeysDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponsePdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeysResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-import lombok.extern.slf4j.Slf4j;
+import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -33,11 +38,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
-import static it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto.*;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto.*;
 
 @Service
-@Slf4j
+@lombok.CustomLog
 public class ManageApiKeyService {
 
     private static final String BLOCK = "BLOCK";
@@ -53,61 +59,107 @@ public class ManageApiKeyService {
     private final ApiKeyBoConverter apiKeyBoConverter;
     private final ExternalRegistriesClient externalRegistriesClient;
 
+    private final PnAuditLogBuilder auditLogBuilder;
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ApiKeyBoConverter apiKeyBoConverter, ExternalRegistriesClient externalRegistriesClient) {
+
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ApiKeyBoConverter apiKeyBoConverter, ExternalRegistriesClient externalRegistriesClient, PnAuditLogBuilder auditLogBuilder) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
         this.apiKeyBoConverter = apiKeyBoConverter;
         this.externalRegistriesClient = externalRegistriesClient;
+        this.auditLogBuilder = auditLogBuilder;
     }
 
-    public Mono<ResponsePdndDto> changePdnd(List<ApiPdndDto> apiPdndDtos) {
-        return Flux.fromIterable(apiPdndDtos)
-                .flatMap(apiPdndDto -> apiKeyRepository.changePdnd(apiPdndDto.getId(), apiPdndDto.getPdnd())
-                        .onErrorResume(throwable -> {
-                            log.warn("can not update pdnd flag of key {} to {}", apiPdndDto.getId(), apiPdndDto.getPdnd(), throwable);
-                            return Mono.empty();
-                        })
-                        .map(apiKeyModel -> apiPdndDto))
-                .collectList()
-                .map(apiPdndChanged -> apiKeyBoConverter.convertToResponsePdnd(apiPdndDtos, apiPdndChanged));
+    public Mono<ResponsePdndDto> changePdnd(Mono<RequestPdndDto> requestPdndDtoMono) {
+        return requestPdndDtoMono.flatMap(requestPdndDto -> {
+            String logMessage = String.format("Cambio valore Pdnd di una o più API Key - Ids=%s - Pdnd=%s",
+                    requestPdndDto.getItems().stream().map(ApiPdndDto::getId).toList(),
+                    requestPdndDto.getItems().stream().map(ApiPdndDto::getPdnd).toList());
+
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)
+                    .build();
+
+            logEvent.log();
+            List<ApiPdndDto> apiPdndDtos = requestPdndDto.getItems();
+            return Flux.fromIterable(apiPdndDtos)
+                    .flatMap(apiPdndDto -> apiKeyRepository.changePdnd(apiPdndDto.getId(), apiPdndDto.getPdnd())
+                            .onErrorResume(throwable -> {
+                                log.warn("can not update pdnd flag of key {} to {}", apiPdndDto.getId(), apiPdndDto.getPdnd(), throwable);
+                                return Mono.empty();
+                            })
+                            .map(apiKeyModel -> apiPdndDto))
+                    .collectList()
+                    .map(apiPdndChanged -> apiKeyBoConverter.convertToResponsePdnd(apiPdndDtos, apiPdndChanged))
+                    .doOnNext(responsePdndDto -> logEvent.generateSuccess().log())
+                    .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+        });
     }
 
-    public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey) {
-        return apiKeyRepository.findByCxId(xPagopaPnCxId)
-                .map(apiKeyModels -> {
-                    if (apiKeyModels.isEmpty()) {
-                        throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
-                    }
-                    if (apiKeyModels.size() > 1) {
-                        throw new ApiKeyManagerException("Already exist a virtual key associated for this cxId", HttpStatus.BAD_REQUEST);
-                    }
-                    return apiKeyModels;
-                })
-                .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels, virtualKey))
-                .doOnNext(apiKeyModels -> log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}", virtualKey, xPagopaPnCxId));
-    }
+    public Mono<List<ApiKeyModel>> changeVirtualKey(Mono<RequestBodyApiKeyPkDto> requestBodyApiKeyPkDto) {
+        return requestBodyApiKeyPkDto
+                .flatMap(request -> {
+                    String logMessage = String.format("Cambio virtual Key API Key - xPagopaPnCxId=%s - VirtualKey=%s",
+                            request.getxPagopaPnCxId(),
+                            request.getVirtualKey());
 
-    public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
-        String status = requestApiKeyStatusDto.getStatus().getValue();
+                    PnAuditLogEvent logEvent = auditLogBuilder
+                            .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
+                            .build();
 
-        if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
-            log.warn(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
-        }
-        return apiKeyRepository.findById(id)
-                .flatMap(apiKeyModel -> {
-                    if (isOperationAllowed(apiKeyModel, status)) {
-                        ApiKeyModel oldApiKey = new ApiKeyModel(apiKeyModel);
-                        apiKeyModel.setStatus(decodeStatus(status, false).getValue());
-                        apiKeyModel.setLastUpdate(LocalDateTime.now());
-                        apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
-                        return saveAndCheckIfRotate(apiKeyModel, oldApiKey, status, xPagopaPnUid)
-                                .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
-                    } else {
-                        return Mono.error(new ApiKeyManagerException(String.format(APIKEY_INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
-                    }
+                    logEvent.log();
+
+                    return apiKeyRepository.findByCxId(request.getxPagopaPnCxId())
+                            .map(apiKeyModels -> {
+                                if (apiKeyModels.isEmpty()) {
+                                    throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
+                                }
+                                if (apiKeyModels.size() > 1) {
+                                    throw new ApiKeyManagerException("Already exist a virtual key associated for this cxId", HttpStatus.BAD_REQUEST);
+                                }
+                                return apiKeyModels;
+                            })
+                            .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels, request.getVirtualKey()))
+                            .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
+                            .doOnNext(apiKeyModels -> {
+                                log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}", request.getVirtualKey(), request.getxPagopaPnCxId());
+                                logEvent.generateSuccess().log();
+                            });
                 });
+    }
+
+    public Mono<ApiKeyModel> changeStatus(String id, Mono<RequestApiKeyStatusDto> requestApiKeyStatus, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups) {
+        return requestApiKeyStatus.flatMap(requestApiKeyStatusDto -> {
+
+            PnAuditLogBuilder logEventBuilder = buildAuditLogForChangeStatus(requestApiKeyStatusDto.getStatus(),
+                    xPagopaPnCxId, xPagopaPnCxGroups,xPagopaPnCxType,xPagopaPnUid);
+
+            PnAuditLogEvent logEvent = logEventBuilder.build();
+
+            logEvent.log();
+
+            String status = requestApiKeyStatusDto.getStatus().getValue();
+
+            if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
+                log.warn(CX_TYPE_NOT_ALLOWED, xPagopaPnCxType);
+                return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
+            }
+            return apiKeyRepository.findById(id)
+                    .flatMap(apiKeyModel -> {
+                        if (isOperationAllowed(apiKeyModel, status)) {
+                            ApiKeyModel oldApiKey = new ApiKeyModel(apiKeyModel);
+                            apiKeyModel.setStatus(decodeStatus(status, false).getValue());
+                            apiKeyModel.setLastUpdate(LocalDateTime.now());
+                            apiKeyModel.getStatusHistory().add(createNewApiKeyHistory(status, xPagopaPnUid));
+                            return saveAndCheckIfRotate(apiKeyModel, oldApiKey, status, xPagopaPnUid)
+                                    .doOnNext(apiKeyModel1 -> log.info("Updated Apikey with id: {} and status: {}", id, status));
+                        } else {
+                            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_INVALID_STATUS, apiKeyModel.getStatus(), status), HttpStatus.CONFLICT));
+                        }
+                    })
+                    .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
+                    .doOnNext(apiKeyModel -> logEvent.generateSuccess().log());
+        });
     }
 
     public Mono<String> deleteApiKey(String id, CxTypeAuthFleetDto xPagopaPnCxType) {
@@ -266,5 +318,24 @@ public class ManageApiKeyService {
                 .lastEvaluatedKey(lastEvaluatedLastKey)
                 .lastEvaluatedLastUpdate(lastEvaluatedLastUpdate)
                 .build();
+    }
+
+    private PnAuditLogBuilder buildAuditLogForChangeStatus(RequestApiKeyStatusDto.StatusEnum status, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnUid) {
+        if (status.equals(ROTATE)) {
+            return auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AK_ROTATE,
+                            String.format("Rotazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
+        } else if (status.equals(BLOCK)) {
+            return auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AK_BLOCK,
+                            String.format("Blocco di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
+        } else if (status.equals(ENABLE)) {
+            return auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AK_REACTIVATE,
+                            String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
+        } else {
+            log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY,false,APIKEY_INVALID_STATUS);
+            throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
+        }
     }
 }

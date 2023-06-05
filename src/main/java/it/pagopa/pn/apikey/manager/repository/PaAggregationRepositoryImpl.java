@@ -3,7 +3,7 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.AddPaListRequestDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -132,7 +132,10 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
 
     @Override
     public Mono<PaAggregationModel> savePaAggregation(PaAggregationModel toSave) {
-        return Mono.fromFuture(table.putItem(toSave)).thenReturn(toSave);
+        log.debug("Inserting data {} in DynamoDB table {}",toSave,table);
+        return Mono.fromFuture(table.putItem(toSave))
+                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
+                .thenReturn(toSave);
     }
 
     @Override
@@ -147,8 +150,10 @@ public class PaAggregationRepositoryImpl implements PaAggregationRepository {
                             Mono.fromFuture(dynamoDbEnhancedClient.batchWriteItem(BatchWriteItemEnhancedRequest.builder()
                                     .writeBatches(builder.build())
                                     .build())));
+                    log.debug("Inserting data {} in DynamoDB table {}",chunk,table);
                     return chunk
                             .doOnNext(builder::addPutItem)
+                            .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
                             .then(deferred);
                 });
     }

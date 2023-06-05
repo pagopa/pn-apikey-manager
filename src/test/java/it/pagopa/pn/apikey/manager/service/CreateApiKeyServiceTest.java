@@ -6,9 +6,9 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
@@ -102,7 +102,7 @@ class CreateApiKeyServiceTest {
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setId("idtest");
 
-        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, stringList))
+        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", Mono.just(requestNewApiKeyDto), stringList))
                 .expectNext(responseNewApiKeyDto)
                 .verifyComplete();
     }
@@ -132,7 +132,7 @@ class CreateApiKeyServiceTest {
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setId("idtest");
 
-        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, stringList))
+        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", Mono.just(requestNewApiKeyDto), stringList))
                 .expectNext(responseNewApiKeyDto).verifyComplete();
     }
 
@@ -165,7 +165,7 @@ class CreateApiKeyServiceTest {
 
         when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
 
-        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, new ArrayList<>()))
+        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", Mono.just(requestNewApiKeyDto), new ArrayList<>()))
                 .expectNext(responseNewApiKeyDto).verifyComplete();
     }
 
@@ -191,7 +191,7 @@ class CreateApiKeyServiceTest {
         ResponseNewApiKeyDto responseNewApiKeyDto = new ResponseNewApiKeyDto();
         responseNewApiKeyDto.setId("idtest");
 
-        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, stringList))
+        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", Mono.just(requestNewApiKeyDto), stringList))
                 .expectNext(responseNewApiKeyDto).verifyComplete();
     }
 
@@ -207,7 +207,7 @@ class CreateApiKeyServiceTest {
 
         when(externalRegistriesClient.getPaGroupsById(any(), any())).thenReturn(Mono.just(paGroups));
 
-        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", requestNewApiKeyDto, new ArrayList<>()))
+        StepVerifier.create(apiKeyService.createApiKey("1234", CxTypeAuthFleetDto.PA, "42", Mono.just(requestNewApiKeyDto), new ArrayList<>()))
                 .expectError(ApiKeyManagerException.class).verify();
     }
 }

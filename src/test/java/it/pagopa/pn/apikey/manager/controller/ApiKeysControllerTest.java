@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 
@@ -67,15 +67,12 @@ class ApiKeysControllerTest {
     @MockBean
     ServerWebExchange serverWebExchange;
 
-    /**
-     * Method under test: {@link ApiKeysController#changeStatusApiKey(String, CxTypeAuthFleetDto, String, String, RequestApiKeyStatusDto, List, ServerWebExchange)}
-     */
     @ParameterizedTest
     @EnumSource(RequestApiKeyStatusDto.StatusEnum.class)
     void testChangeStatusApiKey(RequestApiKeyStatusDto.StatusEnum status) {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(null);
-        when(manageApiKeyService.changeStatus(any(), any(), any(), eq(CxTypeAuthFleetDto.PA)))
+        when(manageApiKeyService.changeStatus(any(), any(), any(), eq(CxTypeAuthFleetDto.PA), any(), any()))
                 .thenReturn(Mono.just(new ApiKeyModel()));
         ApiKeysController apiKeysController = new ApiKeysController(manageApiKeyService, createApiKeyService, auditLogBuilder, scheduler);
         List<String> xPagopaPnCxGroups = new ArrayList<>();
@@ -91,15 +88,13 @@ class ApiKeysControllerTest {
         requestApiKeyStatusDto.setStatus(status);
         when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
         when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
-        StepVerifier.create(apiKeysController.changeStatusApiKey("foo", CxTypeAuthFleetDto.PA, "foo", "foo", requestApiKeyStatusDto, xPagopaPnCxGroups,
+        StepVerifier.create(apiKeysController.changeStatusApiKey("foo", CxTypeAuthFleetDto.PA, "foo", "foo", Mono.just(requestApiKeyStatusDto), xPagopaPnCxGroups,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().build());
     }
 
-    /**
-     * Method under test: {@link ApiKeysController#deleteApiKeys(String, CxTypeAuthFleetDto, String, String, List, ServerWebExchange)}
-     */
+
     @Test
     void testDeleteApiKeys() {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
@@ -123,9 +118,7 @@ class ApiKeysControllerTest {
                 .expectNext(ResponseEntity.ok().build());
     }
 
-    /**
-     * Method under test: {@link ApiKeysController#newApiKey(String, CxTypeAuthFleetDto, String, RequestNewApiKeyDto, List, ServerWebExchange)}
-     */
+
     @Test
     void testNewApiKey() {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = mock(DynamoDbEnhancedAsyncClient.class);
@@ -154,7 +147,7 @@ class ApiKeysControllerTest {
         ResponseEntity<ResponseNewApiKeyDto> responseEntity = ResponseEntity.ok().body(apiKeyModel);
         when(auditLogBuilder.before(any(),any())).thenReturn(auditLogBuilder);
         when(auditLogBuilder.build()).thenReturn(pnAuditLogEvent);
-        StepVerifier.create(apiKeysController.newApiKey("uid", CxTypeAuthFleetDto.PA, "cxId", requestNewApiKeyDto, xPagopaPnCxGroups,
+        StepVerifier.create(apiKeysController.newApiKey("uid", CxTypeAuthFleetDto.PA, "cxId", Mono.just(requestNewApiKeyDto), xPagopaPnCxGroups,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(responseEntity);

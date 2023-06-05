@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;

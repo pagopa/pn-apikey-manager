@@ -22,7 +22,7 @@ import reactor.util.annotation.NonNull;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 
-import static it.pagopa.pn.commons.log.MDCWebFilter.MDC_TRACE_ID_KEY;
+import static it.pagopa.pn.commons.utils.MDCUtils.MDC_TRACE_ID_KEY;
 
 @Slf4j
 @Order(-2)

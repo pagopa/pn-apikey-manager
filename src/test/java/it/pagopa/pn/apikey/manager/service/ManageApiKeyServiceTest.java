@@ -6,9 +6,11 @@ import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.RequestPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponsePdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.Test;
@@ -86,7 +88,7 @@ class ManageApiKeyServiceTest {
         when(apiKeyRepository.changePdnd("id", true)).thenReturn(Mono.just(apiKeyModel));
         when(apiKeyBoConverter.convertToResponsePdnd(any(), any())).thenReturn(apiKeyResponsePdndDto);
 
-        StepVerifier.create(apiKeyService.changePdnd(apiPdndDtos))
+        StepVerifier.create(apiKeyService.changePdnd(Mono.just(new RequestPdndDto())))
                 .expectNext(apiKeyResponsePdndDto)
                 .verifyComplete();
     }
@@ -102,7 +104,10 @@ class ManageApiKeyServiceTest {
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
         when(apiKeyRepository.setNewVirtualKey(anyList(), any())).thenReturn(Mono.just(apiKeyModels));
 
-        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+        RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
+        requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
+        requestBodyApiKeyPkDto.setxPagopaPnCxId("cxId");
+        StepVerifier.create(apiKeyService.changeVirtualKey(Mono.just(requestBodyApiKeyPkDto)))
                 .expectNext(apiKeyModels)
                 .verifyComplete();
     }
@@ -113,7 +118,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
 
-        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+        RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
+        requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
+        requestBodyApiKeyPkDto.setxPagopaPnCxId("cxId");
+
+        StepVerifier.create(apiKeyService.changeVirtualKey(Mono.just(requestBodyApiKeyPkDto)))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
@@ -128,14 +137,15 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
 
-        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+        RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
+        requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
+        requestBodyApiKeyPkDto.setxPagopaPnCxId("cxId");
+
+        StepVerifier.create(apiKeyService.changeVirtualKey(Mono.just(requestBodyApiKeyPkDto)))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 
-    /**
-     * Method under test: {@link ManageApiKeyService#changeStatus(String, RequestApiKeyStatusDto, String, CxTypeAuthFleetDto)}
-     */
     @Test
     void testChangeStatus2() {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
@@ -152,7 +162,7 @@ class ManageApiKeyServiceTest {
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ENABLE);
 
-        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA, "cxId",new ArrayList<>()))
                 .expectNext(apiKeyModel1)
                 .verifyComplete();
     }
@@ -173,7 +183,7 @@ class ManageApiKeyServiceTest {
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
 
-        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA, "cxId", new ArrayList<>()))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
@@ -194,7 +204,7 @@ class ManageApiKeyServiceTest {
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.BLOCK);
 
-        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA, "cxId", new ArrayList<>()))
                 .expectNext(apiKeyModel1)
                 .verifyComplete();
     }
@@ -215,7 +225,7 @@ class ManageApiKeyServiceTest {
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ENABLE);
 
-        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA,"cxId", new ArrayList<>()))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
@@ -236,7 +246,7 @@ class ManageApiKeyServiceTest {
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
 
-        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PA))
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA,"cxId", new ArrayList<>()))
                 .expectNext(apiKeyModel1)
                 .verifyComplete();
     }
@@ -246,7 +256,7 @@ class ManageApiKeyServiceTest {
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
 
-        StepVerifier.create(apiKeyService.changeStatus("42", requestApiKeyStatusDto, "1234", CxTypeAuthFleetDto.PF))
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PF,"cxId", new ArrayList<>()))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }

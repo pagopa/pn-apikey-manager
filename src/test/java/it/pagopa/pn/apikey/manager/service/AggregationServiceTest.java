@@ -5,7 +5,7 @@ import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
 import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
@@ -287,7 +287,7 @@ class AggregationServiceTest {
         when(aggregateRepository.findById("id")).thenReturn(Mono.just(model));
         when(apiGatewayService.moveApiKeyToNewUsagePlan(new ApiKeyAggregateModel(), model))
                 .thenReturn(Mono.just(createUsagePlanKeyResponse));
-        StepVerifier.create(aggregationService.updateAggregate("id", dto))
+        StepVerifier.create(aggregationService.updateAggregate("id", Mono.just(dto)))
                 .expectNext(saveAggregateResponseDto)
                 .verifyComplete();
     }

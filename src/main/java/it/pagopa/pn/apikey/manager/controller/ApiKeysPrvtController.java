@@ -1,12 +1,8 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.api.ApiKeysPrvtApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.dto.RequestBodyApiKeyPkDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.api.ApiKeysPrvtApi;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
-import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,18 +10,19 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY;
+
 @RestController
+@lombok.CustomLog
 public class ApiKeysPrvtController implements ApiKeysPrvtApi {
 
     private final ManageApiKeyService manageApiKeyService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
     @Qualifier("apikeyManagerScheduler")
     private final Scheduler scheduler;
 
-    public ApiKeysPrvtController(ManageApiKeyService manageApiKeyService, PnAuditLogBuilder auditLogBuilder, Scheduler scheduler) {
+    public ApiKeysPrvtController(ManageApiKeyService manageApiKeyService, Scheduler scheduler) {
         this.manageApiKeyService = manageApiKeyService;
-        this.auditLogBuilder = auditLogBuilder;
         this.scheduler = scheduler;
     }
 
@@ -41,25 +38,15 @@ public class ApiKeysPrvtController implements ApiKeysPrvtApi {
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<Void>> changeVirtualKeyApiKey(RequestBodyApiKeyPkDto requestBodyApiKeyPkDto,
+    public Mono<ResponseEntity<Void>> changeVirtualKeyApiKey(Mono<RequestBodyApiKeyPkDto> requestBodyApiKeyPkDto,
                                                              final ServerWebExchange exchange) {
-        String logMessage = String.format("Cambio virtual Key API Key - xPagopaPnCxId=%s - VirtualKey=%s",
-                requestBodyApiKeyPkDto.getxPagopaPnCxId(),
-                requestBodyApiKeyPkDto.getVirtualKey());
+        log.logStartingProcess(PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY);
 
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
-                .build();
-
-        logEvent.log();
-
-        return manageApiKeyService.changeVirtualKey(requestBodyApiKeyPkDto.getxPagopaPnCxId(), requestBodyApiKeyPkDto.getVirtualKey())
+        return manageApiKeyService.changeVirtualKey(requestBodyApiKeyPkDto)
                 .publishOn(scheduler)
-                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
-                .map(s -> {
-                    logEvent.generateSuccess().log();
-                    return ResponseEntity.ok().build();
-                });
+                .doOnNext(apiKeyModels -> log.logEndingProcess(PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY,false,throwable.getMessage()))
+                .map(s -> ResponseEntity.ok().build());
     }
 
 

@@ -4,7 +4,7 @@ import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.PnBatchGetItemResponse;
 import it.pagopa.pn.apikey.manager.model.PnBatchPutItemResponse;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
@@ -152,7 +152,7 @@ class PaServiceTest {
         MovePaResponseDto movePaResponseDto = new MovePaResponseDto();
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
         movePaResponseDto.setProcessed(1);
-        StepVerifier.create(paService.movePa("foo", movePaListRequestDto))
+        StepVerifier.create(paService.movePa("foo", Mono.just(movePaListRequestDto)))
                 .expectNext(movePaResponseDto)
                 .verifyComplete();
     }
@@ -204,7 +204,7 @@ class PaServiceTest {
         movePaResponseDto.setUnprocessedPA(new ArrayList<>());
         movePaResponseDto.setProcessed(1);
 
-        StepVerifier.create(paService.createNewPaAggregation("foo", addPaListRequestDto))
+        StepVerifier.create(paService.createNewPaAggregation("foo", Mono.just(addPaListRequestDto)))
                 .expectNext(movePaResponseDto).verifyComplete();
 
     }

@@ -1,8 +1,8 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.api.ApiKeysApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.ApiKeysApi;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
@@ -19,10 +19,12 @@ import reactor.core.scheduler.Scheduler;
 
 import java.util.List;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.*;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_INVALID_STATUS;
-import static it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto.StatusEnum.*;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestApiKeyStatusDto.StatusEnum.*;
 
 @RestController
+@lombok.CustomLog
 public class ApiKeysController implements ApiKeysApi {
 
     private final ManageApiKeyService manageApiKeyService;
@@ -57,23 +59,15 @@ public class ApiKeysController implements ApiKeysApi {
      */
     @Override
     public Mono<ResponseEntity<Void>> changeStatusApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
-                                                         String id, RequestApiKeyStatusDto requestApiKeyStatusDto, List<String> xPagopaPnCxGroups,
+                                                         String id, Mono<RequestApiKeyStatusDto> requestApiKeyStatusDto, List<String> xPagopaPnCxGroups,
                                                          final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY);
 
-        PnAuditLogBuilder logEventBuilder = buildAuditLogForChangeStatus(requestApiKeyStatusDto.getStatus(),
-                xPagopaPnCxId, xPagopaPnCxGroups,xPagopaPnCxType,xPagopaPnUid);
-
-        PnAuditLogEvent logEvent = logEventBuilder.build();
-
-        logEvent.log();
-
-        return manageApiKeyService.changeStatus(id, requestApiKeyStatusDto, xPagopaPnUid, xPagopaPnCxType)
+        return manageApiKeyService.changeStatus(id, requestApiKeyStatusDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups)
                 .publishOn(scheduler)
-                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
-                .map(s -> {
-                    logEvent.generateSuccess().log();
-                    return ResponseEntity.ok().build();
-                });
+                .doOnNext(apiKeyModel -> log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY,false,throwable.getMessage()))
+                .map(s -> ResponseEntity.ok().build());
     }
 
     /**
@@ -94,6 +88,7 @@ public class ApiKeysController implements ApiKeysApi {
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId,
                                                     String id, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_API_KEY_DELETE_API_KEY);
 
         String logMessage = String.format("Cancellazione API Key - IdApiKey=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s",
                 id,
@@ -110,6 +105,8 @@ public class ApiKeysController implements ApiKeysApi {
         return manageApiKeyService.deleteApiKey(id, xPagopaPnCxType)
                 .publishOn(scheduler)
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
+                .doOnNext(s -> log.logEndingProcess(PROCESS_NAME_API_KEY_DELETE_API_KEY))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_DELETE_API_KEY,false,throwable.getMessage()))
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().build();
@@ -135,6 +132,7 @@ public class ApiKeysController implements ApiKeysApi {
      */
     @Override
     public Mono<ResponseEntity<ApiKeysResponseDto>> getApiKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey, final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_API_KEY_GET_API_KEYS);
 
         String logMessage = String.format("Visualizzazione di una API Key - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s",
                 xPagopaPnCxType.getValue(),
@@ -152,6 +150,8 @@ public class ApiKeysController implements ApiKeysApi {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
                 })
+                .doOnNext(response -> log.logEndingProcess(PROCESS_NAME_API_KEY_GET_API_KEYS))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_GET_API_KEYS,false,throwable.getMessage()))
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
     }
@@ -170,7 +170,8 @@ public class ApiKeysController implements ApiKeysApi {
      * or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<ResponseNewApiKeyDto>> newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, RequestNewApiKeyDto requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ResponseNewApiKeyDto>> newApiKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<RequestNewApiKeyDto> requestNewApiKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_API_KEY_NEW_API_KEY);
 
         String logMessage = String.format("Creazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s",
                 xPagopaPnUid,
@@ -189,6 +190,8 @@ public class ApiKeysController implements ApiKeysApi {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
                 })
+                .doOnNext(response -> log.logEndingProcess(PROCESS_NAME_API_KEY_NEW_API_KEY))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_NEW_API_KEY,false,throwable.getMessage()))
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
     }
@@ -207,6 +210,7 @@ public class ApiKeysController implements ApiKeysApi {
                     .before(PnAuditLogEventType.AUD_AK_REACTIVATE,
                             String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
         } else {
+            log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY,false,APIKEY_INVALID_STATUS);
             throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
         }
     }

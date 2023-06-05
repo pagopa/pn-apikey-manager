@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.client;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;

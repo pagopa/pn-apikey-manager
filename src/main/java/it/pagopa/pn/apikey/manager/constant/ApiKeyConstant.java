@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.constant;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
