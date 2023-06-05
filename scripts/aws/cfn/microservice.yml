@@ -207,6 +207,10 @@ Parameters:
     Type: String
     Description: 'Ecs log group name'
 
+  LogAlarmStrategy:
+    Type: String
+    Default: 'FATAL'
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -247,6 +251,7 @@ Resources:
         LoadbalancerRulePriority: !Ref MicroserviceNumber
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
+        LogAlarmStrategyV1: !Ref LogAlarmStrategy
 
   ApikeyManagerMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
