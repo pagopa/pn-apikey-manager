@@ -57,7 +57,7 @@ class ApiKeysPrvtControllerTest {
 
     @Test
     void testChangeVirtualKeyApiKey() {
-        ApiKeysPrvtController apiKeysPrvtController = new ApiKeysPrvtController(manageApiKeyService, pnAuditLogBuilder, scheduler);
+        ApiKeysPrvtController apiKeysPrvtController = new ApiKeysPrvtController(manageApiKeyService,  scheduler);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -78,7 +78,7 @@ class ApiKeysPrvtControllerTest {
         apiKeyModelList.add(apiKeyModel);
         when(pnAuditLogBuilder.before(any(),any())).thenReturn(pnAuditLogBuilder);
         when(pnAuditLogBuilder.build()).thenReturn(pnAuditLogEvent);
-        when(manageApiKeyService.changeVirtualKey(any(),any())).thenReturn(Mono.just(apiKeyModelList));
+        when(manageApiKeyService.changeVirtualKey(any())).thenReturn(Mono.just(apiKeyModelList));
         StepVerifier.create(apiKeysPrvtController.changeVirtualKeyApiKey(requestBodyApiKeyPkDto,
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))

@@ -14,9 +14,14 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeysResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
+import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -53,12 +58,15 @@ public class ManageApiKeyService {
     private final ApiKeyBoConverter apiKeyBoConverter;
     private final ExternalRegistriesClient externalRegistriesClient;
 
+    private final PnAuditLogBuilder auditLogBuilder;
 
-    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ApiKeyBoConverter apiKeyBoConverter, ExternalRegistriesClient externalRegistriesClient) {
+
+    public ManageApiKeyService(ApiKeyRepository apiKeyRepository, ApiKeyConverter apiKeyConverter, ApiKeyBoConverter apiKeyBoConverter, ExternalRegistriesClient externalRegistriesClient, PnAuditLogBuilder auditLogBuilder) {
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyConverter = apiKeyConverter;
         this.apiKeyBoConverter = apiKeyBoConverter;
         this.externalRegistriesClient = externalRegistriesClient;
+        this.auditLogBuilder = auditLogBuilder;
     }
 
     public Mono<ResponsePdndDto> changePdnd(List<ApiPdndDto> apiPdndDtos) {
@@ -73,19 +81,36 @@ public class ManageApiKeyService {
                 .map(apiPdndChanged -> apiKeyBoConverter.convertToResponsePdnd(apiPdndDtos, apiPdndChanged));
     }
 
-    public Mono<List<ApiKeyModel>> changeVirtualKey(String xPagopaPnCxId, String virtualKey) {
-        return apiKeyRepository.findByCxId(xPagopaPnCxId)
-                .map(apiKeyModels -> {
-                    if (apiKeyModels.isEmpty()) {
-                        throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
-                    }
-                    if (apiKeyModels.size() > 1) {
-                        throw new ApiKeyManagerException("Already exist a virtual key associated for this cxId", HttpStatus.BAD_REQUEST);
-                    }
-                    return apiKeyModels;
-                })
-                .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels, virtualKey))
-                .doOnNext(apiKeyModels -> log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}", virtualKey, xPagopaPnCxId));
+    public Mono<List<ApiKeyModel>> changeVirtualKey(Mono<RequestBodyApiKeyPkDto> requestBodyApiKeyPkDto) {
+        return requestBodyApiKeyPkDto
+                .flatMap(request -> {
+                    String logMessage = String.format("Cambio virtual Key API Key - xPagopaPnCxId=%s - VirtualKey=%s",
+                            request.getxPagopaPnCxId(),
+                            request.getVirtualKey());
+
+                    PnAuditLogEvent logEvent = auditLogBuilder
+                            .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
+                            .build();
+
+                    logEvent.log();
+
+                    return apiKeyRepository.findByCxId(request.getxPagopaPnCxId())
+                            .map(apiKeyModels -> {
+                                if (apiKeyModels.isEmpty()) {
+                                    throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
+                                }
+                                if (apiKeyModels.size() > 1) {
+                                    throw new ApiKeyManagerException("Already exist a virtual key associated for this cxId", HttpStatus.BAD_REQUEST);
+                                }
+                                return apiKeyModels;
+                            })
+                            .flatMap(apiKeyModels -> apiKeyRepository.setNewVirtualKey(apiKeyModels, request.getVirtualKey()))
+                            .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
+                            .doOnNext(apiKeyModels -> {
+                                log.info("Setted new virtual key:{} at api key with xPagopaPnCxId: {}", request.getVirtualKey(), request.getxPagopaPnCxId());
+                                logEvent.generateSuccess().log();
+                            });
+                });
     }
 
     public Mono<ApiKeyModel> changeStatus(String id, RequestApiKeyStatusDto requestApiKeyStatusDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {

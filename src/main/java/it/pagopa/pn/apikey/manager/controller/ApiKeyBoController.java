@@ -10,7 +10,6 @@ import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,8 +17,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO;
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_BO_INTEROP;
+
 @RestController
-@Slf4j
+@lombok.CustomLog
 public class ApiKeyBoController implements ApiKeysBoApi {
 
     private final Scheduler scheduler;
@@ -47,6 +49,8 @@ public class ApiKeyBoController implements ApiKeysBoApi {
      */
     @Override
     public Mono<ResponseEntity<ResponseApiKeysDto>> getBoApiKeys(String paId, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO);
+
         String logMessage = String.format("Visualizzazione di una API Key - xPagopaPnCxId=%s", paId);
 
         PnAuditLogEvent logEvent = auditLogBuilder
@@ -60,6 +64,8 @@ public class ApiKeyBoController implements ApiKeysBoApi {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
                 })
+                .doOnNext(response -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO,false,throwable.getMessage()))
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
     }
@@ -76,6 +82,8 @@ public class ApiKeyBoController implements ApiKeysBoApi {
      */
     @Override
     public Mono<ResponseEntity<ResponsePdndDto>> interop(RequestPdndDto requestPdndDto, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_API_KEY_BO_INTEROP);
+
         String logMessage = String.format("Cambio valore Pdnd di una o più API Key - Ids=%s - Pdnd=%s",
                 requestPdndDto.getItems().stream().map(ApiPdndDto::getId).toList(),
                 requestPdndDto.getItems().stream().map(ApiPdndDto::getPdnd).toList());
@@ -89,6 +97,8 @@ public class ApiKeyBoController implements ApiKeysBoApi {
         return manageApiKeyService.changePdnd(requestPdndDto.getItems())
                 .publishOn(scheduler)
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
+                .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_INTEROP))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_INTEROP,false,throwable.getMessage()))
                 .map(s -> {
                     logEvent.generateSuccess().log();
                     return ResponseEntity.ok().body(s);

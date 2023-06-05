@@ -8,7 +8,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_USAGE_PLAN_GET_USAGE_PLAN;
+
 @RestController
+@lombok.CustomLog
 public class UsagePlanController implements UsagePlanApi {
 
     private final UsagePlanService usagePlanService;
@@ -28,6 +31,11 @@ public class UsagePlanController implements UsagePlanApi {
      */
     @Override
     public Mono<ResponseEntity<UsagePlanResponseDto>> getUsagePlan(final ServerWebExchange exchange) {
-        return usagePlanService.getUsagePlanList().map(s -> ResponseEntity.ok().body(s));
+        log.logStartingProcess(PROCESS_NAME_USAGE_PLAN_GET_USAGE_PLAN);
+
+        return usagePlanService.getUsagePlanList()
+                .map(s -> ResponseEntity.ok().body(s))
+                .doOnNext(apiKeyModels -> log.logEndingProcess(PROCESS_NAME_USAGE_PLAN_GET_USAGE_PLAN))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_USAGE_PLAN_GET_USAGE_PLAN,false,throwable.getMessage()));
     }
 }

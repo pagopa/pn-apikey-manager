@@ -9,6 +9,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,10 @@ class ManageApiKeyServiceTest {
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
         when(apiKeyRepository.setNewVirtualKey(anyList(), any())).thenReturn(Mono.just(apiKeyModels));
 
-        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+        RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
+        requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
+        requestBodyApiKeyPkDto.setxPagopaPnCxId("cxId");
+        StepVerifier.create(apiKeyService.changeVirtualKey(Mono.just(requestBodyApiKeyPkDto)))
                 .expectNext(apiKeyModels)
                 .verifyComplete();
     }
@@ -113,7 +117,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
 
-        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+        RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
+        requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
+        requestBodyApiKeyPkDto.setxPagopaPnCxId("cxId");
+
+        StepVerifier.create(apiKeyService.changeVirtualKey(Mono.just(requestBodyApiKeyPkDto)))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
@@ -128,7 +136,11 @@ class ManageApiKeyServiceTest {
 
         when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
 
-        StepVerifier.create(apiKeyService.changeVirtualKey("cxId", "virtualKey"))
+        RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
+        requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
+        requestBodyApiKeyPkDto.setxPagopaPnCxId("cxId");
+
+        StepVerifier.create(apiKeyService.changeVirtualKey(Mono.just(requestBodyApiKeyPkDto)))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }

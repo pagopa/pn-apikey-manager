@@ -5,7 +5,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.Aggre
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
 import it.pagopa.pn.apikey.manager.service.PaService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +13,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.*;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.INVALID_NAME_LENGTH;
 
 @RestController
-@Slf4j
+@lombok.CustomLog
 public class AggregationController implements AggregateApi {
 
     private final Scheduler scheduler;
@@ -46,8 +46,11 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<AggregateResponseDto>> getAggregate(String id, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_GET_AGGREGATE);
         return aggregationService.getAggregate(id)
                 .map(aggregateDto -> ResponseEntity.ok().body(aggregateDto))
+                .doOnNext(response -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_AGGREGATE))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_AGGREGATE,false,throwable.getMessage()))
                 .publishOn(scheduler);
     }
 
@@ -65,8 +68,11 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<AggregatesListResponseDto>> getAggregatesList(String name, Integer limit, String lastEvaluatedId, String lastEvaluatedName, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_LIST_GET_AGGREGATE);
         return aggregationService.getAggregation(name, limit, lastEvaluatedId, lastEvaluatedName)
                 .map(dto -> ResponseEntity.ok().body(dto))
+                .doOnNext(aggregatesListResponseDtoResponseEntity -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_LIST_GET_AGGREGATE))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_LIST_GET_AGGREGATE,false,throwable.getMessage()))
                 .publishOn(scheduler);
     }
 
@@ -82,8 +88,11 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<PaAggregateResponseDto>> getPaAggregation(String id, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_GET_PA_AGGREGATE);
         return aggregationService.getPaOfAggregate(id)
                 .map(dto -> ResponseEntity.ok().body(dto))
+                .doOnNext(aggregateResponseDtoResponseEntity -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_PA_AGGREGATE))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_PA_AGGREGATE,false,throwable.getMessage()))
                 .publishOn(scheduler);
     }
 
@@ -100,8 +109,11 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<MovePaResponseDto>> movePa(String id, MovePaListRequestDto movePaListRequestDto, final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_MOVE_PA);
         return paService.movePa(id, movePaListRequestDto)
                 .publishOn(scheduler)
+                .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_MOVE_PA))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_MOVE_PA,false,throwable.getMessage()))
                 .map(a -> ResponseEntity.ok().body(a));
     }
     /**
@@ -117,15 +129,21 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<MovePaResponseDto>> addPaListToAggregate(String id, AddPaListRequestDto addPaListRequestDto, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_ADD_PA_LIST_TO_AGGREGATE);
         return paService.createNewPaAggregation(id, addPaListRequestDto)
                 .publishOn(scheduler)
+                .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_ADD_PA_LIST_TO_AGGREGATE))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_ADD_PA_LIST_TO_AGGREGATE,false,throwable.getMessage()))
                 .map(dto -> ResponseEntity.ok().body(dto));
     }
 
     @Override
-    public Mono<ResponseEntity<SaveAggregateResponseDto>> createAggregate(AggregateRequestDto aggregateRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<SaveAggregateResponseDto>> createAggregate(Mono<AggregateRequestDto> aggregateRequestDto, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_CREATE_AGGREGATE);
         return aggregationService.createAggregate(aggregateRequestDto)
                 .publishOn(scheduler)
+                .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_CREATE_AGGREGATE))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_CREATE_AGGREGATE,false,throwable.getMessage()))
                 .map(dto -> ResponseEntity.ok().body(dto));
     }
 
@@ -141,8 +159,11 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<Void>> deleteApiKeys(String id, ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_DELETE_API_KEYS);
         return aggregationService.deleteAggregate(id)
                 .publishOn(scheduler)
+                .doOnNext(unused -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_DELETE_API_KEYS))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_DELETE_API_KEYS,false,throwable.getMessage()))
                 .map(a -> ResponseEntity.ok().build());
     }
 
@@ -158,11 +179,15 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<AssociablePaResponseDto>> getAssociablePa(String name, final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_GET_ASSOCIABLE_PA);
         if (name != null && name.length() < MIN_NAME_FILTER_LENGTH) {
+            log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_ASSOCIABLE_PA,false, INVALID_NAME_LENGTH);
             throw new ApiKeyManagerException(INVALID_NAME_LENGTH, HttpStatus.BAD_REQUEST);
         }
         return paService.getAssociablePa(name)
                 .doOnNext(associablePaResponseDto -> log.info("getAssociablePA return list with size: {}", associablePaResponseDto.getItems().size()))
+                .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_ASSOCIABLE_PA))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_GET_ASSOCIABLE_PA,false,throwable.getMessage()))
                 .map(s -> ResponseEntity.ok().body(s))
                 .publishOn(scheduler);
     }
@@ -180,8 +205,11 @@ public class AggregationController implements AggregateApi {
      */
     @Override
     public Mono<ResponseEntity<SaveAggregateResponseDto>> updateAggregate(String id, AggregateRequestDto aggregateRequestDto, final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_AGGREGATION_UPDATE_AGGREGATE);
         return aggregationService.updateAggregate(id, aggregateRequestDto)
                 .map(s -> ResponseEntity.ok().body(s))
+                .doOnNext(response -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_UPDATE_AGGREGATE))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_AGGREGATION_UPDATE_AGGREGATE,false,throwable.getMessage()))
                 .publishOn(scheduler);
     }
 

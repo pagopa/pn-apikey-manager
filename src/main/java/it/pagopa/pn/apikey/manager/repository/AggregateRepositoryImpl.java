@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
+@lombok.CustomLog
 public class AggregateRepositoryImpl implements AggregateRepository {
 
     private final DynamoDbAsyncTable<ApiKeyAggregateModel> table;
@@ -111,7 +112,10 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 
     @Override
     public Mono<ApiKeyAggregateModel> saveAggregation(ApiKeyAggregateModel toSave) {
-        return Mono.fromFuture(table.putItem(toSave)).thenReturn(toSave);
+        log.debug("Inserting data {} in DynamoDB table {}",toSave,table);
+        return Mono.fromFuture(table.putItem(toSave))
+                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
+                .thenReturn(toSave);
     }
 
     @Override

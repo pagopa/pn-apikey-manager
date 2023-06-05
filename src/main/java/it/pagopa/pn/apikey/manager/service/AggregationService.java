@@ -127,10 +127,10 @@ public class AggregationService {
      * @param requestDto modello della richiesta
      * @return La risposta contiene l'id del nuovo aggregato creato
      */
-    public Mono<SaveAggregateResponseDto> createAggregate(AggregateRequestDto requestDto) {
+    public Mono<SaveAggregateResponseDto> createAggregate(Mono<AggregateRequestDto> requestDto) {
         log.debug("creating aggregate request: {}", requestDto);
-        ApiKeyAggregateModel model = aggregationConverter.convertToModel(requestDto);
-        return aggregateRepository.saveAggregation(model)
+        return requestDto.map(aggregationConverter::convertToModel)
+                .flatMap(model -> aggregateRepository.saveAggregation(model)
                 .zipWhen(this::createAwsApiKey)
                 .flatMap(tuple -> addAwsApiKeyToAggregate(tuple.getT2(), tuple.getT1()))
                 .flatMap(aggregate -> addUsagePlanToKey(aggregate).map(response -> aggregate))
@@ -143,7 +143,7 @@ public class AggregationService {
                     SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
                     dto.setId(aggregate.getAggregateId());
                     return dto;
-                });
+                }));
     }
 
     /**
@@ -196,7 +196,7 @@ public class AggregationService {
         AggregateRequestDto dto = new AggregateRequestDto();
         dto.setName("AGG_" + internalPaDetailDto.getName());
         dto.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
-        return createAggregate(dto).map(SaveAggregateResponseDto::getId);
+        return createAggregate(Mono.just(dto)).map(SaveAggregateResponseDto::getId);
     }
 
     private Mono<CreateApiKeyResponse> createAwsApiKey(ApiKeyAggregateModel aggregate) {

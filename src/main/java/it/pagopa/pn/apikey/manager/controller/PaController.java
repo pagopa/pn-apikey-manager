@@ -3,7 +3,6 @@ package it.pagopa.pn.apikey.manager.controller;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.api.PaApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.GetPaResponseDto;
 import it.pagopa.pn.apikey.manager.service.PaService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,8 +10,10 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_PA_GET_PA;
+
 @RestController
-@Slf4j
+@lombok.CustomLog
 public class PaController implements PaApi {
 
     private final Scheduler scheduler;
@@ -43,8 +44,12 @@ public class PaController implements PaApi {
                                                         String lastEvaluatedId,
                                                         String lastEvaluatedName,
                                                         final ServerWebExchange exchange) {
+        log.logStartingProcess(PROCESS_NAME_PA_GET_PA);
+
         return paService.getPa(paName, limit, lastEvaluatedId, lastEvaluatedName)
                 .map(s -> ResponseEntity.ok().body(s))
+                .doOnNext(apiKeyModels -> log.logEndingProcess(PROCESS_NAME_PA_GET_PA))
+                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_PA_GET_PA,false,throwable.getMessage()))
                 .publishOn(scheduler);
     }
 
