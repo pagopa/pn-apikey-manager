@@ -4,7 +4,7 @@ import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.repository.AggregatePageable;
 import it.pagopa.pn.apikey.manager.repository.AggregateRepository;
@@ -127,23 +127,23 @@ public class AggregationService {
      * @param requestDto modello della richiesta
      * @return La risposta contiene l'id del nuovo aggregato creato
      */
-    public Mono<SaveAggregateResponseDto> createAggregate(AggregateRequestDto requestDto) {
+    public Mono<SaveAggregateResponseDto> createAggregate(Mono<AggregateRequestDto> requestDto) {
         log.debug("creating aggregate request: {}", requestDto);
-        ApiKeyAggregateModel model = aggregationConverter.convertToModel(requestDto);
-        return aggregateRepository.saveAggregation(model)
-                .zipWhen(this::createAwsApiKey)
-                .flatMap(tuple -> addAwsApiKeyToAggregate(tuple.getT2(), tuple.getT1()))
-                .flatMap(aggregate -> addUsagePlanToKey(aggregate).map(response -> aggregate))
-                .doOnNext(aggregate -> log.info("Create aggregate: {}", aggregate))
-                .onErrorResume(e -> deleteAggregate(model.getAggregateId())
-                        .doOnSuccess(a -> log.info("rollback aggregate {} done", model.getAggregateId()))
-                        .doOnError(re -> log.error("can not execute rollback of aggregate {}", model.getAggregateId(), re))
-                        .then(Mono.error(e)))
-                .map(aggregate -> {
-                    SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
-                    dto.setId(aggregate.getAggregateId());
-                    return dto;
-                });
+        return requestDto.map(aggregationConverter::convertToModel)
+                .flatMap(model -> aggregateRepository.saveAggregation(model)
+                        .zipWhen(this::createAwsApiKey)
+                        .flatMap(tuple -> addAwsApiKeyToAggregate(tuple.getT2(), tuple.getT1()))
+                        .flatMap(aggregate -> addUsagePlanToKey(aggregate).map(response -> aggregate))
+                        .doOnNext(aggregate -> log.info("Create aggregate: {}", aggregate))
+                        .onErrorResume(e -> deleteAggregate(model.getAggregateId())
+                                .doOnSuccess(a -> log.info("rollback aggregate {} done", model.getAggregateId()))
+                                .doOnError(re -> log.error("can not execute rollback of aggregate {}", model.getAggregateId(), re))
+                                .then(Mono.error(e)))
+                        .map(aggregate -> {
+                            SaveAggregateResponseDto dto = new SaveAggregateResponseDto();
+                            dto.setId(aggregate.getAggregateId());
+                            return dto;
+                        }));
     }
 
     /**
@@ -196,7 +196,7 @@ public class AggregationService {
         AggregateRequestDto dto = new AggregateRequestDto();
         dto.setName("AGG_" + internalPaDetailDto.getName());
         dto.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
-        return createAggregate(dto).map(SaveAggregateResponseDto::getId);
+        return createAggregate(Mono.just(dto)).map(SaveAggregateResponseDto::getId);
     }
 
     private Mono<CreateApiKeyResponse> createAwsApiKey(ApiKeyAggregateModel aggregate) {
@@ -219,15 +219,10 @@ public class AggregationService {
                 .collectList();
     }
 
-    /**
-     * Modifica di un aggregato. I parametri modificabili sono nome, descrizione e usagePlan
-     * @param id id dell'aggregato da modificare
-     * @param aggregateRequestDto DTO della richiesta
-     * @return Risposta del servizio dell'sdk dell'apiGateway al metodo addUsagePlanToApiKey
-     */
-    public Mono<SaveAggregateResponseDto> updateAggregate(String id, AggregateRequestDto aggregateRequestDto) {
-        return aggregateRepository.findById(id)
-                .flatMap(apiKeyAggregateModel -> updateAggregateModel(apiKeyAggregateModel, aggregateRequestDto));
+
+    public Mono<SaveAggregateResponseDto> updateAggregate(String id, Mono<AggregateRequestDto> aggregateRequest) {
+        return aggregateRequest.flatMap(aggregateRequestDto -> aggregateRepository.findById(id)
+                .flatMap(apiKeyAggregateModel -> updateAggregateModel(apiKeyAggregateModel, aggregateRequestDto)));
     }
 
     private Mono<SaveAggregateResponseDto> updateAggregateModel(ApiKeyAggregateModel aggregate, AggregateRequestDto aggregateRequestDto) {

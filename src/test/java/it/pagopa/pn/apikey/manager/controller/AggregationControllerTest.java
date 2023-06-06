@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.service.AggregationService;
 import it.pagopa.pn.apikey.manager.service.PaService;
 import org.junit.jupiter.api.Test;
@@ -85,7 +85,7 @@ class AggregationControllerTest {
         dto.setUnprocessed(1);
         dto.setProcessed(1);
         when(paService.movePa(any(), any())).thenReturn(Mono.just(dto));
-        StepVerifier.create(aggregationController.movePa("id", new MovePaListRequestDto(),
+        StepVerifier.create(aggregationController.movePa("id", Mono.just(new MovePaListRequestDto()),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
@@ -140,7 +140,7 @@ class AggregationControllerTest {
         dto.setUnprocessed(1);
         dto.setProcessed(1);
         when(paService.createNewPaAggregation(any(), any())).thenReturn(Mono.just(dto));
-        StepVerifier.create(aggregationController.addPaListToAggregate("id", new AddPaListRequestDto(),
+        StepVerifier.create(aggregationController.addPaListToAggregate("id", Mono.just(new AddPaListRequestDto()),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().body(dto));
     }
@@ -199,7 +199,7 @@ class AggregationControllerTest {
         dto.setId("id");
         AggregateRequestDto requestDto = new AggregateRequestDto();
         when(aggregationService.updateAggregate(any(), any())).thenReturn(Mono.just(dto));
-        StepVerifier.create(aggregationController.updateAggregate("id", requestDto,
+        StepVerifier.create(aggregationController.updateAggregate("id", Mono.just(requestDto),
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().body(dto));
@@ -223,7 +223,7 @@ class AggregationControllerTest {
 
         when(aggregationService.createAggregate(any())).thenReturn(Mono.just(dto));
 
-        StepVerifier.create(controller.createAggregate(new AggregateRequestDto(),
+        StepVerifier.create(controller.createAggregate(Mono.just(new AggregateRequestDto()),
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().body(dto));

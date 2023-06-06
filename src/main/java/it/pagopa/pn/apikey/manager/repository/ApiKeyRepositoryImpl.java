@@ -4,7 +4,6 @@ import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.utils.QueryUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_DOES_NOT_EXISTS;
 import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
 
-@Slf4j
+@lombok.CustomLog
 @Component
 public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
@@ -60,7 +59,10 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
     @Override
     public Mono<ApiKeyModel> save(ApiKeyModel apiKeyModel) {
-        return Mono.fromFuture(table.putItem(apiKeyModel)).thenReturn(apiKeyModel);
+        log.debug("Inserting data {} in DynamoDB table {}",apiKeyModel,table);
+        return Mono.fromFuture(table.putItem(apiKeyModel))
+                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
+                .thenReturn(apiKeyModel);
     }
 
     @Override

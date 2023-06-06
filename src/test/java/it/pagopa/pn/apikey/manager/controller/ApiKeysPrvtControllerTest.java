@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.prvt.dto.RequestBodyApiKeyPkDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
@@ -57,7 +57,7 @@ class ApiKeysPrvtControllerTest {
 
     @Test
     void testChangeVirtualKeyApiKey() {
-        ApiKeysPrvtController apiKeysPrvtController = new ApiKeysPrvtController(manageApiKeyService, pnAuditLogBuilder, scheduler);
+        ApiKeysPrvtController apiKeysPrvtController = new ApiKeysPrvtController(manageApiKeyService,  scheduler);
         ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
         when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
         when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
@@ -78,8 +78,8 @@ class ApiKeysPrvtControllerTest {
         apiKeyModelList.add(apiKeyModel);
         when(pnAuditLogBuilder.before(any(),any())).thenReturn(pnAuditLogBuilder);
         when(pnAuditLogBuilder.build()).thenReturn(pnAuditLogEvent);
-        when(manageApiKeyService.changeVirtualKey(any(),any())).thenReturn(Mono.just(apiKeyModelList));
-        StepVerifier.create(apiKeysPrvtController.changeVirtualKeyApiKey(requestBodyApiKeyPkDto,
+        when(manageApiKeyService.changeVirtualKey(any())).thenReturn(Mono.just(apiKeyModelList));
+        StepVerifier.create(apiKeysPrvtController.changeVirtualKeyApiKey(Mono.just(requestBodyApiKeyPkDto),
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().build());

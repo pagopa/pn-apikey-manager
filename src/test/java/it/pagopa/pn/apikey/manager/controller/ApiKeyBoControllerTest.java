@@ -1,9 +1,9 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ApiPdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.RequestPdndDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponseApiKeysDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.ResponsePdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ApiPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.RequestPdndDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponseApiKeysDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponsePdndDto;
 import it.pagopa.pn.apikey.manager.service.ManageApiKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
@@ -91,7 +91,7 @@ class ApiKeyBoControllerTest {
 
         when(manageApiKeyService.changePdnd(any())).thenReturn(Mono.just(apiKeyResponsePdndDto));
 
-        StepVerifier.create(apiKeyBoController.interop(apiKeyRequestPdndDto,
+        StepVerifier.create(apiKeyBoController.interop(Mono.just(apiKeyRequestPdndDto),
                 new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                         new AcceptHeaderLocaleContextResolver()))).expectNext(ResponseEntity.ok().build());
     }

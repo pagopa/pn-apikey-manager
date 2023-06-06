@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.GetPaResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.GetPaResponseDto;
 import it.pagopa.pn.apikey.manager.service.PaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;

@@ -2,10 +2,10 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregateRowDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AggregatesListResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.*;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.AggregateRowDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.AggregatesListResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.UsagePlanDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.*;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;

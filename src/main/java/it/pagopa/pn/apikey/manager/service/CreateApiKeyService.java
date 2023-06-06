@@ -6,15 +6,14 @@ import it.pagopa.pn.apikey.manager.constant.PaAggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ApiKeyStatusDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.RequestNewApiKeyDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto.ResponseNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestNewApiKeyDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ResponseNewApiKeyDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -23,12 +22,16 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.CHECKING_NAME_API_KEY_NEW_API_KEY;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
 
 @Service
-@Slf4j
+@lombok.CustomLog
 public class CreateApiKeyService {
 
     private static final String CREATE = "CREATE";
@@ -57,13 +60,13 @@ public class CreateApiKeyService {
     public Mono<ResponseNewApiKeyDto> createApiKey(@NonNull String xPagopaPnUid,
                                                    @NonNull CxTypeAuthFleetDto xPagopaPnCxType,
                                                    @NonNull String xPagopaPnCxId,
-                                                   @NonNull RequestNewApiKeyDto requestNewApiKeyDto,
+                                                   @NonNull Mono<RequestNewApiKeyDto> requestNewApiKey,
                                                    @Nullable List<String> xPagopaPnCxGroups) {
         if (!ApiKeyConstant.ALLOWED_CX_TYPE.contains(xPagopaPnCxType)) {
             log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
-        return checkGroupsToAdd(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups, xPagopaPnCxId)
+        return requestNewApiKey.flatMap(requestNewApiKeyDto -> checkGroupsToAdd(requestNewApiKeyDto.getGroups(), xPagopaPnCxGroups, xPagopaPnCxId)
                 .flatMap(groupToAdd -> {
                     log.debug("list groupsToAdd size: {}", groupToAdd.size());
                     return paAggregationsService.searchAggregationId(xPagopaPnCxId)
@@ -75,7 +78,8 @@ public class CreateApiKeyService {
                                 return apiKeyRepository.save(apiKeyModel)
                                         .map(this::createResponseNewApiKey);
                             });
-                });
+                }));
+
     }
 
     private Mono<String> createNewAggregate(String xPagopaPnCxId) {
@@ -93,9 +97,12 @@ public class CreateApiKeyService {
     }
 
     private Mono<List<String>> checkGroupsToAdd(List<String> requestGroups, List<String> xPagopaPnCxGroups, String cxId) {
+        log.logChecking(CHECKING_NAME_API_KEY_NEW_API_KEY);
+
         boolean isUserAdmin = xPagopaPnCxGroups == null || xPagopaPnCxGroups.isEmpty();
 
         if(requestGroups.isEmpty()) {
+            log.logCheckingOutcome(CHECKING_NAME_API_KEY_NEW_API_KEY,true);
             return Mono.just(isUserAdmin ? requestGroups : xPagopaPnCxGroups);
         }
 
@@ -104,8 +111,10 @@ public class CreateApiKeyService {
         return groupsToCheck.map(groups -> {
            if(!new HashSet<>(groups).containsAll(requestGroups)) {
                 requestGroups.removeIf(groups::contains);
-                throw new ApiKeyManagerException("User cannot add groups: " + requestGroups, HttpStatus.BAD_REQUEST);
+               log.logCheckingOutcome(CHECKING_NAME_API_KEY_NEW_API_KEY, false, "User cannot add groups: " + requestGroups);
+               throw new ApiKeyManagerException("User cannot add groups: " + requestGroups, HttpStatus.BAD_REQUEST);
             }
+            log.logCheckingOutcome(CHECKING_NAME_API_KEY_NEW_API_KEY,true);
             return requestGroups;
         });
     }

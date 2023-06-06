@@ -8,8 +8,8 @@ import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanDetailDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.UsagePlanResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.UsagePlanDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.UsagePlanResponseDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

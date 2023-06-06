@@ -1,11 +1,11 @@
 package it.pagopa.pn.apikey.manager.client;
 
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.PaDetailDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.PaDetailDto;
 import it.pagopa.pn.apikey.manager.model.InternalPaDetailDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
-import lombok.extern.slf4j.Slf4j;
+import it.pagopa.pn.commons.log.PnLogger;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -16,8 +16,10 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Optional;
 
+import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.*;
+
 @Component
-@Slf4j
+@lombok.CustomLog
 public class ExternalRegistriesClient {
 
     private final WebClient webClient;
@@ -27,6 +29,7 @@ public class ExternalRegistriesClient {
     }
 
     public Mono<List<PaDetailDto>> getAllPa(String name) {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_APIKEY_MANAGER, PROCESS_SERVICE_AGGREGATION_GET_ALL_PA);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .queryParamIfPresent("paNameFilter", Optional.ofNullable(name))
@@ -43,6 +46,7 @@ public class ExternalRegistriesClient {
     }
 
     public Mono<InternalPaDetailDto> getPaById(String id) {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_APIKEY_MANAGER, PROCESS_SERVICE_API_KEY_GET_PA_BY_ID);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/ext-registry-private/pa/v1/activated-on-pn/{id}")
@@ -58,6 +62,7 @@ public class ExternalRegistriesClient {
     }
 
     public Mono<List<PaGroup>> getPaGroupsById(String id, PaGroupStatus status) {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_APIKEY_MANAGER, PROCESS_SERVICE_API_KEY_GET_PA_GROUPS_BY_ID);
         Optional<PaGroupStatus> optStatus =  status == null ? Optional.empty() : Optional.of(status);
 
         return webClient.get()

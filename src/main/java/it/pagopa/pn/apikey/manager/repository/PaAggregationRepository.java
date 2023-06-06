@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.aggregate.dto.AddPaListRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.AddPaListRequestDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPage;
