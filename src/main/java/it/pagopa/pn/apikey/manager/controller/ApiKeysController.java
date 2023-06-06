@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.ApiKeysApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.CreateApiKeyService;
@@ -10,7 +9,6 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -20,8 +18,6 @@ import reactor.core.scheduler.Scheduler;
 import java.util.List;
 
 import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.*;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_INVALID_STATUS;
-import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestApiKeyStatusDto.StatusEnum.*;
 
 @RestController
 @lombok.CustomLog
@@ -194,25 +190,6 @@ public class ApiKeysController implements ApiKeysApi {
                 .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_NEW_API_KEY,false,throwable.getMessage()))
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
-    }
-
-    private PnAuditLogBuilder buildAuditLogForChangeStatus(RequestApiKeyStatusDto.StatusEnum status, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnUid) {
-        if (status.equals(ROTATE)) {
-            return auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AK_ROTATE,
-                            String.format("Rotazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        } else if (status.equals(BLOCK)) {
-            return auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AK_BLOCK,
-                            String.format("Blocco di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        } else if (status.equals(ENABLE)) {
-            return auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AK_REACTIVATE,
-                            String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        } else {
-            log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY,false,APIKEY_INVALID_STATUS);
-            throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
-        }
     }
 
 }
