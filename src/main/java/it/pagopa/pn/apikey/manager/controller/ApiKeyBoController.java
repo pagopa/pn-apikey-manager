@@ -1,7 +1,6 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.api.ApiKeysBoApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ApiPdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.RequestPdndDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponseApiKeysDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.ResponsePdndDto;
@@ -87,8 +86,6 @@ public class ApiKeyBoController implements ApiKeysBoApi {
                 .publishOn(scheduler)
                 .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_INTEROP))
                 .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_INTEROP,false,throwable.getMessage()))
-                .map(s -> {
-                    return ResponseEntity.ok().body(s);
-                });
+                .map(s -> ResponseEntity.ok().body(s));
     }
 }

@@ -35,5 +35,10 @@ public final class ProcessStatus {
 
     public static final String PROCESS_NAME_USAGE_PLAN_GET_USAGE_PLAN = "[USAGE PLAN] get usage plan";
 
+    public static final String PROCESS_SERVICE_AGGREGATION_GET_ALL_PA = "[AGGREGATION] retrieving all pa";
+    public static final String PROCESS_SERVICE_API_KEY_GET_PA_BY_ID = "[API KEY] retrieving pa";
+    public static final String PROCESS_SERVICE_API_KEY_GET_PA_GROUPS_BY_ID = "[API KEY] retrieving pa groups";
+
+
 
 }
