@@ -321,21 +321,26 @@ public class ManageApiKeyService {
     }
 
     private PnAuditLogBuilder buildAuditLogForChangeStatus(RequestApiKeyStatusDto.StatusEnum status, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnUid) {
-        if (status.toString().equals(ROTATE)) {
-            return auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AK_ROTATE,
-                            String.format("Rotazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        } else if (status.toString().equals(BLOCK)) {
-            return auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AK_BLOCK,
-                            String.format("Blocco di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        } else if (status.toString().equals(ENABLE)) {
-            return auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AK_REACTIVATE,
-                            String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
-        } else {
-            log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY,false,APIKEY_INVALID_STATUS);
-            throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
+        switch (status.toString()) {
+            case ROTATE -> {
+                return auditLogBuilder
+                        .before(PnAuditLogEventType.AUD_AK_ROTATE,
+                                String.format("Rotazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
+            }
+            case BLOCK -> {
+                return auditLogBuilder
+                        .before(PnAuditLogEventType.AUD_AK_BLOCK,
+                                String.format("Blocco di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
+            }
+            case ENABLE -> {
+                return auditLogBuilder
+                        .before(PnAuditLogEventType.AUD_AK_REACTIVATE,
+                                String.format("Riattivazione di una API Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups));
+            }
+            default -> {
+                log.logEndingProcess(PROCESS_NAME_API_KEY_CHANGE_STATUS_API_KEY, false, APIKEY_INVALID_STATUS);
+                throw new ApiKeyManagerException(APIKEY_INVALID_STATUS, HttpStatus.BAD_REQUEST);
+            }
         }
     }
 }

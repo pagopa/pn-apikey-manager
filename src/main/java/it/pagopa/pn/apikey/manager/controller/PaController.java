@@ -10,8 +10,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_PA_GET_PA;
-
 @RestController
 @lombok.CustomLog
 public class PaController implements PaApi {
@@ -44,12 +42,8 @@ public class PaController implements PaApi {
                                                         String lastEvaluatedId,
                                                         String lastEvaluatedName,
                                                         final ServerWebExchange exchange) {
-        log.logStartingProcess(PROCESS_NAME_PA_GET_PA);
-
         return paService.getPa(paName, limit, lastEvaluatedId, lastEvaluatedName)
                 .map(s -> ResponseEntity.ok().body(s))
-                .doOnNext(apiKeyModels -> log.logEndingProcess(PROCESS_NAME_PA_GET_PA))
-                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_PA_GET_PA,false,throwable.getMessage()))
                 .publishOn(scheduler);
     }
 

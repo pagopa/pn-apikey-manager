@@ -16,9 +16,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO;
-import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_BO_INTEROP;
-
 @RestController
 @lombok.CustomLog
 public class ApiKeyBoController implements ApiKeysBoApi {
@@ -48,8 +45,6 @@ public class ApiKeyBoController implements ApiKeysBoApi {
      */
     @Override
     public Mono<ResponseEntity<ResponseApiKeysDto>> getBoApiKeys(String paId, ServerWebExchange exchange) {
-        log.logStartingProcess(PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO);
-
         String logMessage = String.format("Visualizzazione di una API Key - xPagopaPnCxId=%s", paId);
 
         PnAuditLogEvent logEvent = auditLogBuilder
@@ -63,8 +58,6 @@ public class ApiKeyBoController implements ApiKeysBoApi {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
                 })
-                .doOnNext(response -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO))
-                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_GET_API_KEYS_BO,false,throwable.getMessage()))
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .publishOn(scheduler);
     }
@@ -81,11 +74,8 @@ public class ApiKeyBoController implements ApiKeysBoApi {
      */
     @Override
     public Mono<ResponseEntity<ResponsePdndDto>> interop(Mono<RequestPdndDto> requestPdndDto, ServerWebExchange exchange) {
-        log.logStartingProcess(PROCESS_NAME_API_KEY_BO_INTEROP);
         return manageApiKeyService.changePdnd(requestPdndDto)
                 .publishOn(scheduler)
-                .doOnNext(dto -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_INTEROP))
-                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_BO_INTEROP,false,throwable.getMessage()))
                 .map(s -> ResponseEntity.ok().body(s));
     }
 }

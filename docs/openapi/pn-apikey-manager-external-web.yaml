@@ -210,6 +210,7 @@ components:
       required: true
       schema:
         type: string
+        x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
@@ -239,12 +240,14 @@ components:
         id:
           type: string
           description: Id dell'api key
+          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         name:
           type: string
           description: Nome dell'api key
         value:
           type: string
           description: Valore dell'api key
+          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         lastUpdate:
           type: string
           description: Data ultima modifica
@@ -310,6 +313,7 @@ components:
         id:
           type: string
           description: id dell'api key appena generata
+          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         apiKey:
           type: string
           description: Valore dell'api key appena generata

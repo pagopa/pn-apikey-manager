@@ -10,8 +10,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import static it.pagopa.pn.apikey.manager.constant.ProcessStatus.PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY;
-
 @RestController
 @lombok.CustomLog
 public class ApiKeysPrvtController implements ApiKeysPrvtApi {
@@ -40,12 +38,8 @@ public class ApiKeysPrvtController implements ApiKeysPrvtApi {
     @Override
     public Mono<ResponseEntity<Void>> changeVirtualKeyApiKey(Mono<RequestBodyApiKeyPkDto> requestBodyApiKeyPkDto,
                                                              final ServerWebExchange exchange) {
-        log.logStartingProcess(PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY);
-
         return manageApiKeyService.changeVirtualKey(requestBodyApiKeyPkDto)
                 .publishOn(scheduler)
-                .doOnNext(apiKeyModels -> log.logEndingProcess(PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY))
-                .doOnError(throwable -> log.logEndingProcess(PROCESS_NAME_API_KEY_PRVT_CHANGE_VIRTUAL_KEY,false,throwable.getMessage()))
                 .map(s -> ResponseEntity.ok().build());
     }
 
