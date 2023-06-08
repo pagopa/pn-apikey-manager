@@ -67,6 +67,7 @@ components:
         virtualKey:
           type: string
           description: Valore dell'api key
+          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
 
     Problem:
       type: object
