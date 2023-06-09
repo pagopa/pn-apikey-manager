@@ -343,6 +343,7 @@ components:
         apiKey:
           type: string
           description: Valore dell'api key appena generata
+          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
 
     RequestApiKeyStatus:
       title: Richiesta di cambio stato per una api key
