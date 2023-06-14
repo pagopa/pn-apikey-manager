@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum PaGroupStatus {
     ACTIVE("ACTIVE"),
-    SUSPENDED("SUSPENDED");
+    SUSPENDED("SUSPENDED"),
+    DELETED("DELETED");
 
     private String value;
 
