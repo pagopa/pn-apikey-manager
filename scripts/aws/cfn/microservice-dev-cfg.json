@@ -1,6 +1,8 @@
 {
   "Parameters": {
-    "MaxTasksNumber": "1",
-    "FlagPdnd": "false"
+    "FlagPdnd": "false",
+    "MinTasksNumber": "2",
+    "MaxTasksNumber": "3",
+    "AutoscalingThreshold": "3500"
   }
 }
