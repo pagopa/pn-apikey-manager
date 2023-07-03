@@ -5,11 +5,20 @@ Transform:
   - UpdateDeploymentTransform
 
 Parameters:
+
   ProjectName:
     Type: String
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
-  
+
+  WebApiDnsName:
+    Type: String
+    Description: 'The DNS name used for WEB rest API.'
+
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Description: 'Kinesis stream that receive logs'
+
   AlarmSNSTopicArn:
     Type: String
     Description: ARN of alarm topic
@@ -38,6 +47,10 @@ Parameters:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
   
+  VpcEgressSubnetsIds:
+    Type: String
+    Description: subnets where to install PN-CORE
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -58,25 +71,13 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
-  UsagePlanThrottle:
-    Type: Number
-    Description: 'throttle for new AWS usagePlan'
-
-  UsagePlanBurstLimit:
-    Type: Number
-    Description: 'throttle burstLimit for new AWS usagePlan'
-
-  UsagePlanApiId:
+  UsagePlanDefault:
     Type: String
-    Description: 'ApiId for new AWS usagePlan'
+    Description: 'Id Usage Plan default'
 
-  UsagePlanKeyType:
+  CorsAllowedDomains:
     Type: String
-    Description: 'keyType for new AWS usagePlan'
-
-  UsagePlanStage:
-    Type: String
-    Description: 'stage for new AWS usagePlan'
+    Description: 'Comma separated list of domains allowed to make cross origin request'
 
   PaAggregationsTableArn:
     Type: String
@@ -90,51 +91,171 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
-  ApiGatewayApikeysArn:
+  PaAggregationsTableName:
     Type: String
-    Description: 'Arn of apiGateway apiKeys'
+    Description: 'Name of dynamodb table containing aggregations'
 
-  ApiGatewayUsagePlanArn:
+  AggregatesTableName:
     Type: String
-    Description: 'Arn of apiGateway usagePlans'
+    Description: 'Name of dynamodb table containing aggregates'
+
+  ApiKeyTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing apikey'
+
+  FlagPdnd:
+    Type: String
+    Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
+
+  # OpenApi Bucket params
+  MicroserviceBucketName:
+    Type: String
+    Default: ''
+    Description: 'Name of the bucket where the microservice files are copied during deploy'
+
+  MicroserviceBucketBaseKey:
+    Type: String
+    Default: ''
+    Description: 'Base key of the microservice in the s3 bucket'
+
+  # Heath Check parameters
+  HealthCheckInterval:
+    Description: Seconds between two health check
+    Type: Number
+    Default: 60
+
+  HealthCheckTimeout:
+    Description: health check timeout seconds
+    Type: Number
+    Default: 15
+  
+  HealthyThresholdCount:
+    Description: |
+      The number of consecutive health checks successes required before considering 
+      an unhealthy target healthy. 
+    Type: Number
+    Default: 5
+  
+  UnhealthyThresholdCount:
+    Description: |
+      The number of consecutive health check failures required before considering a target unhealthy. 
+    Type: Number
+    Default: 2
+
+  HealthCheckPath:
+    Type: String
+    Default: '/actuator/health'
+
+  # Instance parameters
+  # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+  # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+  # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+  # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+  # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+  CpuValue:
+    Type: Number
+    Default: 1024
+    Description: Fargate virtual CPU quantity 1024 equals one vCPU
+
+  # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+  # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+  # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+  # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+  # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+  MemoryAmount:
+    Type: String
+    Default: 2GB
+    Description: memory amount reserved to the task pod.
+    AllowedValues: [ 2GB, 4GB, 6GB, 8GB ]
+
+  # Autoscaling parameters
+  AutoscalingCheckPeriod:
+    Default: 60
+    Type: Number
+    Description: minimum autoscaling number of tasks\
+
+  AutoscalingDataPointN:
+    Default: 1
+    Type: Number
+    Description: activate when N datapoint on M
+
+  AutoscalingDataPointM:
+    Default: 1
+    Type: Number
+    Description: activate when N datapoint on M
+
+  AutoscalingThreshold:
+    Default: 70
+    Type: String
+  
+  MinTasksNumber:
+    Default: 1
+    Type: Number
+    Description: minimum autoscaling number of tasks
+
+  MaxTasksNumber:
+    Default: 6
+    Type: Number
+    Description: maximum autoscaling number of tasks
+
+  ApiKeyTablesEncryptKeyId:
+    Type: String
+    Description: 'KMS ID for apikey manager tables'
+
+  # Log group parameters
+  EcsLogGroup:
+    Type: String
+    Description: 'Ecs log group name'
+
+  LogAlarmStrategy:
+    Type: String
+    Default: 'FATAL'
 
 Resources:
 
-  # PN-National-Registry microservice
+  # PN-ApiKey-Manager microservice
   ApikeyManagerMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        HealthCheckPath: /actuator/health
-        HealthCheckTimeout: 15
+        CpuValue: !Ref CpuValue
+        MemoryAmount: !Ref MemoryAmount
+        HealthCheckTimeout: !Ref HealthCheckTimeout
+        HealthCheckInterval: !Ref HealthCheckInterval
+        HealthyThresholdCount: !Ref HealthyThresholdCount
+        UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
+        HealthCheckPath: !Ref HealthCheckPath
+        AutoscalingThreshold: !Ref AutoscalingThreshold
+        AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
+        MinTasksNumber: !Ref MinTasksNumber
+        MaxTasksNumber: !Ref MaxTasksNumber
+        AutoscalingDataPointN: !Ref AutoscalingDataPointN
+        AutoscalingDataPointM: !Ref AutoscalingDataPointM
         AutoscalingStrategy: REST-API
-        AutoscalingThreshold: 70
-        MicroServiceUniqueName: !Sub '${ProjectName}-ApikeyManager'
-        CpuValue: 1024
-        MemoryAmount: 2GB
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager'
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGION=${AWS::Region}'
-        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_THROTTLE=${UsagePlanThrottle}'
-        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_KEY_TYPE=${UsagePlanKeyType}'
-        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_API_ID=${UsagePlanApiId}'
-        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_STAGE=${UsagePlanStage}'
-        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_BURST_LIMIT=${UsagePlanBurstLimit}'
-        MappedPaths: '/apikey-manager/*'
+        ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
+        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
+        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
+        MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
-        Subnets: !Ref SubnetsIds
+        Subnets: !Ref VpcEgressSubnetsIds
         VpcId: !Ref VpcId
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
+        TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
+        EcsLogGroup: !Ref EcsLogGroup
+        LogAlarmStrategyV1: !Ref LogAlarmStrategy
 
-  ApikeyManagerMicroserviceTaskPolicy:
-    Type: AWS::IAM::Policy
+  ApikeyManagerMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: !Sub '${ProjectName}-ApikeyManager-CustomTaskPolicy'
-      Roles:
-        - !GetAtt ApikeyManagerMicroservice.Outputs.TaskRoleName
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -143,9 +264,16 @@ Resources:
               - apigateway:POST
               - apigateway:GET
             Resource:
-              - !Ref ApiGatewayApikeysArn
-              - !Ref ApiGatewayUsagePlanArn
-              - !Sub '${ApiGatewayUsagePlanArn}/*/keys'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
+          - Effect: Allow
+            Action:
+              - apigateway:DELETE
+            Resource:
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys/*'
           - Effect: Allow
             Action:
               - dynamodb:BatchGetItem
@@ -163,42 +291,107 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Sub '${AggregatesTableArn}/index/*'
+              - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource:
+              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${ApiKeyTablesEncryptKeyId}
 
-#  ApiKeyManagerCognitoUserPool:
-#    Type: AWS::Cognito::UserPool
-#
-#  ApiKeyManagerApiGatewayAuthorizer:
-#    Type: AWS::ApiGateway::Authorizer
-#    Properties:
-#      IdentitySource: method.request.header.Authorization
-#      Name: 'api-key-manager-authorizer'
-#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-#      Type: COGNITO_USER_POOLS
-#      ProviderARNs:
-#        - !GetAtt ApiKeyManagerCognitoUserPool.Arn
-#
-#  ApiKeyManagerApiGateway:
-#    Type: AWS::CloudFormation::Stack
-#    Properties:
-#      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-#    Parameters:
-#      MicroServiceUniqueName: !Sub '${ProjectName}-ApiKeyManager'
-#      AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-#
-#  ApiKeyManagerApiGatewayTestResource:
-#    Type: AWS::ApiGateway::Resource
-#    Properties:
-#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-#      ParentId: !GetAtt ApiKeyManagerApiGateway.Outputs.RootResourceId
-#      PathPart: apikey-manager
-#
-#  ApiKeyManagerApiGatewayTestMethod:
-#    Type: AWS::ApiGateway::Method
-#    Properties:
-#      RestApiId: !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiId
-#      ResourceId: !Ref ApiKeyManagerApiGatewayTestResource
-#      HttpMethod: GET
-#      ApiKeyRequired: false
-#      AuthorizationType: CUSTOM
-#      AuthorizerId: !GetAtt ApiKeyManagerApiGatewayAuthorizer.AuthorizerARN
+  ApiKeyManagerApiGateway:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager'
+        IntendedUsage: WEB
+        DnsName: !Ref WebApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'api-key-self'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+
+  ApiKeyManagerApiGatewayAggregate:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager-bo'
+        IntendedUsage: BACKOFFICE
+        DnsName: !Ref WebApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'api-key-bo'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-apikey-manager-bo.yaml
+
+  ApiKeyManagerApiGatewayAggregateWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-apikey-manager-bo'
+        IntendedUsage: BACKOFFICE 
+        APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.APIGatewayARN
+
+  ApiKeyManagerApiGatewayPrvt:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager-prvt'
+        IntendedUsage: WEB
+        DnsName: !Ref WebApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'api-key-prvt'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+
+  ApiKeyManagerApiGatewayPrvtWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-apikey-manager-prvt'
+        IntendedUsage: WEB 
+        APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayPrvt.Outputs.APIGatewayARN
+
+  ApiKeyManagerMicroserviceCloudWatchDashboard:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
+      Parameters:
+        DashboardName: !Sub "${ProjectName}-apikey-manager"
+        DynamoDBTableNames: !Join
+          - ','
+          - - !Ref PaAggregationsTableName
+            - !Ref AggregatesTableName
+            - !Ref ApiKeyTableName
+        RestApiStageArns: !Join
+          - ','
+          - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
+            - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiStageArn
+        RestApiNames: !Join
+          - ','
+          - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
+            - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
+        AlarmArns: !Join
+          - ','
+          - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
+            - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiErrorAlarmArn
+            - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiErrorAlarmArn
+            - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'    

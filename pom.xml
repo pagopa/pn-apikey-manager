@@ -5,38 +5,21 @@
     <parent>
         <groupId>it.pagopa.pn</groupId>
         <artifactId>pn-parent</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>2.1.0</version>
         <relativePath/>
     </parent>
     <groupId>it.pagopa.pn.apikey.manager</groupId>
     <artifactId>pn-apikey-manager</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>2.0.0</version>
     <name>pn-apikey-manager</name>
     <description>TODO</description>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <java.version>11</java.version>
-        <spring.boot-version>2.5.2</spring.boot-version>
         <sonar.coverage.exclusions>
-            **/it/pagopa/pn/apikey/manager/entity/*
+            **/it/pagopa/pn/apikey/manager/entity/*,
+            **/it/pagopa/pn/apikey/manager/model/*
         </sonar.coverage.exclusions>
-        <awssdk.version>2.16.97</awssdk.version>
     </properties>
-    <dependencyManagement>
-        <dependencies>
-            <!-- Import dependency management from Spring Boot -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot-version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
 
@@ -44,14 +27,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
-            <version>2.5.2</version>
         </dependency>
-
 
         <dependency>
             <groupId>it.pagopa.pn</groupId>
             <artifactId>pn-commons</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>2.1.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.swagger/swagger-annotations -->
         <dependency>
@@ -66,13 +47,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-aws</artifactId>
-            <version>2.2.6.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
-            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -117,7 +92,6 @@
             <scope>test</scope>
         </dependency>
 
-
         <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/kms -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -127,17 +101,14 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>secretsmanager</artifactId>
-            <version>2.16.97</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>apigateway</artifactId>
-            <version>2.16.97</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb-enhanced</artifactId>
-            <version>2.16.97</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
@@ -155,6 +126,24 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>unpack-dependencies</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeArtifactIds>pn-commons</includeArtifactIds>
+                            <outputDirectory>${project.build.directory}/dependency-resources</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
@@ -164,30 +153,109 @@
                 <version>6.0.0</version>
                 <executions>
                     <execution>
-                        <id>com-example-apikey</id>
+                        <id>manage-aggregate</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <phase>process-resources</phase>
                         <configuration>
-                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-internal-v1.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-bo.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <modelNameSuffix>Dto</modelNameSuffix>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
-                            <templateDirectory>src/main/resources/openapi-templates</templateDirectory>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/6.0.0/server</templateDirectory>
                             <configOptions>
                                 <basePackage>
-                                    it.pagopa.pn.apikey.manager.generated.openapi.rest.v1
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate
                                 </basePackage>
                                 <modelPackage>
-                                    it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.dto
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto
                                 </modelPackage>
                                 <apiPackage>
-                                    it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.api
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.api
                                 </apiPackage>
                                 <configPackage>
-                                    it.pagopa.pn.apikey.manager.generated.openapi.rest.v1.config
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.config
+                                </configPackage>
+                                <dateLibrary>java11</dateLibrary>
+                                <delegatePattern>true</delegatePattern>
+                                <interfaceOnly>true</interfaceOnly>
+                                <annotationLibrary>none</annotationLibrary>
+                                <documentationProvider>source</documentationProvider>
+                                <openApiNullable>false</openApiNullable>
+                                <reactive>true</reactive>
+                                <skipDefaultInterface>false</skipDefaultInterface>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>apikey-manager-internal</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-internal.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/6.0.0/server</templateDirectory>
+                            <configOptions>
+                                <basePackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1
+                                </basePackage>
+                                <modelPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto
+                                </modelPackage>
+                                <apiPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api
+                                </apiPackage>
+                                <configPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.config
+                                </configPackage>
+                                <dateLibrary>java11</dateLibrary>
+                                <delegatePattern>true</delegatePattern>
+                                <interfaceOnly>true</interfaceOnly>
+                                <annotationLibrary>none</annotationLibrary>
+                                <documentationProvider>source</documentationProvider>
+                                <openApiNullable>false</openApiNullable>
+                                <reactive>true</reactive>
+                                <skipDefaultInterface>false</skipDefaultInterface>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>apikey-prvt</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-prvt.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/6.0.0/server</templateDirectory>
+                            <configOptions>
+                                <basePackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt
+                                </basePackage>
+                                <modelPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.dto
+                                </modelPackage>
+                                <apiPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.api
+                                </apiPackage>
+                                <configPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.config
                                 </configPackage>
                                 <dateLibrary>java11</dateLibrary>
                                 <delegatePattern>true</delegatePattern>

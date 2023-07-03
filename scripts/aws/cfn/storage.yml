@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Some storage with input and output
 
 Parameters:
+
   ProjectName:
     Type: String
     Description: Nome dell'ambiente destinazione
@@ -20,15 +21,25 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send Logs'
+  
+  ApiKeyTablesEncryptKeyId:
+    Type: String
+    Description: Dynamo table encryption key
+
+  LogRetention:
+    Type: Number
+    Default: 14
 
 Resources:
-  ###      KEY PAIR PER CREARE JWT NECESSARIO PER ACCEDERE AI SERVIZI M2M DI PDND    ###
-  ###   La chiave viene impiegata per firmare il client assertion che serve          ###
-  ###   per richedere a PDND il JWT da utilizzare per invocare i servizi M2M di PDND ###
-  ######################################################################################
-  # Dynamo Table
+
+  # pn-apiKey DynamoDB table
   ApiKeyTable:
     Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain    
     Properties:
       TableName: !Sub '${ProjectName}-apiKey'
       AttributeDefinitions:
@@ -61,35 +72,150 @@ Resources:
           Projection:
             ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: pnInfraFeature
+          Value: pnStorage
+        - Key: pnMicroservice
+          Value: !Sub '${ProjectName}-apiKey'
+      SSESpecification:
+        KMSMasterKeyId: !Ref ApiKeyTablesEncryptKeyId
+        SSEEnabled: true
+        SSEType: KMS
 
+  # pn-aggregates DynamoDB table
   AggregatesTable:
     Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain    
     Properties:
       TableName: !Sub '${ProjectName}-aggregates'
       AttributeDefinitions:
         - AttributeName: "aggregateId"
           AttributeType: "S"
+        - AttributeName: "name"
+          AttributeType: "S"
+        - AttributeName: "pageable"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "aggregateId"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "aggregations-aggregateName-index"
+          KeySchema:
+            - AttributeName: pageable
+              KeyType: HASH
+            - AttributeName: name
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true     
+      Tags:
+        - Key: pnInfraFeature
+          Value: pnStorage
+        - Key: pnMicroservice
+          Value: !Sub '${ProjectName}-aggregates'
+      SSESpecification:
+        KMSMasterKeyId: !Ref ApiKeyTablesEncryptKeyId
+        SSEEnabled: true
+        SSEType: KMS
 
+  # pn-paAggregations DynamoDB table
   PaAggregationsTable:
     Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain    
     Properties:
       TableName: !Sub '${ProjectName}-paAggregations'
       AttributeDefinitions:
         - AttributeName: "x-pagopa-pn-cx-id"
           AttributeType: "S"
+        - AttributeName: "aggregateId"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "x-pagopa-pn-cx-id"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "paAggregations-aggregateId-index"
+          KeySchema:
+            - AttributeName: aggregateId
+              KeyType: HASH
+            - AttributeName: "x-pagopa-pn-cx-id"
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true  
+      Tags:
+        - Key: pnInfraFeature
+          Value: pnStorage
+        - Key: pnMicroservice
+          Value: !Sub '${ProjectName}-paAggregations'
+      
+  UsagePlanSmall:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain    
+    Properties:
+      Tags:
+        - Key: scope
+          Value: pn-apikey-manager
+        - Key: size
+          Value: S
+      Description: Small
+      Throttle:
+        BurstLimit: 1500
+        RateLimit: 5000
+      UsagePlanName: pn_usageplan_small
 
-#Necessario a causa di bug script deploy
+  UsagePlanMedium:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain    
+    Properties:
+      Tags:
+        - Key: scope
+          Value: pn-apikey-manager
+        - Key: size
+          Value: M
+      Description: Medium
+      Throttle:
+        BurstLimit: 3000
+        RateLimit: 10000
+      UsagePlanName: pn_usageplan_medium
+
+  UsagePlanLarge:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain    
+    Properties:
+      Tags:
+        - Key: scope
+          Value: pn-apikey-manager
+        - Key: size
+          Value: L
+      Description: Large
+      Throttle:
+        BurstLimit: 6000
+        RateLimit: 20000
+      UsagePlanName: pn_usageplan_large
+
+  PnApiKeyManagerLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain 
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub '${ProjectName}-apikey-manager'
+        LogGroupRetention: !Ref LogRetention
+        LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
 Outputs:
 
-  # Table parameters
   PaAggregationsTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store of PaAggregationsTable
     Value: !Sub '${PaAggregationsTable.Arn}'
@@ -102,5 +228,22 @@ Outputs:
     Description: ARM Dynamo Name used by application to access the key-value store of ApiKeyTable
     Value: !Sub '${ApiKeyTable.Arn}'
 
+  PaAggregationsTableName:
+    Description: Name of dynamodb table containing aggregations
+    Value: !Ref PaAggregationsTable
 
+  AggregatesTableName:
+    Description: Name of dynamodb table containing aggregates
+    Value: !Ref AggregatesTable
 
+  ApiKeyTableName:
+    Description: Name of dynamodb table containing apikey
+    Value: !Ref ApiKeyTable
+
+  UsagePlanDefault:
+    Description: Id Usage Plan default
+    Value: !Ref UsagePlanMedium
+
+  # Log group exports
+  EcsLogGroup:
+    Value: !GetAtt PnApiKeyManagerLogGroup.Outputs.LogGroupName

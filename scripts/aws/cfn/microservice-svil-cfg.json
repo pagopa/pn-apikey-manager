@@ -1,11 +1,5 @@
 {
   "Parameters": {
-    "UsagePlanThrottle": "",
-    "UsagePlanBurstLimit": "",
-    "UsagePlanApiId": "",
-    "UsagePlanKeyType": "",
-    "UsagePlanStage": "",
-    "ApiGatewayApikeysArn":"",
-    "ApiGatewayUsagePlanArn":""
+    "FlagPdnd": "true"
   }
 }

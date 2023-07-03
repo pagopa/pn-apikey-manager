@@ -12,8 +12,18 @@ public interface ApiKeyRepository {
 
     Mono<ApiKeyModel> save (ApiKeyModel apiKeyModel);
 
+    Mono<List<ApiKeyModel>> setNewVirtualKey(List<ApiKeyModel> apiKeyModels, String virtualKey);
+
     Mono<ApiKeyModel> findById(String id);
 
-    Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String lastUpdate);
+    Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId);
+
+    Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId);
+
+    Mono<Page<ApiKeyModel>> getAllWithFilter(String xPagopaPnCxId, List<String> xPagopaPnCxGroups, ApiKeyPageable pageable);
+
+    Mono<Integer> countWithFilters(String xPagopaPnCxId, List<String> xPagopaPnCxGroups);
+
+    Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd);
 
 }

@@ -1,12 +1,13 @@
 package it.pagopa.pn.apikey.manager.converter;
 
-import it.pagopa.pn.apikey.manager.entity.ApiKeyHistory;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ContextConfiguration;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -18,6 +19,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+@ContextConfiguration(classes = {ApiKeyConverter.class})
 @ExtendWith(MockitoExtension.class)
 class ApiKeyConverterTest {
 
@@ -25,19 +27,18 @@ class ApiKeyConverterTest {
     private ApiKeyConverter apiKeyConverter;
 
     @Test
-    void testConvertResponsetoDto() {
+    void testConvertResponseToDto() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         List<String> groups = new ArrayList<>();
-        List<ApiKeyHistory> apiKeyHistories = new ArrayList<>();
-        ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
-        apiKeyHistory.setChangeByDenomination("CREATE");
-        apiKeyHistory.setStatus("CREATED");
-        apiKeyHistory.setDate(LocalDateTime.now());
-        apiKeyHistories.add(apiKeyHistory);
+        List<ApiKeyHistoryModel> apiKeyHistories = new ArrayList<>();
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setChangeByDenomination("CREATE");
+        apiKeyHistoryModel.setStatus("CREATED");
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistories.add(apiKeyHistoryModel);
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
-        apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
         apiKeyModel.setLastUpdate(LocalDateTime.now());
         apiKeyModel.setVirtualKey("virtualKey");
@@ -51,28 +52,26 @@ class ApiKeyConverterTest {
         apiKeyModels.add(apiKeyModel);
 
         Map<String, AttributeValue> lastKey = new HashMap<>();
-        lastKey.put("id",AttributeValue.builder().s("id").build());
-        lastKey.put("lastUpdate",AttributeValue.builder().s("lastUpdate").build());
+        lastKey.put("id", AttributeValue.builder().s("id").build());
+        lastKey.put("lastUpdate", AttributeValue.builder().s("lastUpdate").build());
 
-        Page<ApiKeyModel> page = Page.create(apiKeyModels,lastKey);
+        Page<ApiKeyModel> page = Page.create(apiKeyModels, lastKey);
 
-        Assertions.assertNotNull(apiKeyConverter.convertResponsetoDto(page, true));
+        Assertions.assertNotNull(apiKeyConverter.convertResponseToDto(page, true));
     }
 
-
     @Test
-    void testConvertResponsetoDtoExc2() {
+    void testConvertResponseToDtoExc2() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         List<String> groups = new ArrayList<>();
-        List<ApiKeyHistory> apiKeyHistories = new ArrayList<>();
-        ApiKeyHistory apiKeyHistory = new ApiKeyHistory();
-        apiKeyHistory.setChangeByDenomination("CREATE");
-        apiKeyHistory.setStatus("CREATED");
-        apiKeyHistories.add(apiKeyHistory);
+        List<ApiKeyHistoryModel> apiKeyHistories = new ArrayList<>();
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setChangeByDenomination("CREATE");
+        apiKeyHistoryModel.setStatus("CREATED");
+        apiKeyHistories.add(apiKeyHistoryModel);
         groups.add("RECLAMI");
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("id");
-        apiKeyModel.setApiKey("apiKey");
         apiKeyModel.setName("name");
         apiKeyModel.setVirtualKey("virtualKey");
         apiKeyModel.setGroups(groups);
@@ -85,17 +84,16 @@ class ApiKeyConverterTest {
         apiKeyModels.add(apiKeyModel);
 
         Map<String, AttributeValue> lastKey = new HashMap<>();
-        lastKey.put("id",AttributeValue.builder().s("id").build());
-        lastKey.put("lastUpdate",AttributeValue.builder().s("lastUpdate").build());
+        lastKey.put("id", AttributeValue.builder().s("id").build());
+        lastKey.put("lastUpdate", AttributeValue.builder().s("lastUpdate").build());
 
-        Page<ApiKeyModel> page = Page.create(apiKeyModels,lastKey);
+        Page<ApiKeyModel> page = Page.create(apiKeyModels, lastKey);
 
-        try{
-            apiKeyConverter.convertResponsetoDto(page, true);
-            fail( "My method didn't throw when I expected it to" );
+        try {
+            apiKeyConverter.convertResponseToDto(page, true);
+            fail("My method didn't throw when I expected it to");
         } catch (Exception expectedException) {
             System.out.println("Test passed");
         }
     }
 }
-
