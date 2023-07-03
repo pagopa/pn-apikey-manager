@@ -37,4 +37,5 @@ class CustomFormMessageWriterTest {
 
         assertEquals(expectedMediaType, actualMediaType);
     }
+
 }
