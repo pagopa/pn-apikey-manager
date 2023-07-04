@@ -316,6 +316,15 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
 
+  ApiKeyManagerApiGatewayWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-apikey-manager-self'
+        IntendedUsage: WEB 
+        APIGatewayARNs: !GetAtt ApiKeyManagerApiGateway.Outputs.APIGatewayARN
+
   ApiKeyManagerApiGatewayAggregate:
     Type: AWS::CloudFormation::Stack
     Properties:
