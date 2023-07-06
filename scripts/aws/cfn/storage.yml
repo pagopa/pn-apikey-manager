@@ -135,6 +135,10 @@ Resources:
           AttributeType: "S"
         - AttributeName: "aggregateId"
           AttributeType: "S"
+        - AttributeName: "name"
+          AttributeType: "S"
+        - AttributeName: "pageable"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "x-pagopa-pn-cx-id"
           KeyType: "HASH"
@@ -144,6 +148,14 @@ Resources:
             - AttributeName: aggregateId
               KeyType: HASH
             - AttributeName: "x-pagopa-pn-cx-id"
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: "pageable-paName-index"
+          KeySchema:
+            - AttributeName: pageable
+              KeyType: HASH
+            - AttributeName: paName
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
