@@ -168,7 +168,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
             return Mono.from(table.index(gsiLastUpdate).query(queryEnhancedRequest))
                     .flatMap(page -> {
                         cumulativeQueryResult.addAll(page.items());
-                        Map<String, AttributeValue> lastEvaluatedKey = null;
+                        Map<String, AttributeValue> lastEvaluatedKey = new HashMap<>();
                         if (page.lastEvaluatedKey() != null) {
                             lastEvaluatedKey = new HashMap<>(page.lastEvaluatedKey());
                         }
@@ -178,6 +178,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                             return getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, cumulativeQueryResult, newPageable);
                         }
                         List<ApiKeyModel> result = QueryUtils.adjustPageResult(cumulativeQueryResult, pageable, lastEvaluatedKey);
+                        lastEvaluatedKey = lastEvaluatedKey.isEmpty() ? null : lastEvaluatedKey;
                         return Mono.just(Page.create(result, lastEvaluatedKey));
                     });
         } else {
