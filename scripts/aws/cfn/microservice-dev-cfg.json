@@ -3,6 +3,7 @@
     "FlagPdnd": "false",
     "MinTasksNumber": "2",
     "MaxTasksNumber": "3",
-    "AutoscalingThreshold": "3500"
+    "AutoscalingThreshold": "3500",
+    "EnhancedWebSecurityEnabled": "true"
   }
 }
