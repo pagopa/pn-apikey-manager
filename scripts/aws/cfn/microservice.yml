@@ -211,6 +211,14 @@ Parameters:
     Type: String
     Default: 'FATAL'
 
+  EnhancedWebSecurityEnabled:
+    Type: String
+    Default: false
+    Description: Enable additional WAF Web rules
+    AllowedValues:
+      - true
+      - false
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -324,6 +332,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-apikey-manager-self'
         IntendedUsage: WEB 
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGateway.Outputs.APIGatewayARN
+        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   ApiKeyManagerApiGatewayAggregate:
     Type: AWS::CloudFormation::Stack
@@ -374,6 +383,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-apikey-manager-prvt'
         IntendedUsage: WEB 
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayPrvt.Outputs.APIGatewayARN
+        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   ApiKeyManagerMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
