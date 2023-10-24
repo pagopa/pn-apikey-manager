@@ -211,6 +211,11 @@ Parameters:
     Type: String
     Default: 'FATAL'
 
+  WebWafLimit:
+    Default: 6000
+    Type: Number
+    Description: web waf limit
+
   EnhancedWebSecurityEnabled:
     Type: String
     Default: false
@@ -332,6 +337,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-apikey-manager-self'
         IntendedUsage: WEB 
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGateway.Outputs.APIGatewayARN
+        Limit: !Ref WebWafLimit
         EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   ApiKeyManagerApiGatewayAggregate:
