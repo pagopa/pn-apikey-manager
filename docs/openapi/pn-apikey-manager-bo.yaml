@@ -49,7 +49,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/AggregatesListResponse'
         '400':
@@ -82,7 +82,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/SaveAggregateResponse'
         '400':
@@ -119,7 +119,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/PaAggregateResponse'
         '400':
@@ -157,7 +157,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/AggregateResponse'
         '400':
@@ -195,7 +195,7 @@ paths:
         '400':
           description: Bad request
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
@@ -230,7 +230,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/SaveAggregateResponse'
         '400':
@@ -274,7 +274,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/MovePaResponse'
         '400':
@@ -318,7 +318,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/MovePaResponse'
         '400':
@@ -360,7 +360,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/AssociablePaResponse'
         '400':
@@ -396,7 +396,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/UsagePlanResponse'
         '400':
@@ -451,7 +451,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/GetPaResponse'
         '400':
@@ -487,7 +487,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ResponsePdnd'
         '400':
@@ -529,7 +529,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ResponseApiKeys'
         '400':
