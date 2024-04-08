@@ -62,7 +62,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ApiKeysResponse'
         '400':
@@ -94,7 +94,7 @@ paths:
         '200':
           description: OK
           content:
-            application/problem+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ResponseNewApiKey'
         '400':
