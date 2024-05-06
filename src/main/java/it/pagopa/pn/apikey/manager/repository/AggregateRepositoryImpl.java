@@ -43,7 +43,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
                 .limit(pageable.getLimit())
                 .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.scan(scanEnhancedRequest));
+            return Mono.from(table.scan());
         } else {
             return Flux.from(table.scan(scanEnhancedRequest).items())
                     .collectList()

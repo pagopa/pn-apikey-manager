@@ -34,7 +34,7 @@ public class DynamoConfiguration {
     public DynamoDbEnhancedAsyncClient dynamoDb() {
         DynamoDbAsyncClient asyncClient = DynamoDbAsyncClient.builder()
                 .region(Region.of(awsRegion))
-                .credentialsProvider(DefaultCredentialsProvider.builder().profileName("pagopa_dev_core").build())
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .addExecutionInterceptor(new AwsClientLoggerInterceptor())
                         .build())
