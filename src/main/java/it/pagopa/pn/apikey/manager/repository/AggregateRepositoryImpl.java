@@ -92,7 +92,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 //        }
 
         Map<String,String> expressionNames = new HashMap<>();
-        expressionNames.put("#name","name");
+        expressionNames.put("#name", AggregationConstant.NAME);
 
         ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
             .exclusiveStartKey(attributeValue)
