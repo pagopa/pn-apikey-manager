@@ -9,6 +9,6 @@ import org.springframework.context.annotation.Configuration;
 public class AwsServicesClientsConfigActivation extends AwsServicesClientsConfig {
 
     public AwsServicesClientsConfigActivation(AwsConfigs props) {
-        super(props, RuntimeMode.DEVELOPMENT);
+        super(props, RuntimeMode.PROD);
     }
 }
