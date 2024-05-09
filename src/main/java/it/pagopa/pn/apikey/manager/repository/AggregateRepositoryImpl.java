@@ -71,13 +71,13 @@ public class AggregateRepositoryImpl implements AggregateRepository {
         }
 
         Map<String,String> expressionNames = new HashMap<>();
-        expressionNames.put("#name", AggregationConstant.NAME);
+        expressionNames.put("#searchterm", AggregationConstant.SEARCHTERM);
 
         ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
             .exclusiveStartKey(attributeValue)
-            .filterExpression(Expression.builder().expression("contains(#name, :name)")
+            .filterExpression(Expression.builder().expression("contains(#searchterm, :name)")
                 .expressionNames(expressionNames)
-                .putExpressionValue(":name", AttributeValue.builder().s(name).build())
+                .putExpressionValue(":name", AttributeValue.builder().s(name.toLowerCase()).build())
                 .build())
             .limit(pageable.getLimit())
             .build();

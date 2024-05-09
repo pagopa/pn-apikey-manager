@@ -42,6 +42,9 @@ public class ApiKeyAggregateModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("usagePlanId")}))
     private String usagePlanId;
 
+    @Getter(onMethod=@__(@DynamoDbAttribute("searchterm")))
+    private String searchterm;
+
     @Getter(onMethod = @__({
             @DynamoDbAttribute(AggregationConstant.PAGEABLE),
             @DynamoDbSecondaryPartitionKey(indexNames = AggregationConstant.GSI_NAME)
@@ -58,5 +61,6 @@ public class ApiKeyAggregateModel {
         apiKeyId = model.apiKeyId;
         usagePlanId = model.usagePlanId;
         pageable = model.pageable;
+        searchterm = model.searchterm;
     }
 }
