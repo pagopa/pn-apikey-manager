@@ -112,6 +112,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     @Override
     public Mono<ApiKeyAggregateModel> saveAggregation(ApiKeyAggregateModel toSave) {
         log.debug("Inserting data {} in DynamoDB table {}",toSave,table);
+        toSave.setSearchterm(toSave.getName().toLowerCase());
         return Mono.fromFuture(table.putItem(toSave))
                 .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
                 .thenReturn(toSave);
