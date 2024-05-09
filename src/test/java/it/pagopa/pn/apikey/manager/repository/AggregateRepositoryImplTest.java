@@ -72,7 +72,7 @@ class AggregateRepositoryImplTest {
         AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
         PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
+        when(dynamoDbAsyncTable.scan()).thenReturn(pagePublisher);
         StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(10,"id", "")))
                 .expectNextCount(0);
     }
