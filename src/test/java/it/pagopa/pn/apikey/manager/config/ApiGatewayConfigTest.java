@@ -10,7 +10,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {ApiGatewayConfig.class})
 @TestPropertySource(properties = {
-        "aws.region=eu-south-1"
+        "aws.region-code=eu-south-1"
+    , "aws.profile-name=default"
+    ,"aws.endpoint-url=http://localhost:4556"
 })
 @ExtendWith(SpringExtension.class)
 class ApiGatewayConfigTest {

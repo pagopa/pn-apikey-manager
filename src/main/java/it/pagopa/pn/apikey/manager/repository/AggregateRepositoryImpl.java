@@ -43,7 +43,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
                 .limit(pageable.getLimit())
                 .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.scan(scanEnhancedRequest));
+            return Mono.from(table.scan());
         } else {
             return Flux.from(table.scan(scanEnhancedRequest).items())
                     .collectList()
@@ -65,31 +65,30 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     @Override
     public Mono<Page<ApiKeyAggregateModel>> findByName(String name, AggregatePageable pageable) {
         Map<String, AttributeValue> attributeValue = null;
-        if (pageable.isPageByName()) {
+        if (pageable.isPage()) {
             attributeValue = new HashMap<>();
             attributeValue.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
-            attributeValue.put(AggregationConstant.NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
-            attributeValue.put(AggregationConstant.PAGEABLE, AttributeValue.builder().s(AggregationConstant.PAGEABLE_VALUE).build());
         }
 
-        QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
-                .partitionValue(AggregationConstant.PAGEABLE_VALUE)
-                .sortValue(name)
-                .build());
+        Map<String,String> expressionNames = new HashMap<>();
+        expressionNames.put("#name", AggregationConstant.NAME);
 
-        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
-                .queryConditional(queryConditional)
-                .exclusiveStartKey(attributeValue)
-                .limit(pageable.getLimit())
-                .build();
-
+        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
+            .exclusiveStartKey(attributeValue)
+            .filterExpression(Expression.builder().expression("contains(#name, :name)")
+                .expressionNames(expressionNames)
+                .putExpressionValue(":name", AttributeValue.builder().s(name).build())
+                .build())
+            .limit(pageable.getLimit())
+            .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.index(gsiName).query(queryEnhancedRequest));
+            return Mono.from(table.scan(scanEnhancedRequest));
         } else {
-            return Flux.from(table.index(gsiName).query(queryEnhancedRequest).flatMapIterable(Page::items))
-                    .collectList()
-                    .map(Page::create);
+            return Flux.from(table.scan(scanEnhancedRequest).items())
+                .collectList()
+                .map(Page::create);
         }
+
     }
 
     @Override
