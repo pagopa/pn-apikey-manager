@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.config;
 
-import org.apache.http.client.CredentialsProvider;
+import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,10 +13,14 @@ public class ApiGatewayConfig {
 
     private final String awsRegion;
     private final String awsProfileName;
+    private final String awsEndpoint;
 
-    public ApiGatewayConfig(@Value("${aws.region}") String awsRegion, @Value("${aws.profile-name}") String awsPofileName) {
+    public ApiGatewayConfig(@Value("${aws.region-code}") String awsRegion
+        , @Value("${aws.profile-name}") String awsPofileName
+        ,@Value("${aws.endpoint-url}") String awsEndpoint) {
         this.awsRegion = awsRegion;
         this.awsProfileName = awsPofileName;
+        this.awsEndpoint = awsEndpoint;
     }
 
     @Bean
@@ -27,6 +31,7 @@ public class ApiGatewayConfig {
                     DefaultCredentialsProvider.builder()
                     .profileName(awsProfileName)
                     .build())
+                .endpointOverride(URI.create(awsEndpoint))
                 .build();
     }
 
