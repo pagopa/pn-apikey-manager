@@ -68,28 +68,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
         if (pageable.isPage()) {
             attributeValue = new HashMap<>();
             attributeValue.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
-//            attributeValue.put(AggregationConstant.NAME, AttributeValue.builder().s(pageable.getLastEvaluatedName()).build());
-//            attributeValue.put(AggregationConstant.PAGEABLE, AttributeValue.builder().s(AggregationConstant.PAGEABLE_VALUE).build());
         }
-
-//        QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
-//            .partitionValue(AggregationConstant.PAGEABLE_VALUE)
-//            .sortValue(name)
-//            .build());
-//
-//        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
-//            .queryConditional(queryConditional)
-//            .exclusiveStartKey(attributeValue)
-//            .limit(pageable.getLimit())
-//            .build();
-//
-//        if (pageable.hasLimit()) {
-//            return Mono.from(table.index(gsiName).query(queryEnhancedRequest));
-//        } else {
-//            return Flux.from(table.index(gsiName).query(queryEnhancedRequest).flatMapIterable(Page::items))
-//                .collectList()
-//                .map(Page::create);
-//        }
 
         Map<String,String> expressionNames = new HashMap<>();
         expressionNames.put("#name", AggregationConstant.NAME);
