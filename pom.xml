@@ -122,12 +122,9 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sts -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sts</artifactId>
-            <!--<version>2.25.45</version>-->
-            <!--<scope>test</scope>-->
         </dependency>
 
     </dependencies>
