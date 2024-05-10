@@ -26,13 +26,13 @@ public class ApiGatewayConfig {
 
     @Bean
     public ApiGatewayAsyncClient apiGatewayAsync() {
+        DefaultCredentialsProvider credentialProvider = awsProfileName== null
+            ? DefaultCredentialsProvider.create()
+            : DefaultCredentialsProvider.builder().profileName(awsProfileName).build();
+
         ApiGatewayAsyncClientBuilder clientBuilder = ApiGatewayAsyncClient.builder()
             .region(Region.of(awsRegion))
-            .credentialsProvider(
-                DefaultCredentialsProvider.builder()
-                    .profileName(awsProfileName)
-                    .build()
-            );
+            .credentialsProvider( credentialProvider);
 
         if (awsEndpoint != null) {
             clientBuilder = clientBuilder.endpointOverride(URI.create(awsEndpoint));
