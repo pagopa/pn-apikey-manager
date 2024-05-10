@@ -17,7 +17,7 @@ public class ApiGatewayConfig {
     private final String awsEndpoint;
 
     public ApiGatewayConfig(@Value("${aws.region-code}") String awsRegion
-        , @Value("${aws.profile-name}") String awsPofileName
+        , @Value("${aws.profile-name:#{null}}") String awsPofileName
         ,@Value("${aws.endpoint-url:#{null}}") String awsEndpoint) {
         this.awsRegion = awsRegion;
         this.awsProfileName = awsPofileName;
