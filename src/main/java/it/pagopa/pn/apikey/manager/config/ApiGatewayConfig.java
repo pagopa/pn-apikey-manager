@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
+import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClientBuilder;
 
 @Configuration
 public class ApiGatewayConfig {
@@ -25,15 +26,19 @@ public class ApiGatewayConfig {
 
     @Bean
     public ApiGatewayAsyncClient apiGatewayAsync() {
-
-        return ApiGatewayAsyncClient.builder()
-                .region(Region.of(awsRegion))
-                .credentialsProvider(
-                    DefaultCredentialsProvider.builder()
+        ApiGatewayAsyncClientBuilder clientBuilder = ApiGatewayAsyncClient.builder()
+            .region(Region.of(awsRegion))
+            .credentialsProvider(
+                DefaultCredentialsProvider.builder()
                     .profileName(awsProfileName)
-                    .build())
-                .endpointOverride(URI.create(awsEndpoint))
-                .build();
+                    .build()
+            );
+
+        if (awsEndpoint != null) {
+            clientBuilder = clientBuilder.endpointOverride(URI.create(awsEndpoint));
+        }
+
+        return clientBuilder.build();
     }
 
 }
