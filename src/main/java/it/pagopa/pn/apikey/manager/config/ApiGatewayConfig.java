@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
+import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClientBuilder;
 
 @Configuration
 public class ApiGatewayConfig {
@@ -16,8 +17,8 @@ public class ApiGatewayConfig {
     private final String awsEndpoint;
 
     public ApiGatewayConfig(@Value("${aws.region-code}") String awsRegion
-        , @Value("${aws.profile-name}") String awsPofileName
-        ,@Value("${aws.endpoint-url}") String awsEndpoint) {
+        , @Value("${aws.profile-name:#{null}}") String awsPofileName
+        ,@Value("${aws.endpoint-url:#{null}}") String awsEndpoint) {
         this.awsRegion = awsRegion;
         this.awsProfileName = awsPofileName;
         this.awsEndpoint = awsEndpoint;
@@ -25,14 +26,19 @@ public class ApiGatewayConfig {
 
     @Bean
     public ApiGatewayAsyncClient apiGatewayAsync() {
-        return ApiGatewayAsyncClient.builder()
-                .region(Region.of(awsRegion))
-                .credentialsProvider(
-                    DefaultCredentialsProvider.builder()
-                    .profileName(awsProfileName)
-                    .build())
-                .endpointOverride(URI.create(awsEndpoint))
-                .build();
+        DefaultCredentialsProvider credentialProvider = awsProfileName== null
+            ? DefaultCredentialsProvider.create()
+            : DefaultCredentialsProvider.builder().profileName(awsProfileName).build();
+
+        ApiGatewayAsyncClientBuilder clientBuilder = ApiGatewayAsyncClient.builder()
+            .region(Region.of(awsRegion))
+            .credentialsProvider( credentialProvider);
+
+        if (awsEndpoint != null) {
+            clientBuilder = clientBuilder.endpointOverride(URI.create(awsEndpoint));
+        }
+
+        return clientBuilder.build();
     }
 
 }
