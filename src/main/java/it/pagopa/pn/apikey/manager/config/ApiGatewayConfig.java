@@ -17,7 +17,7 @@ public class ApiGatewayConfig {
 
     public ApiGatewayConfig(@Value("${aws.region-code}") String awsRegion
         , @Value("${aws.profile-name}") String awsPofileName
-        ,@Value("${aws.endpoint-url}") String awsEndpoint) {
+        ,@Value("${aws.endpoint-url:#{null}}") String awsEndpoint) {
         this.awsRegion = awsRegion;
         this.awsProfileName = awsPofileName;
         this.awsEndpoint = awsEndpoint;
@@ -25,6 +25,7 @@ public class ApiGatewayConfig {
 
     @Bean
     public ApiGatewayAsyncClient apiGatewayAsync() {
+
         return ApiGatewayAsyncClient.builder()
                 .region(Region.of(awsRegion))
                 .credentialsProvider(
