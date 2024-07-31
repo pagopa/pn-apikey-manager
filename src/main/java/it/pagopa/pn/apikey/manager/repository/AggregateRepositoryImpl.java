@@ -29,7 +29,7 @@ public class AggregateRepositoryImpl extends BaseRepository<ApiKeyAggregateModel
 
     private final String gsiName;
 
-    private final static Function<ApiKeyAggregateModel, PnLastEvaluatedKey> APIKEY_AGGREGATE_MODEL_KEY_MAKER = (ApiKeyAggregateModel item) -> {
+    private static final Function<ApiKeyAggregateModel, PnLastEvaluatedKey> APIKEY_AGGREGATE_MODEL_KEY_MAKER = (ApiKeyAggregateModel item) -> {
         PnLastEvaluatedKey pnLastEvaluatedKey = new PnLastEvaluatedKey();
         pnLastEvaluatedKey.setExternalLastEvaluatedKey(item.getAggregateId());
         pnLastEvaluatedKey.setInternalLastEvaluatedKey(Map.of(
@@ -95,7 +95,7 @@ public class AggregateRepositoryImpl extends BaseRepository<ApiKeyAggregateModel
                 .limit(pageable.getLimit())
                 .build();
 
-        if(pageable.hasLimit()) {
+        if (pageable.hasLimit()) {
             ResultPaginationDto<ApiKeyAggregateModel> resultPaginationDto = new ResultPaginationDto<>();
             return scanByFilterPaginated(scanEnhancedRequest, resultPaginationDto, pageable.getLimit(), lastEvaluatedKey, APIKEY_AGGREGATE_MODEL_KEY_MAKER);
         } else {

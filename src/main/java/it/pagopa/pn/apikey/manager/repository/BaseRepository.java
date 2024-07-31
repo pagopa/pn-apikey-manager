@@ -74,7 +74,7 @@ public class BaseRepository<T> {
                     .toList());
         }
 
-        if (limit > 0 && queryResult.size() >= limit) {
+        if (limit > 0 && queryResult != null && queryResult.size() >= limit) {
             resultPaginationDto.setLastEvaluatedKey(keyMaker.apply(queryResult.get(limit - 1)).getInternalLastEvaluatedKey());
         }
         return resultPaginationDto;
