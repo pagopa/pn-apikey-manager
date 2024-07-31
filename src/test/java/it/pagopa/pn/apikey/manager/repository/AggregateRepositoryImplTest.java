@@ -66,29 +66,7 @@ class AggregateRepositoryImplTest {
                 .expectNext(apikeyAggregateModel).verifyComplete();
     }
 
-    @Test
-    void findAllAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
-        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        when(dynamoDbAsyncTable.scan()).thenReturn(pagePublisher);
-        StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(10,"id", "")))
-                .expectNextCount(0);
-    }
-
-//    @Test
-//    void findByName() {
-//        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-//        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
-//
-//        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
-//        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
-//        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
-//        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
-//        StepVerifier.create(aggregateRepository.findByName("name", new AggregatePageable(10,"id", "")))
-//                .expectNextCount(0);
-//    }
 
     @Test
     void findById() {

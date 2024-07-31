@@ -2,11 +2,16 @@ package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.constant.AggregationConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
+import it.pagopa.pn.apikey.manager.model.PnLastEvaluatedKey;
+import it.pagopa.pn.apikey.manager.model.ResultPaginationDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
@@ -16,18 +21,26 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 @Component
 @lombok.CustomLog
-public class AggregateRepositoryImpl implements AggregateRepository {
+public class AggregateRepositoryImpl extends BaseRepository<ApiKeyAggregateModel> implements AggregateRepository {
 
-    private final DynamoDbAsyncTable<ApiKeyAggregateModel> table;
     private final String gsiName;
+
+    private final static Function<ApiKeyAggregateModel, PnLastEvaluatedKey> APIKEY_AGGREGATE_MODEL_KEY_MAKER = (ApiKeyAggregateModel item) -> {
+        PnLastEvaluatedKey pnLastEvaluatedKey = new PnLastEvaluatedKey();
+        pnLastEvaluatedKey.setExternalLastEvaluatedKey(item.getAggregateId());
+        pnLastEvaluatedKey.setInternalLastEvaluatedKey(Map.of(
+                AggregationConstant.PK, AttributeValue.builder().s(item.getAggregateId()).build()));
+        return pnLastEvaluatedKey;
+    };
 
     public AggregateRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                    @Value("${pn.apikey.manager.dynamodb.tablename.aggregates}") String tableName,
                                    @Value("${pn.apikey.manager.dynamodb.aggregations.gsi-name.aggregate-name}") String gsiName) {
-        this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyAggregateModel.class));
+        super(dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(ApiKeyAggregateModel.class)));
         this.gsiName = gsiName;
     }
 
@@ -43,7 +56,8 @@ public class AggregateRepositoryImpl implements AggregateRepository {
                 .limit(pageable.getLimit())
                 .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.scan());
+            ResultPaginationDto<ApiKeyAggregateModel> resultPaginationDto = new ResultPaginationDto<>();
+            return scanByFilterPaginated(scanEnhancedRequest, resultPaginationDto, pageable.getLimit(), attributeValue, APIKEY_AGGREGATE_MODEL_KEY_MAKER);
         } else {
             return Flux.from(table.scan(scanEnhancedRequest).items())
                     .collectList()
@@ -64,29 +78,30 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 
     @Override
     public Mono<Page<ApiKeyAggregateModel>> findByName(String name, AggregatePageable pageable) {
-        Map<String, AttributeValue> attributeValue = null;
+        Map<String, AttributeValue> lastEvaluatedKey = null;
         if (pageable.isPage()) {
-            attributeValue = new HashMap<>();
-            attributeValue.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            lastEvaluatedKey = new HashMap<>();
+            lastEvaluatedKey.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
         }
 
-        Map<String,String> expressionNames = new HashMap<>();
+        Map<String, String> expressionNames = new HashMap<>();
         expressionNames.put("#searchterm", AggregationConstant.SEARCHTERM);
 
         ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
-            .exclusiveStartKey(attributeValue)
-            .filterExpression(Expression.builder().expression("contains(#searchterm, :name)")
-                .expressionNames(expressionNames)
-                .putExpressionValue(":name", AttributeValue.builder().s(name.toLowerCase()).build())
-                .build())
-            .limit(pageable.getLimit())
-            .build();
-        if (pageable.hasLimit()) {
-            return Mono.from(table.scan(scanEnhancedRequest));
+                .filterExpression(Expression.builder().expression("contains(#searchterm, :name)")
+                        .expressionNames(expressionNames)
+                        .putExpressionValue(":name", AttributeValue.builder().s(name.toLowerCase()).build())
+                        .build())
+                .limit(pageable.getLimit())
+                .build();
+
+        if(pageable.hasLimit()) {
+            ResultPaginationDto<ApiKeyAggregateModel> resultPaginationDto = new ResultPaginationDto<>();
+            return scanByFilterPaginated(scanEnhancedRequest, resultPaginationDto, pageable.getLimit(), lastEvaluatedKey, APIKEY_AGGREGATE_MODEL_KEY_MAKER);
         } else {
             return Flux.from(table.scan(scanEnhancedRequest).items())
-                .collectList()
-                .map(Page::create);
+                    .collectList()
+                    .map(Page::create);
         }
 
     }
@@ -111,10 +126,10 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 
     @Override
     public Mono<ApiKeyAggregateModel> saveAggregation(ApiKeyAggregateModel toSave) {
-        log.debug("Inserting data {} in DynamoDB table {}",toSave,table);
+        log.debug("Inserting data {} in DynamoDB table {}", toSave, table);
         toSave.setSearchterm(toSave.getName() != null ? toSave.getName().toLowerCase() : "");
         return Mono.fromFuture(table.putItem(toSave))
-                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
+                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}", table))
                 .thenReturn(toSave);
     }
 
@@ -135,7 +150,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
     }
 
     @Override
-    public Mono<ApiKeyAggregateModel> findById(String id){
+    public Mono<ApiKeyAggregateModel> findById(String id) {
         Key key = Key.builder()
                 .partitionValue(id)
                 .build();
