@@ -1,10 +1,9 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
@@ -31,11 +30,16 @@ class AggregateRepositoryImplTest {
     @MockBean
     private DynamoDbAsyncTable<ApiKeyAggregateModel> dynamoDbAsyncTable;
 
+    private AggregateRepositoryImpl aggregateRepository;
+
+    @BeforeEach
+    void setup() {
+        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
+        aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+    }
+
     @Test
     void saveAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
-
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> null);
@@ -46,9 +50,6 @@ class AggregateRepositoryImplTest {
 
     @Test
     void getApiKeyAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
-
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<ApiKeyAggregateModel> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> apikeyAggregateModel);
@@ -59,9 +60,6 @@ class AggregateRepositoryImplTest {
 
     @Test
     void deleteAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
-
         ApiKeyAggregateModel apikeyAggregateModel = new ApiKeyAggregateModel();
         CompletableFuture<ApiKeyAggregateModel> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> apikeyAggregateModel);
@@ -72,88 +70,38 @@ class AggregateRepositoryImplTest {
 
     @Test
     void findAllAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+        ApiKeyAggregateModel entity1 = new ApiKeyAggregateModel();
+        entity1.setAggregateId("id1");
+        ApiKeyAggregateModel entity2 = new ApiKeyAggregateModel();
+        entity2.setAggregateId("id2");
 
-        SdkPublisher<Page<ApiKeyAggregateModel>> sdkPublisher = mock(SdkPublisher.class);
-        doAnswer(invocation -> {
-            ApiKeyAggregateModel entity1 = new ApiKeyAggregateModel();
-            entity1.setAggregateId("id1");
-            ApiKeyAggregateModel entity2 = new ApiKeyAggregateModel();
-            entity2.setAggregateId("id2");
+        List<ApiKeyAggregateModel> entities = Arrays.asList(entity1, entity2);
+        TestUtilsRepository.mockScanEnhancedRequestToRetrievePage(dynamoDbAsyncTable, entities);
 
-            List<ApiKeyAggregateModel> entities = Arrays.asList(entity1, entity2);
-            Page<ApiKeyAggregateModel> page = Page.create(entities, null);
-
-            Subscriber<? super Page<ApiKeyAggregateModel>> subscriber = invocation.getArgument(0);
-            subscriber.onSubscribe(new Subscription() {
-                @Override
-                public void request(long n) {
-                    if (n != 0) {
-                        subscriber.onNext(page);
-                        subscriber.onComplete();
-                    }
-                }
-
-                @Override
-                public void cancel() { }
-            });
-            return null;
-        }).when(sdkPublisher).subscribe((Subscriber<? super Page<ApiKeyAggregateModel>>) any());
-
-        PagePublisher<ApiKeyAggregateModel> pagePublisher = PagePublisher.create(sdkPublisher);
-        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
-
-
-        StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(10,"id", "")))
-                .expectNextCount(0);
+        StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(1,"id", "")))
+                .expectNextMatches(p -> p.items().size() == 1)
+                .verifyComplete();
     }
 
     @Test
     void findByNameAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+        ApiKeyAggregateModel entity1 = new ApiKeyAggregateModel();
+        entity1.setAggregateId("id1");
+        ApiKeyAggregateModel entity2 = new ApiKeyAggregateModel();
+        entity2.setAggregateId("id2");
 
-        SdkPublisher<Page<ApiKeyAggregateModel>> sdkPublisher = mock(SdkPublisher.class);
-        doAnswer(invocation -> {
-            ApiKeyAggregateModel entity1 = new ApiKeyAggregateModel();
-            entity1.setAggregateId("id1");
-            ApiKeyAggregateModel entity2 = new ApiKeyAggregateModel();
-            entity2.setAggregateId("id2");
+        List<ApiKeyAggregateModel> entities = Arrays.asList(entity1, entity2);
 
-            List<ApiKeyAggregateModel> entities = Arrays.asList(entity1, entity2);
-            Page<ApiKeyAggregateModel> page = Page.create(entities, null);
-
-            Subscriber<? super Page<ApiKeyAggregateModel>> subscriber = invocation.getArgument(0);
-            subscriber.onSubscribe(new Subscription() {
-                @Override
-                public void request(long n) {
-                    if (n != 0) {
-                        subscriber.onNext(page);
-                        subscriber.onComplete();
-                    }
-                }
-
-                @Override
-                public void cancel() { }
-            });
-            return null;
-        }).when(sdkPublisher).subscribe((Subscriber<? super Page<ApiKeyAggregateModel>>) any());
-
-        PagePublisher<ApiKeyAggregateModel> pagePublisher = PagePublisher.create(sdkPublisher);
-        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
-
+        TestUtilsRepository.mockScanEnhancedRequestToRetrievePage(dynamoDbAsyncTable, entities);
 
         StepVerifier.create(aggregateRepository.findByName("test", new AggregatePageable(10,"id", "")))
-                .expectNextCount(0);
+                .expectNextMatches(p -> p.items().size() == 2)
+                .verifyComplete();
     }
 
 
     @Test
     void findById() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
-
         CompletableFuture<ApiKeyAggregateModel> completableFuture = new CompletableFuture<>();
         ApiKeyAggregateModel apiKeyAggregateModel = new ApiKeyAggregateModel();
         apiKeyAggregateModel.setAggregateId("id");
@@ -164,8 +112,6 @@ class AggregateRepositoryImplTest {
 
     @Test
     void testCount(){
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
         PagePublisher<ApiKeyAggregateModel> pagePublisher = mock(PagePublisher.class);
         when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
         StepVerifier.create(aggregateRepository.count()).expectNext(0);
@@ -173,8 +119,6 @@ class AggregateRepositoryImplTest {
 
     @Test
     void testCountByName(){
-        when(dynamoDbEnhancedAsyncClient.table(any(), any(TableSchema.class))).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
         SdkPublisher<Page<ApiKeyAggregateModel>> sdkPublisher = mock(SdkPublisher.class);
         DynamoDbAsyncIndex<ApiKeyAggregateModel> index = mock(DynamoDbAsyncIndex.class);
         when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);

@@ -41,6 +41,7 @@ public class BaseRepository<T> {
         }
 
         ScanEnhancedRequest finalScanEnhancedRequest = scanEnhancedRequest;
+
         return Mono.from(table.scan(scanEnhancedRequest))
                 .flatMap(tPage -> {
                     Map<String, AttributeValue> lastKey = tPage.lastEvaluatedKey();
