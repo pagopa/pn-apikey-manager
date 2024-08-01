@@ -7,11 +7,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.core.async.SdkPublisher;
-import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
+
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -66,16 +68,18 @@ class AggregateRepositoryImplTest {
                 .expectNext(apikeyAggregateModel).verifyComplete();
     }
 
-    @Test
-    void findAllAggregation() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+@Test
+void findAllAggregation() {
+    when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+    AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
 
-        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
-        when(dynamoDbAsyncTable.scan()).thenReturn(pagePublisher);
-        StepVerifier.create(aggregateRepository.findAll(new AggregatePageable(10,"id", "")))
-                .expectNextCount(0);
-    }
+    AggregatePageable aggregatePageable = new AggregatePageable(10, "id", "");
+
+    PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+    when(dynamoDbAsyncTable.scan(any(ScanEnhancedRequest.class))).thenReturn(pagePublisher);
+    StepVerifier.create(aggregateRepository.findAll(aggregatePageable))
+            .expectNextCount(0);
+}
 
 //    @Test
 //    void findByName() {
@@ -117,9 +121,9 @@ class AggregateRepositoryImplTest {
         when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
         AggregateRepositoryImpl aggregateRepository = new AggregateRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
         SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
-        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
-        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
-        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        PagePublisher<Object> pagePublisher = mock(PagePublisher.class);
+        when(dynamoDbAsyncTable.scan((ScanEnhancedRequest) any())).thenReturn(pagePublisher);
         StepVerifier.create(aggregateRepository.countByName("name")).expectNext(0);
     }
+
 }

@@ -8,8 +8,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -43,7 +41,7 @@ public class AggregateRepositoryImpl implements AggregateRepository {
                 .limit(pageable.getLimit())
                 .build();
         if (pageable.hasLimit()) {
-            return Mono.from(table.scan());
+            return Mono.from(table.scan(scanEnhancedRequest));
         } else {
             return Flux.from(table.scan(scanEnhancedRequest).items())
                     .collectList()
@@ -93,18 +91,20 @@ public class AggregateRepositoryImpl implements AggregateRepository {
 
     @Override
     public Mono<Integer> countByName(String name) {
-        QueryConditional queryConditional = QueryConditional.sortBeginsWith(Key.builder()
-                .partitionValue(AggregationConstant.PAGEABLE_VALUE)
-                .sortValue(name)
-                .build());
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#searchterm", AggregationConstant.SEARCHTERM);
 
-        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
-                .queryConditional(queryConditional)
+        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
+                .filterExpression(Expression.builder()
+                        .expression("contains(#searchterm, :name)")
+                        .expressionNames(expressionNames)
+                        .putExpressionValue(":name", AttributeValue.builder().s(name.toLowerCase()).build())
+                        .build())
                 .addAttributeToProject(AggregationConstant.PK)
                 .build();
 
         AtomicInteger counter = new AtomicInteger(0);
-        return Flux.from(table.index(gsiName).query(queryEnhancedRequest))
+        return Flux.from(table.scan(scanEnhancedRequest))
                 .doOnNext(page -> counter.getAndAdd(page.items().size()))
                 .then(Mono.defer(() -> Mono.just(counter.get())));
     }
