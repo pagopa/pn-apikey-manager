@@ -44,18 +44,18 @@ public class AggregateRepositoryImpl extends BaseRepository<ApiKeyAggregateModel
 
     @Override
     public Mono<Page<ApiKeyAggregateModel>> findAll(AggregatePageable pageable) {
-        Map<String, AttributeValue> attributeValue = null;
+        Map<String, AttributeValue> lastEvaluatedKey = null;
         if (pageable.isPage()) {
-            attributeValue = new HashMap<>();
-            attributeValue.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
+            lastEvaluatedKey = new HashMap<>();
+            lastEvaluatedKey.put(AggregationConstant.PK, AttributeValue.builder().s(pageable.getLastEvaluatedId()).build());
         }
         ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
-                .exclusiveStartKey(attributeValue)
+                .exclusiveStartKey(lastEvaluatedKey)
                 .limit(pageable.getLimit())
                 .build();
         if (pageable.hasLimit()) {
             ResultPaginationDto<ApiKeyAggregateModel> resultPaginationDto = new ResultPaginationDto<>();
-            return scanByFilterPaginated(scanEnhancedRequest, resultPaginationDto, pageable.getLimit(), attributeValue, APIKEY_AGGREGATE_MODEL_KEY_MAKER);
+            return scanByFilterPaginated(scanEnhancedRequest, resultPaginationDto, pageable.getLimit(), lastEvaluatedKey, APIKEY_AGGREGATE_MODEL_KEY_MAKER);
         } else {
             return Flux.from(table.scan(scanEnhancedRequest).items())
                     .collectList()
