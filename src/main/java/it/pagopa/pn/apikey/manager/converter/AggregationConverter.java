@@ -31,9 +31,6 @@ public class AggregationConverter {
         AggregatesListResponseDto dto = new AggregatesListResponseDto();
         if (page.lastEvaluatedKey() != null && page.lastEvaluatedKey().containsKey(AggregationConstant.PK)) {
             dto.setLastEvaluatedId(page.lastEvaluatedKey().get(AggregationConstant.PK).s());
-            if (page.lastEvaluatedKey().containsKey(AggregationConstant.NAME)) {
-                dto.setLastEvaluatedName(page.lastEvaluatedKey().get(AggregationConstant.NAME).s());
-            }
         }
         page.items().forEach(item -> dto.addItemsItem(convertToResponseDto(item, usagePlanMap)));
         return dto;
