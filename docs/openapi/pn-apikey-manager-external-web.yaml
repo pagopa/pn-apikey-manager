@@ -294,6 +294,7 @@ components:
       properties:
         name:
           type: string
+          pattern: '^(?!\s).+(?<!\s)$'
           description: nome dell'api key
         groups:
           type: array
