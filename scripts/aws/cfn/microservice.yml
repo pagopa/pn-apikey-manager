@@ -91,6 +91,10 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
+  PublicKeyTableArn:
+    Type: String
+    Description: 'Arn of dynamodb table containing Public Key information'
+
   PaAggregationsTableName:
     Type: String
     Description: 'Name of dynamodb table containing aggregations'
@@ -102,6 +106,10 @@ Parameters:
   ApiKeyTableName:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
+
+  PublicKeyTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing public keys'
 
   FlagPdnd:
     Type: String
@@ -304,9 +312,11 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Ref PublicKeyTableArn
               - !Sub '${AggregatesTableArn}/index/*'
               - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
+              - !Sub '${PublicKeyTableArn}/index/*'
           - Effect: Allow
             Action:
               - kms:Encrypt
@@ -402,6 +412,7 @@ Resources:
           - - !Ref PaAggregationsTableName
             - !Ref AggregatesTableName
             - !Ref ApiKeyTableName
+            - !Ref PublicKeyTableName
         RestApiStageArns: !Join
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
