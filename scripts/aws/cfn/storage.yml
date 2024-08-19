@@ -101,6 +101,8 @@ Resources:
       KeySchema:
         - AttributeName: "kid"
           KeyType: "HASH"
+        - AttributeName: "cxId"
+          KeyType: "RANGE"
       GlobalSecondaryIndexes:
         - IndexName: "cxId-status-index"
           KeySchema:
@@ -113,17 +115,11 @@ Resources:
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
-      Tags:
-        - Key: pnInfraFeature
-          Value: pnStorage
-        - Key: pnMicroservice
-          Value: !Sub '${ProjectName}-publicKey'
-      SSESpecification:
-        KMSMasterKeyId: !Ref ApiKeyTablesEncryptKeyId
-        SSEEnabled: true
-        SSEType: KMS
       StreamSpecification:
         StreamViewType: KEYS_ONLY
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: true
 
   # pn-aggregates DynamoDB table
   AggregatesTable:
