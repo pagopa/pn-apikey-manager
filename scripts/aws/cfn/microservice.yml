@@ -107,6 +107,22 @@ Parameters:
     Type: String
     Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
 
+  ApikeyInternalQueueName:
+    Type: String
+    Description: 'Name of Internal queue'
+
+  ApikeyInternalQueueARN:
+    Type: String
+    Description: 'ARN for ApikeyInternalQueue'
+
+  ApikeyInternalQueueDLQName:
+    Type: String
+    Description: 'Name of Internal queue DLQ'
+
+  ApikeyInternalQueueDLQARN:
+    Type: String
+    Description: 'ARN for ApikeyInternalQueue DLQ'
+
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
@@ -255,6 +271,8 @@ Resources:
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
+        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyInternalQueueName}'
+
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds
@@ -313,6 +331,17 @@ Resources:
               - kms:Decrypt
             Resource:
               - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${ApiKeyTablesEncryptKeyId}
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
+            Resource:
+              - !Ref ApikeyInternalQueueARN
+              - !Ref ApikeyInternalQueueDLQARN
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
@@ -410,6 +439,9 @@ Resources:
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
+        QueueArns: !Join
+          - ','
+          - - !Ref ApikeyInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
