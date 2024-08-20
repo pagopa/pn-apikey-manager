@@ -98,6 +98,8 @@ Resources:
           AttributeType: "S"
         - AttributeName: "status"
           AttributeType: "S"
+        - AttributeName: "createdAt"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "kid"
           KeyType: "HASH"
@@ -109,6 +111,14 @@ Resources:
             - AttributeName: cxId
               KeyType: HASH
             - AttributeName: status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: "cxId-createdAt-index"
+          KeySchema:
+            - AttributeName: cxId
+              KeyType: HASH
+            - AttributeName: createdAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
