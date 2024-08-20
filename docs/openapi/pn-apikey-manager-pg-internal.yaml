@@ -2,12 +2,12 @@ openapi: 3.0.3
 info:
   termsOfService: https://termofservice.it
   x-api-id: api-internal-web-pa
-  title: 'Piattaforma Notifiche: API per il Front End delle PA'
-  x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
+  title: 'Piattaforma Notifiche: API per il Front End delle PG destinatarie'
+  x-summary: 'Piattaforma Notifiche: API per il Front End delle PG destinatarie'
   version: '2.0.0'
   description: >-
     ## Abstract
-      API utilizzate dal portale di Piattaforma Notifiche dedicato alle Pubbliche Amministrazioni
+      API utilizzate dal portale di Piattaforma Notifiche dedicato alle Persone Giuridiche destinatarie
   contact:
     email: pn@pagopa.it
   license:
@@ -23,7 +23,7 @@ servers:
 tags:
   - name: PublicKeys
     description: >-
-      Invocazioni utilizzabili dalle pg per la gestione delle public keys
+      Invocazioni utilizzabili dalle PG destinatarie per la gestione delle public keys
 
 
 paths:
@@ -35,11 +35,12 @@ paths:
       tags:
         - PublicKeys
       operationId: getPublicKeys
-      parameters:                                           # NO EXTERNAL
+      parameters:
         - $ref: '#/components/parameters/uidAuthFleet'      # NO EXTERNAL
         - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
         - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'   # NO EXTERNAL
         - name: limit
           in: query
           schema:
@@ -50,21 +51,17 @@ paths:
           required: false
           schema:
             type: string
-        - name: lastUpdate
+        - name: createdAt
           in: query
           required: false
           schema:
             type: string
-        - name: showVirtualKey
+        - name: showPublicKey
           in: query
           required: false
           schema:
             type: boolean
             default: false
-        - name: x-pagopa-pn-cx-id
-          in: header
-          schema:
-            type: string
       responses:
         '200':
           description: OK
@@ -84,23 +81,25 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  "/pg-self/public-key":
     post:
-      summary: Creazione public key
+      summary: Censimento public key
       description: >-
-        servizio di creazione di un'api key
+        servizio di censimento di una public key
       tags:
         - PublicKeys
       operationId: newPublicKey
-      parameters:                                           # NO EXTERNAL
+      parameters:
         - $ref: '#/components/parameters/uidAuthFleet'      # NO EXTERNAL
         - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
         - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'   # NO EXTERNAL
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RequestNewPublicKey"
+              $ref: "#/components/schemas/PublicKeyRequest"
         required: true
       responses:
         '200':
@@ -108,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseNewPublicKey'
+                $ref: '#/components/schemas/PublicKeyResponse'
         '400':
           description: Bad request
           content:
@@ -121,11 +120,11 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  "/pg-self/public-keys/{kid}":
-    delete:
+  "/pg-self/public-key/{kid}/delete":
+    put:
       summary: Rimozione public key
       description: >-
-        servizio di rimozione della public key
+        servizio di rimozione della public key identificata tramite Kid
       tags:
         - PublicKeys
       operationId: deletePublicKeys
@@ -134,14 +133,11 @@ paths:
         - $ref: '#/components/parameters/cxTypeAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
-        - $ref: '#/components/parameters/pathApiKey'
-        - name: x-pagopa-pn-cx-id
-          in: header
-          schema:
-            type: string
+        - $ref: '#/components/parameters/cxRoleAuthFleet'   # NO EXTERNAL
+        - $ref: '#/components/parameters/pathKid'
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No content
         '400':
           description: Bad request
           content:
@@ -167,11 +163,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/pg-self/public-keys/{kid}/status":
+  "/pg-self/public-key/{kid}/status":
     put:
-      summary: Cambia lo stato della public key
+      summary: Blocco/Riattivazione public key
       description: >-
-        servizio di cambio stato della public key
+        servizio di blocco/riattivazione della public key identificata tramite Kid
       tags:
         - PublicKeys
       operationId: changeStatusPublicKey
@@ -180,19 +176,64 @@ paths:
         - $ref: '#/components/parameters/cxTypeAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
         - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
-        - name: x-pagopa-pn-cx-id
-          in: header
-          schema:
-            type: string
+        - $ref: '#/components/parameters/cxRoleAuthFleet'   # NO EXTERNAL
+        - $ref: '#/components/parameters/pathKid'
+        - $ref: '#/components/parameters/queryStatus'
+      responses:
+        '204':
+          description: No content
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  "/pg-self/public-key/{kid}/rotate":
+    post:
+      summary: Rotazione public key
+      description: >-
+        servizio di rotazione della public key identificata tramite Kid
+      tags:
+        - PublicKeys
+      operationId: rotatePublicKey
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxGroupsAuthFleet' # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'   # NO EXTERNAL
+        - $ref: '#/components/parameters/pathKid'
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RequestPublicKeyStatus"
+              $ref: "#/components/schemas/PublicKeyRequest"
         required: true
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKeyResponse'
         '400':
           description: Bad request
           content:
@@ -233,23 +274,31 @@ components:
       required: false
     uidAuthFleet:                                                          # NO EXTERNAL
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'       # NO EXTERNAL
-
-    ############################################################################################
-    ###                        PARAMETRI RICERCA API KEY                                     ###
-    ############################################################################################
-    pathApiKey:
+    cxRoleAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxRoleAuthFleet'
+    pathKid:
       description: >-
-        Identificativo univoco dell'api key
-      name: id
+           Identificativo univoco della public key
+      name: kid
       in: path
       required: true
       schema:
         type: string
         x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+    queryStatus:
+      description: >-
+        Action per il cambio stato di una public key
+      name: status
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+          - 'BLOCK'
+          - 'ENABLE'
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
-
     PublicKeysResponse:
       title: Elenco di public keys
       description: >-
@@ -264,11 +313,10 @@ components:
             $ref: '#/components/schemas/PublicKeyRow'
         lastKey:
           type: string
-        lastUpdate:
+        createdAt:
           type: string
         total:
           type: integer
-
     PublicKeyRow:
       type: object
       properties:
@@ -278,28 +326,26 @@ components:
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         name:
           type: string
-          description: Nome dell public key
+          description: Nome della public key
         value:
           type: string
-          description: Valore dell public key
+          description: Valore dell public key restituito solo se il query param showPublicKey == True
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
-        lastUpdate:
+        createdAt:
           type: string
-          description: Data ultima modifica
+          description: Data censimento public key
           format: date-time
         status:
           $ref: '#/components/schemas/PublicKeyStatus'
         statusHistory:
           type: array
-          description: Storico degli stati dell'api key
+          description: Storico degli stati delle public key
           items:
             $ref: '#/components/schemas/PublicKeyStatusHistory'
-
     PublicKeyStatus:
       description: Stato della public key
       type: string
       enum: ['CREATED', 'ACTIVE', 'ROTATED', 'BLOCKED', 'DELETED']
-
     PublicKeyStatusHistory:
       type: object
       properties:
@@ -312,28 +358,24 @@ components:
         changedByDenomination:
           type: string
           description: nome dell'utente che ha effettuato il cambio di stato
-
-    RequestNewPublicKey:
-      title: Request creazione public key
+    PublicKeyRequest:
+      title: Richiesta di censimento nuova public key
       description: >-
-        Request per la creazione di una nuova public key
+        Request per il censimento di una nuova public key
       type: object
       required:
-        - name
         - publicKey
       properties:
         name:
           type: string
-          pattern: '^(?!\s).+(?<!\s)$'
           description: nome della public key
         publicKey:
           type: string
           description: Valore della public key
-
-    ResponseNewPublicKey:
-      title: Response creazione public key
+    PublicKeyResponse:
+      title: Response censimento public key
       description: >-
-        Response per la creazione di una nuova public key
+        Response del censimento di una nuova public key
       type: object
       required:
         - kid
@@ -341,29 +383,11 @@ components:
       properties:
         kid:
           type: string
-          description: Kid della public key appena generata
+          description: Kid della public key caricata da utilizzare nell'header kid del token JWT
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         issuer:
           type: string
-          description: Valore dell'issuer per la key appena generata
-          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
-
-    RequestPublicKeyStatus:
-      title: Richiesta di cambio stato per una public key
-      description: >-
-        Richiesta di cambio stato per una public key
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          type: string
-          description: Action per il cambio stato di una public key
-          enum:
-            - 'BLOCK'
-            - 'ENABLE'
-            - 'ROTATE'
-
+          description: Valore dell'issuer per la key caricata da utilizzare nel claims iss del token JWT
 
 #  securitySchemes:                                      # ONLY EXTERNAL
 #    bearerAuth:                                         # ONLY EXTERNAL
