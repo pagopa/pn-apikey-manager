@@ -131,6 +131,11 @@ Parameters:
     Type: String
     Description: 'ARN for ApikeyInternalQueue DLQ'
 
+  ApiKeyManagerPipeBatchSize:
+    Type: Number
+    Default: 30
+    Description: records batch size of apikey manager pipe (DynamoDB to SQS)
+
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
@@ -291,6 +296,81 @@ Resources:
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
+
+  PgPublicKeyTtlPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
+      Name: !Sub ${ProjectName}-apikey-manager-publickey-ttl-pipe
+      Source: !GetAtt PublicKeyTable.StreamArn
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: TRIM_HORIZON
+          BatchSize: !Ref ApiKeyManagerPipeBatchSize
+      FilterCriteria:
+        Filters:
+          - Pattern: '{ "eventName": ["DELETE"] }'
+      Target: !Ref ApikeyInternalQueueARN
+      TargetParameters:
+        InputTemplate: |
+          {
+            "cxId": <$.dynamodb.Keys.cxId.S>,
+            "kid": <$.dynamodb.Keys.kid.S>,
+            "action": "JWKS"
+          }
+
+  PgPublicKeyPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
+      Name: !Sub ${ProjectName}-apikey-manager-publickey-pipe
+      Source: !GetAtt PublicKeyTable.StreamArn
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: TRIM_HORIZON
+          BatchSize: !Ref ApiKeyManagerPipeBatchSize
+      FilterCriteria:
+        Filters:
+          - Pattern: '{ "eventName": ["INSERT", "MODIFY"] }'
+      Target: !Ref ApikeyInternalQueueARN
+      TargetParameters:
+        InputTemplate: |
+          {
+            "cxId": <$.dynamodb.Keys.cxId.S>,
+            "action": "JWKS"
+          }
+
+  PnApiKeyManagerPipeExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - pipes.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-source-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: !Ref PublicKeyTableArn
+        - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-target-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource: !Ref ApikeyInternalQueueARN
 
   ApikeyManagerMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
