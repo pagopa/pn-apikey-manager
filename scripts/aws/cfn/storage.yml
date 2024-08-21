@@ -33,6 +33,9 @@ Parameters:
     Type: Number
     Default: 14
 
+  AlarmSNSTopicName:
+    Type: String
+
 Resources:
 
   # pn-apiKey DynamoDB table
@@ -215,18 +218,18 @@ Resources:
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-paAggregations'
 
-  ApikeyInternalQueue:
+  ApikeyManagerInternalQueue:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
-        QueueName: !Sub '${ProjectName}-apikey-internal-queue'
+        QueueName: !Sub '${ProjectName}-apikey_manager_internal_queue'
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
-        VisibilityTimeout: 180
+        VisibilityTimeout: 60
         MaxReceiveCount: 10
-        DelaySeconds: 3
+        DelaySeconds: 1
 
   UsagePlanSmall:
     Type: 'AWS::ApiGateway::UsagePlan'
@@ -324,15 +327,15 @@ Outputs:
     Description: Id Usage Plan default
     Value: !Ref UsagePlanMedium
 
-  # ApikeyInternalQueue Queue
-  ApikeyInternalQueueName:
-    Value: !GetAtt ApikeyInternalQueue.Outputs.QueueName
-  ApikeyInternalQueueARN:
-    Value: !GetAtt ApikeyInternalQueue.Outputs.QueueARN
-  ApikeyInternalQueueDLQName:
-    Value: !GetAtt ApikeyInternalQueue.Outputs.DeadLetterQueueName
-  ApikeyInternalQueueDLQARN:
-    Value: !GetAtt ApikeyInternalQueue.Outputs.DeadLetterQueueARN
+  # ApikeyManagerInternalQueue Queue
+  ApikeyManagerInternalQueueName:
+    Value: !GetAtt ApikeyManagerInternalQueue.Outputs.QueueName
+  ApikeyManagerInternalQueueARN:
+    Value: !GetAtt ApikeyManagerInternalQueue.Outputs.QueueARN
+  ApikeyManagerInternalQueueDLQName:
+    Value: !GetAtt ApikeyManagerInternalQueue.Outputs.DeadLetterQueueName
+  ApikeyManagerInternalQueueDLQARN:
+    Value: !GetAtt ApikeyManagerInternalQueue.Outputs.DeadLetterQueueARN
 
   # Log group exports
   EcsLogGroup:
