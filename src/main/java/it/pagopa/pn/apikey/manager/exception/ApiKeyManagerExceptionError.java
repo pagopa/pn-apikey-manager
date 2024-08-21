@@ -13,5 +13,6 @@ public class ApiKeyManagerExceptionError {
     public static final String AGGREGATE_NOT_FOUND = "Aggregato non trovato";
 
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
+    public static final String ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED = "ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED";
 
 }

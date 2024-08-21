@@ -18,4 +18,11 @@ public class PnApikeyManagerConfig {
     private String defaultPlan;
     private String scope;
     private String tag;
+
+    private Sqs sqs;
+
+    @Data
+    public static class Sqs {
+        private String pnApiKeyManagerInternalQueueName;
+    }
 }
