@@ -23,6 +23,6 @@ public class PnApikeyManagerConfig {
 
     @Data
     public static class Sqs {
-        private String pnApiKeyManagerInternalQueueName;
+        private String internalQueueName;
     }
 }

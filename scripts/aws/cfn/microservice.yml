@@ -284,7 +284,7 @@ Resources:
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
-        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyInternalQueueName}'
+        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_USAGEPLAN_SQS_INTERNALQUEUENAME=${ApikeyInternalQueueName}'
         ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
 
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
@@ -411,28 +411,15 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
-              - !Ref PublicKeyTableArn
               - !Sub '${AggregatesTableArn}/index/*'
               - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
-              - !Sub '${PublicKeyTableArn}/index/*'
           - Effect: Allow
             Action:
               - kms:Encrypt
               - kms:Decrypt
             Resource:
               - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${ApiKeyTablesEncryptKeyId}
-          - Effect: Allow
-            Action:
-              - sqs:SendMessage
-              - sqs:GetQueueUrl
-              - sqs:ChangeMessageVisibility
-              - sqs:DeleteMessage
-              - sqs:GetQueueAttributes
-              - sqs:ReceiveMessage
-            Resource:
-              - !Ref ApikeyInternalQueueARN
-              - !Ref ApikeyInternalQueueDLQARN
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
@@ -522,7 +509,6 @@ Resources:
           - - !Ref PaAggregationsTableName
             - !Ref AggregatesTableName
             - !Ref ApiKeyTableName
-            - !Ref PublicKeyTableName
         RestApiStageArns: !Join
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
@@ -531,9 +517,6 @@ Resources:
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
-        QueueArns: !Join
-          - ','
-          - - !Ref ApikeyInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn

@@ -1,5 +1,7 @@
 package it.pagopa.pn.apikey.manager.middleware.queue.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
@@ -26,6 +28,7 @@ import static it.pagopa.pn.apikey.manager.model.PublicKeyEventAction.JWKS;
 @RequiredArgsConstructor
 public class PnEventInboundService {
     private final EventHandler eventHandler;
+    private final ObjectMapper objectMapper;
     private final PnApikeyManagerConfig pnApikeyManagerConfig;
 
     @Bean
@@ -74,8 +77,15 @@ public class PnEventInboundService {
     private String handleOtherEvent(Message<?> message) {
         String eventType;
         String queueName = (String) message.getHeaders().get("aws_receivedQueue");
-        if (Objects.equals(queueName, pnApikeyManagerConfig.getSqs().getPnApiKeyManagerInternalQueueName())) {
-            PublicKeyEvent.Payload payload = (PublicKeyEvent.Payload) message.getPayload();
+        if (Objects.equals(queueName, pnApikeyManagerConfig.getSqs().getInternalQueueName())) {
+            PublicKeyEvent.Payload payload = null;
+            try {
+                payload = this.objectMapper.readValue((String) message.getPayload(), PublicKeyEvent.Payload.class);
+            } catch (JsonProcessingException e) {
+                log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
+                throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
+            }
+
             if(JWKS.name().equalsIgnoreCase(payload.getAction())) {
                 eventType = "JWKS_EVENTS";
             }
