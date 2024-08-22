@@ -27,6 +27,9 @@ import static it.pagopa.pn.apikey.manager.model.PublicKeyEventAction.JWKS;
 @Slf4j
 @RequiredArgsConstructor
 public class PnEventInboundService {
+    public static final String EVENT_TYPE_NOT_PRESENT_WITH_PARAMS = "eventType not present, cannot start scheduled action headers={} payload={}";
+    public static final String EVENT_TYPE_NOT_PRESENT = "eventType not present, cannot start scheduled action";
+
     private final EventHandler eventHandler;
     private final ObjectMapper objectMapper;
     private final PnApikeyManagerConfig pnApikeyManagerConfig;
@@ -82,8 +85,8 @@ public class PnEventInboundService {
             try {
                 payload = this.objectMapper.readValue((String) message.getPayload(), PublicKeyEvent.Payload.class);
             } catch (JsonProcessingException e) {
-                log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
-                throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
+                log.error(EVENT_TYPE_NOT_PRESENT_WITH_PARAMS, message.getHeaders(), message.getPayload());
+                throw new PnInternalException(EVENT_TYPE_NOT_PRESENT, ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
             }
 
             if(JWKS.name().equalsIgnoreCase(payload.getAction())) {
@@ -94,12 +97,12 @@ public class PnEventInboundService {
             }
             else {
                 log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
-                throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
+                throw new PnInternalException(EVENT_TYPE_NOT_PRESENT, ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
             }
         }
         else {
             log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
-            throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
+            throw new PnInternalException(EVENT_TYPE_NOT_PRESENT, ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
         }
         return eventType;
     }

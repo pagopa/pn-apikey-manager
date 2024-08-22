@@ -14,66 +14,66 @@ import java.util.List;
 @DynamoDbBean
 public class PublicKeyModel {
 
-    public static final String KID = "kid";
-    public static final String NAME = "name";
-    public static final String CORRELATION_ID = "correlationId";
-    public static final String PUBLIC_KEY = "publickey";
-    public static final String EXPIRE_AT = "expireAt";
-    public static final String CREATED_AT = "createdAt";
-    public static final String STATUS = "status";
-    public static final String CX_ID = "cxId";
-    public static final String STATUS_HISTORY = "statusHistory";
-    public static final String ISSUER = "issuer";
-    public static final String TTL = "ttl";
-    public static final String CHANGE_BY_DENOMINATION = "changeByDenomination";
-    public static final String DATE = "date";
+    public static final String COL_KID = "kid";
+    public static final String COL_NAME = "name";
+    public static final String COL_CORRELATION_ID = "correlationId";
+    public static final String COL_PUBLIC_KEY = "publickey";
+    public static final String COL_EXPIRE_AT = "expireAt";
+    public static final String COL_CREATED_AT = "createdAt";
+    public static final String COL_STATUS = "status";
+    public static final String COL_CX_ID = "cxId";
+    public static final String COL_STATUS_HISTORY = "statusHistory";
+    public static final String COL_ISSUER = "issuer";
+    public static final String COL_TTL = "ttl";
+    public static final String COL_CHANGE_BY_DENOMINATION = "changeByDenomination";
+    public static final String COL_DATE = "date";
 
     public static final String GSI_CXID_STATUS = "cxId-status-index";
     public static final String GSI_CXID_CREATEDAT = "cxId-createdAt-index";
 
     @Getter(onMethod=@__({
             @DynamoDbPartitionKey,
-            @DynamoDbAttribute(KID)
+            @DynamoDbAttribute(COL_KID)
     }))
     private String kid;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(NAME)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_NAME)}))
     private String name;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(CORRELATION_ID)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_CORRELATION_ID)}))
     private String correlationId;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(PUBLIC_KEY)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_PUBLIC_KEY)}))
     private String publicKey;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(EXPIRE_AT)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_EXPIRE_AT)}))
     private Instant expireAt;
 
     @Getter(onMethod = @__({
-            @DynamoDbAttribute(CREATED_AT),
+            @DynamoDbAttribute(COL_CREATED_AT),
             @DynamoDbSecondarySortKey(indexNames = GSI_CXID_CREATEDAT)}))
     private Instant createdAt;
 
     @Getter(onMethod = @__({
-            @DynamoDbAttribute(STATUS),
+            @DynamoDbAttribute(COL_STATUS),
             @DynamoDbSecondarySortKey(indexNames = GSI_CXID_STATUS)
     }))
     private String status;
 
     @Getter(onMethod = @__({
             @DynamoDbSortKey,
-            @DynamoDbAttribute(CX_ID),
+            @DynamoDbAttribute(COL_CX_ID),
             @DynamoDbSecondaryPartitionKey(indexNames = {GSI_CXID_STATUS, GSI_CXID_CREATEDAT}),
     }))
     private String cxId;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(STATUS_HISTORY)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_STATUS_HISTORY)}))
     private List<StatusHistoryItem> statusHistory = new ArrayList<>();
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(ISSUER)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_ISSUER)}))
     private String issuer;
 
-    @Getter(onMethod = @__({@DynamoDbAttribute(TTL)}))
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_TTL)}))
     private Instant ttl;
 
     public PublicKeyModel(PublicKeyModel publicKeyModel) {
@@ -94,13 +94,13 @@ public class PublicKeyModel {
     @NoArgsConstructor
     @DynamoDbBean
     public static class StatusHistoryItem {
-        @Getter(onMethod = @__({@DynamoDbAttribute(CHANGE_BY_DENOMINATION)}))
+        @Getter(onMethod = @__({@DynamoDbAttribute(COL_CHANGE_BY_DENOMINATION)}))
         private String changeByDenomination;
 
-        @Getter(onMethod = @__({@DynamoDbAttribute(DATE)}))
+        @Getter(onMethod = @__({@DynamoDbAttribute(COL_DATE)}))
         private Instant date;
 
-        @Getter(onMethod = @__({@DynamoDbAttribute(STATUS)}))
+        @Getter(onMethod = @__({@DynamoDbAttribute(COL_STATUS)}))
         private String status;
     }
 }

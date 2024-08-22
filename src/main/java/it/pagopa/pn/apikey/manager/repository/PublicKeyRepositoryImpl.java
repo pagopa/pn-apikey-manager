@@ -16,15 +16,13 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.HashMap;
 import java.util.Map;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_DOES_NOT_EXISTS;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.PUBLIC_KEY_DOES_NOT_EXISTS;
 import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
 
 @lombok.CustomLog
 @Component
 public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     private final DynamoDbAsyncTable<PublicKeyModel> table;
-    private static final int MIN_LIMIT = 100;
-    private static final int EXPRESSION_GROUP = 2;
 
     public PublicKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                    @Value("${pn.apikey.manager.dynamodb.tablename.publickey}") String tableName) {
@@ -37,13 +35,13 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     }
 
     @Override
-    public Mono<PublicKeyModel> findByKidAndCxId(String kid, String xPagopaPnCxId) {
+    public Mono<PublicKeyModel> findByKidAndCxId(PublicKeyModel publicKeyModel) {
         Key key = Key.builder()
-                .partitionValue(kid)
-                .sortValue(xPagopaPnCxId)
+                .partitionValue(publicKeyModel.getKid())
+                .sortValue(publicKeyModel.getCxId())
                 .build();
         return Mono.fromFuture(table.getItem(key))
-                .switchIfEmpty(Mono.error(new ApiKeyManagerException(APIKEY_DOES_NOT_EXISTS, HttpStatus.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException(PUBLIC_KEY_DOES_NOT_EXISTS, HttpStatus.NOT_FOUND)));
 
     }
 

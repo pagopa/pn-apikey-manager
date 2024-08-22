@@ -5,5 +5,5 @@ import reactor.core.publisher.Mono;
 
 public interface PublicKeyRepository {
     Mono<PublicKeyModel> changeStatus(PublicKeyModel publicKeyModel);
-    Mono<PublicKeyModel> findByKidAndCxId(String kid, String xPagopaPnCxId);
+    Mono<PublicKeyModel> findByKidAndCxId(PublicKeyModel publicKeyModel);
 }

@@ -47,9 +47,11 @@ class PublicKeyRepositoryImplTest {
     @Test
     void findByKidAndCxIdSuccessfully() {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setCxId("cxId");
         when(table.getItem(any(Key.class))).thenReturn(CompletableFuture.completedFuture(publicKeyModel));
 
-        Mono<PublicKeyModel> result = repository.findByKidAndCxId("kid", "cxId");
+        Mono<PublicKeyModel> result = repository.findByKidAndCxId(publicKeyModel);
 
         StepVerifier.create(result)
                 .expectNext(publicKeyModel)
@@ -59,8 +61,10 @@ class PublicKeyRepositoryImplTest {
     @Test
     void findByKidAndCxIdNotFound() {
         when(table.getItem(any(Key.class))).thenReturn(CompletableFuture.completedFuture(null));
-
-        Mono<PublicKeyModel> result = repository.findByKidAndCxId("kid", "cxId");
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setCxId("cxId");
+        Mono<PublicKeyModel> result = repository.findByKidAndCxId(publicKeyModel);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
