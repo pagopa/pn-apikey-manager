@@ -340,8 +340,8 @@ Resources:
               - sqs:GetQueueAttributes
               - sqs:ReceiveMessage
             Resource:
-              - !Ref ApikeyInternalQueueARN
-              - !Ref ApikeyInternalQueueDLQARN
+              - !Ref ApikeyManagerInternalQueueARN
+              - !Ref ApikeyManagerInternalQueueDLQARN
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
@@ -441,7 +441,7 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
         QueueArns: !Join
           - ','
-          - - !Ref ApikeyInternalQueueName
+          - - !Ref ApikeyManagerInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
