@@ -81,7 +81,7 @@ public class PnEventInboundService {
         String eventType;
         String queueName = (String) message.getHeaders().get("aws_receivedQueue");
         if (Objects.equals(queueName, pnApikeyManagerConfig.getSqs().getInternalQueueName())) {
-            PublicKeyEvent.Payload payload = null;
+            PublicKeyEvent.Payload payload;
             try {
                 payload = this.objectMapper.readValue((String) message.getPayload(), PublicKeyEvent.Payload.class);
             } catch (JsonProcessingException e) {
@@ -96,12 +96,12 @@ public class PnEventInboundService {
                 eventType = "DELETE_EVENTS";
             }
             else {
-                log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
+                log.error(EVENT_TYPE_NOT_PRESENT_WITH_PARAMS, message.getHeaders(), message.getPayload());
                 throw new PnInternalException(EVENT_TYPE_NOT_PRESENT, ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
             }
         }
         else {
-            log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
+            log.error(EVENT_TYPE_NOT_PRESENT_WITH_PARAMS, message.getHeaders(), message.getPayload());
             throw new PnInternalException(EVENT_TYPE_NOT_PRESENT, ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED);
         }
         return eventType;

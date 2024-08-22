@@ -14,6 +14,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.PUBLIC_KEY_DOES_NOT_EXISTS;
@@ -30,36 +31,38 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     }
 
     @Override
-    public Mono<PublicKeyModel> changeStatus(PublicKeyModel publicKeyModel) {
-        return Mono.fromFuture(table.updateItem(updateItemEnhancedRequest(publicKeyModel)));
+    public Mono<PublicKeyModel> updateItemStatus(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus) {
+        return Mono.fromFuture(table.updateItem(createUpdateItemEnhancedRequest(publicKeyModel, invalidStartedStatus)));
     }
 
     @Override
-    public Mono<PublicKeyModel> findByKidAndCxId(PublicKeyModel publicKeyModel) {
+    public Mono<PublicKeyModel> findByKidAndCxId(String kid, String cxId) {
         Key key = Key.builder()
-                .partitionValue(publicKeyModel.getKid())
-                .sortValue(publicKeyModel.getCxId())
+                .partitionValue(kid)
+                .sortValue(cxId)
                 .build();
         return Mono.fromFuture(table.getItem(key))
                 .switchIfEmpty(Mono.error(new ApiKeyManagerException(PUBLIC_KEY_DOES_NOT_EXISTS, HttpStatus.NOT_FOUND)));
 
     }
 
-    private UpdateItemEnhancedRequest<PublicKeyModel> updateItemEnhancedRequest(PublicKeyModel publicKeyModel) {
-        Map<String, String> expressionNames = new HashMap<>();
-        expressionNames.put("#kid", "kid");
-        expressionNames.put("#cxId", "cxId");
+        private UpdateItemEnhancedRequest<PublicKeyModel> createUpdateItemEnhancedRequest(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus) {
+            Map<String, String> expressionNames = new HashMap<>();
+            expressionNames.put("#status", "status");
 
-        Map<String, AttributeValue> expressionValues = new HashMap<>();
-        expressionValues.put(":kid", AttributeValue.builder().s(publicKeyModel.getKid()).build());
-        expressionValues.put(":cxId", AttributeValue.builder().s(publicKeyModel.getCxId()).build());
+            Map<String, AttributeValue> expressionValues = new HashMap<>();
+            StringBuilder expressionBuilder = new StringBuilder();
+            invalidStartedStatus.forEach(status -> {
+                expressionValues.put(":" + status, AttributeValue.builder().s(status).build());
+                expressionBuilder.append("#status <> :").append(status).append(" AND ");
+            });
 
-        return UpdateItemEnhancedRequest
-                .builder(PublicKeyModel.class)
-                .conditionExpression(expressionBuilder("#kid = :kid AND #cxId = :cxId", expressionValues, expressionNames))
-                .item(publicKeyModel)
-                .ignoreNulls(true)
-                .build();
-    }
+            return UpdateItemEnhancedRequest
+                    .builder(PublicKeyModel.class)
+                    .conditionExpression(expressionBuilder(expressionBuilder.toString(), expressionValues, expressionNames))
+                    .item(publicKeyModel)
+                    .ignoreNulls(true)
+                    .build();
+        }
 
 }

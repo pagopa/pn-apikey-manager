@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -15,6 +14,9 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+import java.util.Collections;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,28 +25,44 @@ public class PublicKeyService {
 
     private final PublicKeyRepository repository;
     private final PnAuditLogBuilder auditLogBuilder;
-    private final PublicKeyConverter converter;
     private final PublicKeyValidator validator;
 
-    public Mono<PublicKeyModel> handlePublicKeyEvent(Message<PublicKeyEvent.Payload> message) {
+    private static final String AUTOMATIC_DELETE = "AUTOMATIC_DELETE";
+
+    public Mono<PublicKeyModel> handlePublicKeyTtlEvent(Message<PublicKeyEvent.Payload> message) {
 
         PnAuditLogEvent logEvent = this.logMessage(message);
 
-        return Mono.just(message.getPayload())
-                .flatMap(validator::validatePayload)
-                .flatMap(converter::convertPayloadToModel)
-                .flatMap(repository::findByKidAndCxId)
-                .flatMap(validator::validateModel)
+        PublicKeyEvent.Payload publicKeyEvent = message.getPayload();
+        validator.validatePayload(publicKeyEvent);
+        String kid = retrieveBaseKidFromPayload(publicKeyEvent.getKid());
+
+        return validator.validatePayload(publicKeyEvent)
+                .flatMap(payload -> repository.findByKidAndCxId(kid, publicKeyEvent.getCxId()))
+                .flatMap(validator::checkItemExpiration)
                 .flatMap(publicKeyModel -> {
-                    publicKeyModel.setStatus("DELETED");
-                    return repository.changeStatus(publicKeyModel);
+                    publicKeyModel.setStatus("DELETED"); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
+                    publicKeyModel.getStatusHistory().add(createNewPublicKeyHistory("DELETED", AUTOMATIC_DELETE)); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
+                    return repository.updateItemStatus(publicKeyModel, Collections.singletonList("DELETED")); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
                 })
-                .doOnNext(responsePdndDto -> logEvent.generateSuccess().log())
+                .doOnNext(item -> logEvent.generateSuccess().log())
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
 
+    private String retrieveBaseKidFromPayload(String kid) {
+        return kid.replace("_COPY", "");
+    }
+
+    protected PublicKeyModel.StatusHistoryItem createNewPublicKeyHistory(String status, String changeByDenomination) {
+        PublicKeyModel.StatusHistoryItem historyItem = new PublicKeyModel.StatusHistoryItem();
+        historyItem.setDate(Instant.now());
+        historyItem.setStatus(status);
+        historyItem.setChangeByDenomination(changeByDenomination);
+        return historyItem;
+    }
+
     public PnAuditLogEvent logMessage(Message<PublicKeyEvent.Payload> message) {
-        String logMessage = String.format("Cambio stato in DELETED per la public Key - kid=%s - cxid=%s",
+        String logMessage = String.format("Copied Public Key with kid=%s - cxid=%s was deleted by TTL, start verify related publicKey to update status to DELETED",
                 message.getPayload().getKid(),
                 message.getPayload().getCxId());
 

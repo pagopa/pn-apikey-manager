@@ -36,12 +36,12 @@ class PublicKeyTtlEventHandlerTest {
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
-        when(publicKeyService.handlePublicKeyEvent(any())).thenReturn(Mono.empty());
+        when(publicKeyService.handlePublicKeyTtlEvent(any())).thenReturn(Mono.empty());
 
         Consumer<Message<PublicKeyEvent.Payload>> consumer = handler.pnPublicKeyTtlEventInboundConsumer();
         consumer.accept(message);
 
-        verify(publicKeyService, times(1)).handlePublicKeyEvent(message);
+        verify(publicKeyService, times(1)).handlePublicKeyTtlEvent(message);
     }
 
     @Test
@@ -49,7 +49,7 @@ class PublicKeyTtlEventHandlerTest {
         MessageHeaders messageHeaders = new MessageHeaders(null);
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-        when(publicKeyService.handlePublicKeyEvent(any())).thenReturn(Mono.error(mock(PnRuntimeException.class)));
+        when(publicKeyService.handlePublicKeyTtlEvent(any())).thenReturn(Mono.error(mock(PnRuntimeException.class)));
 
         Assertions.assertThrows(PnRuntimeException.class, () -> handler.pnPublicKeyTtlEventInboundConsumer().accept(message));
     }

@@ -19,6 +19,7 @@ import reactor.test.StepVerifier;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
@@ -26,14 +27,13 @@ class PublicKeyServiceTest {
 
     private PublicKeyService publicKeyService;
     private PublicKeyRepository publicKeyRepository;
-    private PublicKeyConverter converter = new PublicKeyConverter();
     private PublicKeyValidator validator = new PublicKeyValidator();
     private PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
 
     @BeforeEach
     void setUp() {
         publicKeyRepository = mock(PublicKeyRepository.class);
-        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, converter, validator);
+        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
     }
 
     @Test
@@ -48,13 +48,13 @@ class PublicKeyServiceTest {
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
-        when(publicKeyRepository.findByKidAndCxId(any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.changeStatus(any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.updateItemStatus(any(), anyList())).thenReturn(Mono.just(publicKeyModel));
 
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyEvent(message);
+        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
         StepVerifier.create(result)
-                .expectNextMatches(model -> "DELETED".equals(model.getStatus()))
+                .expectNext(publicKeyModel)
                 .verifyComplete();
     }
 
@@ -64,9 +64,9 @@ class PublicKeyServiceTest {
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
-        when(publicKeyRepository.findByKidAndCxId(any())).thenReturn(Mono.error(new RuntimeException("Key not found")));
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.error(new RuntimeException("Key not found")));
 
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyEvent(message);
+        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
@@ -80,20 +80,20 @@ class PublicKeyServiceTest {
         publicKeyModel.setExpireAt(Instant.now().plusSeconds(60));
         publicKeyModel.setKid("kid");
         publicKeyModel.setCxId("cxId");
-        publicKeyModel.setStatus("DELETE");
+        publicKeyModel.setStatus("PENDING");
 
         MessageHeaders messageHeaders = new MessageHeaders(null);
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
-        when(publicKeyRepository.findByKidAndCxId(any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.updateItemStatus(any(), anyList())).thenReturn(Mono.just(publicKeyModel));
 
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyEvent(message);
+        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals(String.format("The key with kid %s and cxid %s, is not expired.", publicKeyModel.getKid(), publicKeyModel.getCxId())))
-                .verify();
+                .expectNext(publicKeyModel)
+                .verifyComplete();
     }
 
     @Test
@@ -102,7 +102,7 @@ class PublicKeyServiceTest {
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("").cxId("").action("DELETE").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyEvent(message);
+        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
@@ -116,7 +116,7 @@ class PublicKeyServiceTest {
         PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("RESUME").build();
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyEvent(message);
+        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&

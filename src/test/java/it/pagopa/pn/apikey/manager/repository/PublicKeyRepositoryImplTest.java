@@ -13,6 +13,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,7 +38,7 @@ class PublicKeyRepositoryImplTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         when(table.updateItem(any(UpdateItemEnhancedRequest.class))).thenReturn(CompletableFuture.completedFuture(publicKeyModel));
 
-        Mono<PublicKeyModel> result = repository.changeStatus(publicKeyModel);
+        Mono<PublicKeyModel> result = repository.updateItemStatus(publicKeyModel, Collections.singletonList("DELETED"));
 
         StepVerifier.create(result)
                 .expectNext(publicKeyModel)
@@ -51,7 +52,7 @@ class PublicKeyRepositoryImplTest {
         publicKeyModel.setCxId("cxId");
         when(table.getItem(any(Key.class))).thenReturn(CompletableFuture.completedFuture(publicKeyModel));
 
-        Mono<PublicKeyModel> result = repository.findByKidAndCxId(publicKeyModel);
+        Mono<PublicKeyModel> result = repository.findByKidAndCxId("kid", "cxId");
 
         StepVerifier.create(result)
                 .expectNext(publicKeyModel)
@@ -64,7 +65,7 @@ class PublicKeyRepositoryImplTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
         publicKeyModel.setCxId("cxId");
-        Mono<PublicKeyModel> result = repository.findByKidAndCxId(publicKeyModel);
+        Mono<PublicKeyModel> result = repository.findByKidAndCxId("kid","cxId");
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
