@@ -29,6 +29,7 @@ public class PublicKeyValidator {
         if (Instant.now().isBefore(publicKeyModel.getExpireAt())) {
             log.warn(String.format("PublicKey with kid [%s] and cxid [%s], is not expired. Event will ignore",
                     publicKeyModel.getKid(), publicKeyModel.getCxId()));
+            return Mono.empty();
         }
         return Mono.just(publicKeyModel);
     }

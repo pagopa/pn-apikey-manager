@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.PUBLIC_KEY_DOES_NOT_EXISTS;
 import static it.pagopa.pn.apikey.manager.utils.QueryUtils.expressionBuilder;
@@ -26,7 +27,7 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     private final DynamoDbAsyncTable<PublicKeyModel> table;
 
     public PublicKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
-                                   @Value("${pn.apikey.manager.dynamodb.tablename.publickey}") String tableName) {
+                                   @Value("${pn.apikey.manager.dao.publickeytablename}") String tableName) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PublicKeyModel.class));
     }
 
@@ -52,9 +53,13 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
 
             Map<String, AttributeValue> expressionValues = new HashMap<>();
             StringBuilder expressionBuilder = new StringBuilder();
-            invalidStartedStatus.forEach(status -> {
-                expressionValues.put(":" + status, AttributeValue.builder().s(status).build());
-                expressionBuilder.append("#status <> :").append(status).append(" AND ");
+            IntStream.range(0, invalidStartedStatus.size()).forEach(idx -> {
+                expressionValues.put(":" + invalidStartedStatus.get(idx), AttributeValue.builder().s(invalidStartedStatus.get(idx)).build());
+                if(idx == invalidStartedStatus.size() - 1) {
+                    expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx));
+                } else {
+                    expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx)).append(" AND ");
+                }
             });
 
             return UpdateItemEnhancedRequest

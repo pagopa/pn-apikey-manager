@@ -34,7 +34,6 @@ public class PublicKeyService {
         PnAuditLogEvent logEvent = this.logMessage(message);
 
         PublicKeyEvent.Payload publicKeyEvent = message.getPayload();
-        validator.validatePayload(publicKeyEvent);
         String kid = retrieveBaseKidFromPayload(publicKeyEvent.getKid());
 
         return validator.validatePayload(publicKeyEvent)

@@ -92,7 +92,6 @@ class PublicKeyServiceTest {
         Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
         StepVerifier.create(result)
-                .expectNext(publicKeyModel)
                 .verifyComplete();
     }
 
