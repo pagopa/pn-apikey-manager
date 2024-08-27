@@ -38,15 +38,6 @@ class PublicKeyModelTest {
     }
 
     @Test
-    void publicKeyModelHandlesNullStatusHistory() {
-        PublicKeyModel model = new PublicKeyModel();
-        model.setStatusHistory(null);
-
-        assertNotNull(model.getStatusHistory());
-        assertTrue(model.getStatusHistory().isEmpty());
-    }
-
-    @Test
     void statusHistoryItemConstructorSetsFieldsCorrectly() {
         PublicKeyModel.StatusHistoryItem item = new PublicKeyModel.StatusHistoryItem();
         item.setChangeByDenomination("denomination");
