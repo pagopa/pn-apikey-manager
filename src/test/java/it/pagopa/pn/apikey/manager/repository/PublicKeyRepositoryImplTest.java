@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.repository;
 
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,8 +30,12 @@ class PublicKeyRepositoryImplTest {
         DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient = mock(DynamoDbEnhancedAsyncClient.class);
         table = mock(DynamoDbAsyncTable.class);
         when(dynamoDbEnhancedClient.table(anyString(), any(TableSchema.class))).thenReturn(table);
+        PnApikeyManagerConfig pnApikeyManagerConfig = new PnApikeyManagerConfig();
+        PnApikeyManagerConfig.Dao dao = new PnApikeyManagerConfig.Dao();
+        dao.setPublicKeyTableName("pn-publicKey");
+        pnApikeyManagerConfig.setDao(dao);
 
-        repository = new PublicKeyRepositoryImpl(dynamoDbEnhancedClient, "tableName");
+        repository = new PublicKeyRepositoryImpl(dynamoDbEnhancedClient, pnApikeyManagerConfig);
     }
 
     @Test
