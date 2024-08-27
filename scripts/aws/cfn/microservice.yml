@@ -103,10 +103,6 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
 
-  PublicKeyTableName:
-    Type: String
-    Description: 'Name of dynamodb table containing public keys'
-
   FlagPdnd:
     Type: String
     Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
@@ -263,9 +259,7 @@ Resources:
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
-        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
         ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
-        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
 
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
