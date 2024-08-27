@@ -322,7 +322,7 @@ Resources:
           {
             "cxId": <$.dynamodb.Keys.cxId.S>,
             "kid": <$.dynamodb.Keys.kid.S>,
-            "action": "JWKS"
+            "action": "DELETE"
           }
 
   PgPublicKeyPipe:
