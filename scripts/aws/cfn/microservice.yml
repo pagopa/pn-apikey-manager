@@ -107,10 +107,6 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
 
-  PublicKeyTableName:
-    Type: String
-    Description: 'Name of dynamodb table containing public keys'
-
   PublicKeyTableStreamArn:
     Type: String
     Description: 'Arn of dynamodb table stream containing Public Key information'
@@ -119,21 +115,9 @@ Parameters:
     Type: String
     Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
 
-  ApikeyManagerInternalQueueName:
-    Type: String
-    Description: 'Name of Internal queue'
-
   ApikeyManagerInternalQueueARN:
     Type: String
     Description: 'ARN for ApikeyManagerInternalQueue'
-
-  ApikeyManagerInternalQueueDLQName:
-    Type: String
-    Description: 'Name of Internal queue DLQ'
-
-  ApikeyManagerInternalQueueDLQARN:
-    Type: String
-    Description: 'ARN for ApikeyManagerInternalQueue DLQ'
 
   ApiKeyManagerPipeBatchSize:
     Type: Number
@@ -288,10 +272,6 @@ Resources:
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
-        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
-        ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
-        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
-
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds
@@ -416,28 +396,15 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
-              - !Ref PublicKeyTableArn
               - !Sub '${AggregatesTableArn}/index/*'
               - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
-              - !Sub '${PublicKeyTableArn}/index/*'
           - Effect: Allow
             Action:
               - kms:Encrypt
               - kms:Decrypt
             Resource:
               - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${ApiKeyTablesEncryptKeyId}
-          - Effect: Allow
-            Action:
-              - sqs:SendMessage
-              - sqs:GetQueueUrl
-              - sqs:ChangeMessageVisibility
-              - sqs:DeleteMessage
-              - sqs:GetQueueAttributes
-              - sqs:ReceiveMessage
-            Resource:
-              - !Ref ApikeyManagerInternalQueueARN
-              - !Ref ApikeyManagerInternalQueueDLQARN
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
@@ -527,7 +494,6 @@ Resources:
           - - !Ref PaAggregationsTableName
             - !Ref AggregatesTableName
             - !Ref ApiKeyTableName
-            - !Ref PublicKeyTableName
         RestApiStageArns: !Join
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
@@ -536,9 +502,6 @@ Resources:
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
-        QueueArns: !Join
-          - ','
-          - - !Ref ApikeyManagerInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
@@ -548,4 +511,4 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
         LogGroupsNames: !Join
           - ','
-          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'    
+          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'
