@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +28,7 @@ class ApiGatewayServiceTest {
     ApiGatewayAsyncClient apiGatewayAsyncClient;
 
     @MockBean
-    PnApikeyManagerConfig pnApikeyManagerConfig;
+    PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     @Test
     void moveApiKeyToNewUsagePlan() {
