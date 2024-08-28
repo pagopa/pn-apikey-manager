@@ -146,29 +146,4 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
         }
     ]'
 
-echo "### CREATE AUTH JWT ISSUERS TABLE ###"
-
-aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
-    dynamodb create-table \
-    --table-name pn-AuthJwtIssuer \
-    --attribute-definitions \
-        AttributeName=hashKey,AttributeType=S \
-        AttributeName=sortKey,AttributeType=S \
-    --key-schema \
-        AttributeName=hashKey,KeyType=HASH \
-        AttributeName=sortKey,KeyType=RANGE \
-    --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 \
-    --global-secondary-indexes \
-    '[
-        {
-            "IndexName": "hashKey-sortKey-index",
-            "KeySchema": [
-                {"AttributeName":"hashKey","KeyType":"HASH"},
-                {"AttributeName":"sortKey","KeyType":"RANGE"}
-            ],
-            "Projection": {"ProjectionType":"ALL"},
-            "ProvisionedThroughput": {"ReadCapacityUnits": 10, "WriteCapacityUnits": 5}
-        }
-    ]'
-
 echo "Initialization terminated"
