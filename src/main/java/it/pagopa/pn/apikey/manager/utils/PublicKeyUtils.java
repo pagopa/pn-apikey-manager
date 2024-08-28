@@ -26,8 +26,8 @@ public class PublicKeyUtils {
     public static Mono<PublicKeyRequestDto> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups, PublicKeyRequestDto dto) {
         String process = "validating access admin only";
         log.logChecking(process);
-        if (CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
-                && (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
+        if (!CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
+                || (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
 
             log.logCheckingOutcome(process, false, "only a PG admin can access this resource");
             return Mono.error(new PnForbiddenException());

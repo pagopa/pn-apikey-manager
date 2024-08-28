@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
@@ -43,9 +44,9 @@ public class PublicKeyService {
 
         return cachedRequestDto.flatMap(dto -> PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups, dto))
                 .flatMap(validator::validatePublicKeyRequest)
-                .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, "ACTIVE").hasElements())
+                .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()).hasElements())
                 .zipWith(cachedRequestDto)
-                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists.", HttpStatus.BAD_REQUEST))
+                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.BAD_REQUEST))
                         : createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, response.getT2()))
                 .flatMap(publicKeyRepository::save)
                 .flatMap(model -> {
@@ -70,9 +71,9 @@ public class PublicKeyService {
         model.setPublicKey(publicKeyRequestDto.getPublicKey());
         model.setExpireAt(Instant.now().plus(355, ChronoUnit.DAYS));
         model.setCreatedAt(Instant.now());
-        model.setStatus("ACTIVE");
+        model.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
         model.setCxId(xPagopaPnCxId);
-        model.setStatusHistory(List.of(createNewHistoryItem(xPagopaPnUid, "CREATED")));
+        model.setStatusHistory(List.of(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.CREATED.getValue())));
         model.setIssuer(xPagopaPnCxId);
         return Mono.just(model);
     }
@@ -81,10 +82,10 @@ public class PublicKeyService {
         return UUID.nameUUIDFromBytes((publicKey+name).getBytes()).toString();
     }
 
-    private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String created) {
+    private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String status) {
         PublicKeyModel.StatusHistoryItem statusHistoryItem = new PublicKeyModel.StatusHistoryItem();
         statusHistoryItem.setChangeByDenomination(xPagopaPnUid);
-        statusHistoryItem.setStatus(created);
+        statusHistoryItem.setStatus(status);
         statusHistoryItem.setDate(Instant.now());
         return statusHistoryItem;
     }

@@ -87,7 +87,7 @@ class PublicKeyServiceTest {
         dto.setPublicKey("publicKey");
 
         StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(dto), List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key with status ACTIVE already exists."))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key with status ACTIVE already exists, to create a new public key use the rotate operation."))
                 .verify();
     }
 
