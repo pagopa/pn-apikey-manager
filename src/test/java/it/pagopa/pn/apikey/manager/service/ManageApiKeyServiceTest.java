@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
@@ -66,7 +66,7 @@ class ManageApiKeyServiceTest {
     private ApiKeyBoConverter apiKeyBoConverter;
 
     @MockBean
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
+    private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
