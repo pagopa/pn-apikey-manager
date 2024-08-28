@@ -1,7 +1,9 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +23,17 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     public PublicKeyRepositoryImpl(DynamoDbEnhancedAsyncClient dynamoDbEnhancedClient,
                                    @Value("${pn.apikey.manager.dao.publickeytablename}") String tableName) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(PublicKeyModel.class));
+    }
+
+    @Override
+    public Mono<PublicKeyModel> findByKidAndCxId(String kid, String cxId) {
+        Key key = Key.builder()
+                .partitionValue(kid)
+                .sortValue(cxId)
+                .build();
+        return Mono.fromFuture(table.getItem(key))
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException("Public key does not exists", HttpStatus.NOT_FOUND)));
+
     }
 
     @Override

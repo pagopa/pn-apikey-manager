@@ -29,12 +29,13 @@ class PublicKeyServiceTest {
 
     private PublicKeyService publicKeyService;
     private PublicKeyRepository publicKeyRepository;
-    private final PublicKeyValidator validator = new PublicKeyValidator();
+    private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
 
     @BeforeEach
     void setUp() {
         publicKeyRepository = mock(PublicKeyRepository.class);
+        validator = new PublicKeyValidator(publicKeyRepository);
         publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
     }
 
@@ -67,7 +68,7 @@ class PublicKeyServiceTest {
         
 
         when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ROTATED"))).thenReturn(Flux.empty());
-        when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ACTIVE"))).thenReturn(Flux.just(publicKeyModel));
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
 
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModelCopy));
@@ -78,12 +79,13 @@ class PublicKeyServiceTest {
     }
 
     @Test
-    void rotatePublicKey_withExistingActiveKey_throwsApiKeyManagerException() {
+    void rotatePublicKey_withExistingRotatedKey_throwsApiKeyManagerException() {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
         publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
         publicKeyModel.setIssuer("issuer");
-        when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ROTATED"))).thenReturn(Flux.just(publicKeyModel));
+        publicKeyModel.setStatus("ROTATED");
+        when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.just(publicKeyModel));
         PublicKeyRequestDto dto = new PublicKeyRequestDto();
         dto.setName("Test Key");
         dto.setPublicKey("publicKey");
@@ -95,14 +97,17 @@ class PublicKeyServiceTest {
 
     @Test
     void rotatePublicKey_withInvalidCxType_throwsApiKeyManagerException() {
-        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(new PublicKeyRequestDto()), "uid", CxTypeAuthFleetDto.PA, "cxId", "kid", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(new PublicKeyRequestDto()), "uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, "ADMIN"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("CxTypeAuthFleet PA not allowed"))
                 .verify();
     }
 
     @Test
     void rotatePublicKey_withInvalidRole_throwsApiKeyManagerException() {
-        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(new PublicKeyRequestDto()), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "USER"))
+        PublicKeyRequestDto dto = new PublicKeyRequestDto();
+        dto.setName("Test Key");
+        dto.setPublicKey("publicKey");
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "USER"))
                 .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException && throwable.getMessage().contains("Accesso negato!"))
                 .verify();
     }

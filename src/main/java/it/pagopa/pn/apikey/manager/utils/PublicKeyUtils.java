@@ -21,19 +21,18 @@ public class PublicKeyUtils {
      * @param pnCxType   tipo utente (PF, PG, PA)
      * @param pnCxRole   ruolo (admin, operator)
      * @param pnCxGroups gruppi
-     * @param dto
      */
-    public static Mono<PublicKeyRequestDto> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups, PublicKeyRequestDto dto) {
+    public static Mono<Boolean> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups) {
         String process = "validating access admin only";
         log.logChecking(process);
-        if (CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
-                && (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
+        if (!CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
+                || (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
 
             log.logCheckingOutcome(process, false, "only a PG admin can access this resource");
             return Mono.error(new PnForbiddenException());
         }
         log.debug("access granted for {}, role: {}, groups: {}", pnCxType, pnCxRole, pnCxGroups);
         log.logCheckingOutcome(process, true);
-        return Mono.just(dto);
+        return Mono.just(true);
     }
 }
