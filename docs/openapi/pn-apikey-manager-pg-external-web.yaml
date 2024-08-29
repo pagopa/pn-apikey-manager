@@ -2,12 +2,12 @@ openapi: 3.0.3
 info:
   termsOfService: https://termofservice.it
   x-api-id: api-internal-web-pa
-  title: 'Piattaforma Notifiche: API per il Front End delle PA'
-  x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
+  title: 'Piattaforma Notifiche: API per il Front End delle PG destinatarie'
+  x-summary: 'Piattaforma Notifiche: API per il Front End delle PG destinatarie'
   version: '2.0.0'
   description: >-
     ## Abstract
-      API utilizzate dal portale di Piattaforma Notifiche dedicato alle Pubbliche Amministrazioni
+      API utilizzate dal portale di Piattaforma Notifiche dedicato alle Persone Giuridiche destinatarie
   contact:
     email: pn@pagopa.it
   license:
@@ -21,20 +21,21 @@ servers:
   - url: https://webapi.dev.pn.pagopa.it
     description: Ambiente di sviluppo
 tags:
-  - name: ApiKeys
+  - name: PublicKeys
     description: >-
-      Invocazioni utilizzabili dai mittenti per la gestione delle api keys
+      Invocazioni utilizzabili dalle PG destinatarie per la gestione delle public keys
 
 
 paths:
-  "/api-key-self/api-keys":
+  "/pg-self/public-keys":
     get:
-      summary: Ricerca api keys
+      summary: Ricerca public keys
       description: >-
-        servizio di consultazione della lista delle api keys
+        servizio di consultazione della lista delle public keys
       tags:
-        - ApiKeys
-      operationId: getApiKeys
+        - PublicKeys
+      operationId: getPublicKeys
+      parameters:
         - name: limit
           in: query
           schema:
@@ -45,25 +46,24 @@ paths:
           required: false
           schema:
             type: string
-        - name: lastUpdate
+        - name: createdAt
           in: query
           required: false
           schema:
             type: string
-        - name: showVirtualKey
+        - name: showPublicKey
           in: query
           required: false
           schema:
             type: boolean
             default: false
-
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKeysResponse'
+                $ref: '#/components/schemas/PublicKeysResponse'
         '400':
           description: Bad request
           content:
@@ -76,18 +76,20 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  "/pg-self/public-key":
     post:
-      summary: Creazione api key
+      summary: Censimento public key
       description: >-
-        servizio di creazione di un'api key
+        servizio di censimento di una public key
       tags:
-        - ApiKeys
-      operationId: newApiKey
+        - PublicKeys
+      operationId: newPublicKey
+      parameters:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RequestNewApiKey"
+              $ref: "#/components/schemas/PublicKeyRequest"
         required: true
       responses:
         '200':
@@ -95,7 +97,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseNewApiKey'
+                $ref: '#/components/schemas/PublicKeyResponse'
         '400':
           description: Bad request
           content:
@@ -108,20 +110,19 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-
-  "/api-key-self/api-keys/{id}":
-    delete:
-      summary: Rimozione api key
+  "/pg-self/public-key/{kid}/delete":
+    put:
+      summary: Rimozione public key
       description: >-
-        servizio di rimozione dell'api key
+        servizio di rimozione della public key identificata tramite Kid
       tags:
-        - ApiKeys
-      operationId: deleteApiKeys
+        - PublicKeys
+      operationId: deletePublicKeys
       parameters:
-        - $ref: '#/components/parameters/pathApiKey'
+        - $ref: '#/components/parameters/pathKid'
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No content
         '400':
           description: Bad request
           content:
@@ -147,25 +148,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/api-key-self/api-keys/{id}/status":
+  "/pg-self/public-key/{kid}/status":
     put:
-      summary: Cambia lo stato dell'api key
+      summary: Blocco/Riattivazione public key
       description: >-
-        servizio di cambio stato dell'api key
+        servizio di blocco/riattivazione della public key identificata tramite Kid
       tags:
-        - ApiKeys
-      operationId: changeStatusApiKey
+        - PublicKeys
+      operationId: changeStatusPublicKey
       parameters:
-        - $ref: '#/components/parameters/pathApiKey'
+        - $ref: '#/components/parameters/pathKid'
+        - $ref: '#/components/parameters/queryStatus'
+      responses:
+        '204':
+          description: No content
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  "/pg-self/public-key/{kid}/rotate":
+    post:
+      summary: Rotazione public key
+      description: >-
+        servizio di rotazione della public key identificata tramite Kid
+      tags:
+        - PublicKeys
+      operationId: rotatePublicKey
+      parameters:
+        - $ref: '#/components/parameters/pathKid'
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RequestApiKeyStatus"
+              $ref: "#/components/schemas/PublicKeyRequest"
         required: true
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKeyResponse'
         '400':
           description: Bad request
           content:
@@ -198,26 +241,34 @@ components:
     ############################################################################################
     ### N.B. PRENDERLE DA AUTH FLEET ###
       required: false
-
-    ############################################################################################
-    ###                        PARAMETRI RICERCA API KEY                                     ###
-    ############################################################################################
-    pathApiKey:
+    cxRoleAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxRoleAuthFleet'
+    pathKid:
       description: >-
-        Identificativo univoco dell'api key
-      name: id
+           Identificativo univoco della public key
+      name: kid
       in: path
       required: true
       schema:
         type: string
+    queryStatus:
+      description: >-
+        Action per il cambio stato di una public key
+      name: status
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+          - 'BLOCK'
+          - 'ENABLE'
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
-
-    ApiKeysResponse:
-      title: Elenco di api keys
+    PublicKeysResponse:
+      title: Elenco di public keys
       description: >-
-        Dto contenente la lista delle api keys associate ad un utente.
+        Dto contenente la lista delle public keys associate ad una pg.
       type: object
       required:
         - items
@@ -225,53 +276,45 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ApiKeyRow'
+            $ref: '#/components/schemas/PublicKeyRow'
         lastKey:
           type: string
-        lastUpdate:
+        createdAt:
           type: string
         total:
           type: integer
-
-    ApiKeyRow:
+    PublicKeyRow:
       type: object
       properties:
-        id:
+        kid:
           type: string
-          description: Id dell'api key
+          description: Id della public key
         name:
           type: string
-          description: Nome dell'api key
+          description: Nome della public key
         value:
           type: string
-          description: Valore dell'api key
-        lastUpdate:
+          description: Valore dell public key restituito solo se il query param showPublicKey == True
+        createdAt:
           type: string
-          description: Data ultima modifica
+          description: Data censimento public key
           format: date-time
-        groups:
-          type: array
-          description: Gruppi a cui appartiene l'api key
-          items:
-            type: string
         status:
-          $ref: '#/components/schemas/ApiKeyStatus'
+          $ref: '#/components/schemas/PublicKeyStatus'
         statusHistory:
           type: array
-          description: Storico degli stati dell'api key
+          description: Storico degli stati delle public key
           items:
-            $ref: '#/components/schemas/ApiKeyStatusHistory'
-
-    ApiKeyStatus:
-      description: Stato dell'api key
+            $ref: '#/components/schemas/PublicKeyStatusHistory'
+    PublicKeyStatus:
+      description: Stato della public key
       type: string
-      enum: ['CREATED', 'ENABLED', 'BLOCKED', 'ROTATED']
-
-    ApiKeyStatusHistory:
+      enum: ['CREATED', 'ACTIVE', 'ROTATED', 'BLOCKED', 'DELETED']
+    PublicKeyStatusHistory:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/ApiKeyStatus'
+          $ref: '#/components/schemas/PublicKeyStatus'
         date:
           type: string
           description: data a cui corrisponde il cambio di stato
@@ -279,58 +322,35 @@ components:
         changedByDenomination:
           type: string
           description: nome dell'utente che ha effettuato il cambio di stato
-
-    RequestNewApiKey:
-      title: Request creazione api key
+    PublicKeyRequest:
+      title: Richiesta di censimento nuova public key
       description: >-
-        Request per la creazione di una nuova api key
+        Request per il censimento di una nuova public key
       type: object
       required:
-        - name
-        - groups
+        - publicKey
       properties:
         name:
           type: string
-          pattern: '^(?!\s).+(?<!\s)$'
-          description: nome dell'api key
-        groups:
-          type: array
-          description: Gruppi a cui appartiene l'api key (indicare l'id dei gruppi)
-          items:
-            type: string
-
-    ResponseNewApiKey:
-      title: Response creazione api key
+          description: nome della public key
+        publicKey:
+          type: string
+          description: Valore della public key
+    PublicKeyResponse:
+      title: Response censimento public key
       description: >-
-        Response per la creazione di una nuova api key
+        Response del censimento di una nuova public key
       type: object
       required:
-        - id
-        - apiKey
+        - kid
+        - issuer
       properties:
-        id:
+        kid:
           type: string
-          description: id dell'api key appena generata
-        apiKey:
+          description: Kid della public key caricata da utilizzare nell'header kid del token JWT
+        issuer:
           type: string
-          description: Valore dell'api key appena generata
-
-    RequestApiKeyStatus:
-      title: Richiesta di cambio stato per una api key
-      description: >-
-        Richiesta di cambio stato per una api key
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          type: string
-          description: Action per il cambio stato di un'api key
-          enum:
-            - 'BLOCK'
-            - 'ENABLE'
-            - 'ROTATE'
-
+          description: Valore dell'issuer per la key caricata da utilizzare nel claims iss del token JWT
 
   securitySchemes:                                      # ONLY EXTERNAL
     bearerAuth:                                         # ONLY EXTERNAL
