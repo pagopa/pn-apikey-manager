@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.utils.MaskDataUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +14,11 @@ import software.amazon.awssdk.services.apigateway.model.*;
 public class ApiGatewayService {
 
     private final ApiGatewayAsyncClient apiGatewayAsyncClient;
-    private final PnApikeyManagerConfig pnApikeyManagerConfig;
+    private final PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
-    public ApiGatewayService(ApiGatewayAsyncClient apiGatewayAsyncClient, PnApikeyManagerConfig pnApikeyManagerConfig) {
+    public ApiGatewayService(ApiGatewayAsyncClient apiGatewayAsyncClient, PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig) {
         this.apiGatewayAsyncClient = apiGatewayAsyncClient;
-        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
+        this.pnApikeyManagerUsagePlanConfig = pnApikeyManagerUsagePlanConfig;
     }
 
     /**
@@ -84,7 +84,7 @@ public class ApiGatewayService {
     private CreateUsagePlanKeyRequest constructUsagePlanKeyRequest(String usagePlanId, String id) {
         return CreateUsagePlanKeyRequest.builder()
                 .keyId(id)
-                .keyType(pnApikeyManagerConfig.getKeyType())
+                .keyType(pnApikeyManagerUsagePlanConfig.getKeyType())
                 .usagePlanId(usagePlanId)
                 .build();
     }
