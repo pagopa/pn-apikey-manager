@@ -91,6 +91,10 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
+  PublicKeyTableArn:
+    Type: String
+    Description: 'Arn of dynamodb table containing Public Key information'
+
   PaAggregationsTableName:
     Type: String
     Description: 'Name of dynamodb table containing aggregations'
@@ -102,6 +106,14 @@ Parameters:
   ApiKeyTableName:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
+
+  PublicKeyTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing public keys'
+
+  PublicKeyTableStreamArn:
+    Type: String
+    Description: 'Arn of dynamodb table stream containing Public Key information'
 
   FlagPdnd:
     Type: String
@@ -272,6 +284,7 @@ Resources:
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
 
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
@@ -322,9 +335,11 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Ref PublicKeyTableArn
               - !Sub '${AggregatesTableArn}/index/*'
               - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
+              - !Sub '${PublicKeyTableArn}/index/*'
           - Effect: Allow
             Action:
               - kms:Encrypt
@@ -431,6 +446,7 @@ Resources:
           - - !Ref PaAggregationsTableName
             - !Ref AggregatesTableName
             - !Ref ApiKeyTableName
+            - !Ref PublicKeyTableName
         RestApiStageArns: !Join
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
@@ -451,4 +467,4 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
         LogGroupsNames: !Join
           - ','
-          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'    
+          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'

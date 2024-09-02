@@ -87,6 +87,53 @@ Resources:
         SSEEnabled: true
         SSEType: KMS
 
+  # pn-publicKey DynamoDB table
+  PublicKeyTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub '${ProjectName}-publicKey'
+      AttributeDefinitions:
+        - AttributeName: "kid"
+          AttributeType: "S"
+        - AttributeName: "cxId"
+          AttributeType: "S"
+        - AttributeName: "status"
+          AttributeType: "S"
+        - AttributeName: "createdAt"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "kid"
+          KeyType: "HASH"
+        - AttributeName: "cxId"
+          KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        - IndexName: "cxId-status-index"
+          KeySchema:
+            - AttributeName: cxId
+              KeyType: HASH
+            - AttributeName: status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: "cxId-createdAt-index"
+          KeySchema:
+            - AttributeName: cxId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: KEYS_ONLY
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: true
+
   # pn-aggregates DynamoDB table
   AggregatesTable:
     Type: AWS::DynamoDB::Table
@@ -256,6 +303,10 @@ Outputs:
     Description: ARM Dynamo Name used by application to access the key-value store of ApiKeyTable
     Value: !Sub '${ApiKeyTable.Arn}'
 
+  PublicKeyTableArn:
+    Description: ARM Dynamo Name used by application to access the key-value store of PublicKeyTable
+    Value: !Sub '${PublicKeyTable.Arn}'
+
   PaAggregationsTableName:
     Description: Name of dynamodb table containing aggregations
     Value: !Ref PaAggregationsTable
@@ -267,6 +318,14 @@ Outputs:
   ApiKeyTableName:
     Description: Name of dynamodb table containing apikey
     Value: !Ref ApiKeyTable
+
+  PublicKeyTableName:
+    Description: Name of dynamodb table containing publickey
+    Value: !Ref PublicKeyTable
+
+  PublicKeyTableStreamArn:
+    Description: Stream ARN of PublicKeyTable
+    Value: !GetAtt PublicKeyTable.StreamArn
 
   UsagePlanDefault:
     Description: Id Usage Plan default
