@@ -169,8 +169,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
-        - $ref: '#/components/parameters/cxGroupsAuthFleet'
-        - $ref: '#/components/parameters/pathVirtualKey'
+        - $ref: '#/components/parameters/pathVirtualKeyId'
       requestBody:
         content:
           application/json:
@@ -232,6 +231,7 @@ components:
       required: true
       schema:
         type: string
+        x-field-extra-annotation: "@lombok.ToString.Exclude"
 
   schemas:
     Problem:
