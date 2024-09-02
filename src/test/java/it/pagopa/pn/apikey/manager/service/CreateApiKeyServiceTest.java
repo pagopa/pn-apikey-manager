@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
@@ -59,7 +59,7 @@ class CreateApiKeyServiceTest {
     private PaAggregationsService paAggregationsService;
 
     @MockBean
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
+    private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
