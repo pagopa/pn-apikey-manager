@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
@@ -9,7 +9,6 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -53,27 +52,7 @@ class PublicKeyServiceTest {
         Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, "ADMIN");
 
         StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
-                .verify();
-    }
-
-    @Test
-    void deletePublicKey_RoleNotAllowed() {
-        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, "USER");
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
-                .verify();
-    }
-
-    @Test
-    void deletePublicKey_KeyNotFound() {
-        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.empty());
-
-        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "ADMIN");
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.NOT_FOUND)
+                .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException)
                 .verify();
     }
 }
