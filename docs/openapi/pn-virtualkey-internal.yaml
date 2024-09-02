@@ -38,7 +38,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
-        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
         - name: limit
           in: query
           schema:
@@ -128,6 +128,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
         - $ref: '#/components/parameters/pathVirtualKeyId'
       responses:
         '200':
@@ -169,6 +170,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
         - $ref: '#/components/parameters/pathVirtualKeyId'
       requestBody:
         content:
@@ -213,12 +215,10 @@ components:
       $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
     cxIdAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
-    cxGroupsAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'
-      required: false
     uidAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'
-
+    cxRoleAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxRoleAuthFleet'
     ############################################################################################
     ###                        PARAMETRI RICERCA VIRTUAL KEY                                     ###
     ############################################################################################
