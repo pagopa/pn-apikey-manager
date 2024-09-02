@@ -215,12 +215,10 @@ components:
       $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
     cxIdAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
-    cxGroupsAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'
-      required: false
     uidAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'
-
+    cxRoleAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxRoleAuthFleet'
     ############################################################################################
     ###                        PARAMETRI RICERCA VIRTUAL KEY                                     ###
     ############################################################################################
