@@ -274,6 +274,45 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>virtual-key-internal</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-virtualkey-internal.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/6.0.0/server</templateDirectory>
+                            <configOptions>
+                                <basePackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1
+                                </basePackage>
+                                <modelPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto
+                                </modelPackage>
+                                <apiPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api
+                                </apiPackage>
+                                <configPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.config
+                                </configPackage>
+                                <dateLibrary>java11</dateLibrary>
+                                <delegatePattern>true</delegatePattern>
+                                <interfaceOnly>true</interfaceOnly>
+                                <annotationLibrary>none</annotationLibrary>
+                                <documentationProvider>source</documentationProvider>
+                                <openApiNullable>false</openApiNullable>
+                                <reactive>true</reactive>
+                                <skipDefaultInterface>false</skipDefaultInterface>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

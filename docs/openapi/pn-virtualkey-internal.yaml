@@ -46,14 +46,17 @@ paths:
             default: 10
         - name: lastKey
           in: query
+          required: false
           schema:
             type: string
         - name: lastUpdate
           in: query
+          required: false
           schema:
             type: string
         - name: showVirtualKey
           in: query
+          required: false
           schema:
             type: boolean
             default: false
@@ -113,54 +116,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  /virtual-keys/{id}/status":
-    put:
-      summary: Cambia lo stato della virtualKey
-      description: >-
-        servizio di cambio stato della virtualKey
-      tags:
-        - virtualKeys
-      operationId: changeStatusVirtualKeys
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet'
-        - $ref: '#/components/parameters/cxTypeAuthFleet'
-        - $ref: '#/components/parameters/cxIdAuthFleet'
-        - $ref: '#/components/parameters/cxGroupsAuthFleet'
-        - $ref: '#/components/parameters/pathVirtualKey'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RequestVirtualKeyStatus"
-        required: true
-      responses:
-        '200':
-          description: OK
-        '400':
-          description: Bad request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '409':
-          description: Wrong state transition (i.e. enable an enabled key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '500':
-          description: Internal error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-
   "/virtual-keys/{id}":
     delete:
       summary: Eliminazione virtual key
@@ -185,6 +140,54 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '409':
           description: Wrong state transition
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/virtual-keys/{id}/status":
+    put:
+      summary: Cambia lo stato della virtualKey
+      description: >-
+        servizio di cambio stato della virtualKey
+      tags:
+        - VirtualKeys
+      operationId: changeStatusVirtualKeys
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet'
+        - $ref: '#/components/parameters/cxTypeAuthFleet'
+        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/pathVirtualKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestVirtualKeyStatus"
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
           content:
             application/problem+json:
               schema:
