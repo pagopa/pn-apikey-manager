@@ -1,0 +1,100 @@
+
+package it.pagopa.pn.apikey.manager.service;
+
+import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
+import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(SpringExtension.class)
+class PublicKeyServiceTest {
+
+    private PublicKeyService publicKeyService;
+    private PublicKeyRepository publicKeyRepository;
+    private final PublicKeyValidator validator = new PublicKeyValidator();
+    private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+
+    @BeforeEach
+    void setUp() {
+        publicKeyRepository = mock(PublicKeyRepository.class);
+        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
+    }
+
+    @Test
+    void changeStatus_withValidData_updatesStatusSuccessfully() {
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setName("Test Key");
+        publicKeyModel.setCorrelationId("correlationId");
+        publicKeyModel.setPublicKey("publicKeyData");
+        publicKeyModel.setStatus("ACTIVE");
+        publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
+        publicKeyModel.setIssuer("issuer");
+        publicKeyModel.setCxId("cxId");
+        publicKeyModel.setStatusHistory(new ArrayList<>());
+
+
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
+
+        StepVerifier.create(publicKeyService.changeStatus("kid", "BLOCKED", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+                .verifyComplete();
+    }
+
+    @Test
+    void changeStatus_withInvalidCxType_throwsApiKeyManagerException() {
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PA, "cxId", List.of(), "ADMIN"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("CxTypeAuthFleet PA not allowed"))
+                .verify();
+    }
+
+    @Test
+    void changeStatus_withNonExistentPublicKey_throwsNotFoundException() {
+        when(publicKeyRepository.findByKidAndCxId(anyString(), anyString())).thenReturn(Mono.empty());
+
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key not found"))
+                .verify();
+    }
+
+    @Test
+    void changeStatus_withInvalidRole_throwsForbiddenException() {
+
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "USER"))
+                .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException && Objects.requireNonNull(throwable.getMessage()).contains("Accesso negato!"))
+                .verify();
+    }
+
+    @Test
+    void changeStatus_withInvalidStatusTransition_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus("ACTIVE");
+
+        when(publicKeyRepository.findByKidAndCxId(anyString(), anyString())).thenReturn(Mono.just(publicKeyModel));
+
+        StepVerifier.create(publicKeyService.changeStatus("kid", "INACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Invalid state transition"))
+                .verify();
+    }
+}
