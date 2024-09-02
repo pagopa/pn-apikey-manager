@@ -218,7 +218,7 @@ components:
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'
 
     ############################################################################################
-    ###                        PARAMETRI RICERCA API KEY                                     ###
+    ###                        PARAMETRI RICERCA VIRTUAL KEY                                     ###
     ############################################################################################
 
     pathVirtualKeyId:
@@ -293,7 +293,7 @@ components:
         name:
           type: string
           pattern: '^(?!\s).+(?<!\s)$'
-          description: nome dell'api key
+          description: nome della virtual key
 
     ResponseNewVirtualKey:
       title: Response creazione virtual key
