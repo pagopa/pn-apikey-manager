@@ -92,13 +92,6 @@ class PublicKeyServiceTest {
     }
 
     @Test
-    void createPublicKey_withInvalidCxType_throwsApiKeyManagerException() {
-        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PA, "cxId", Mono.just(new PublicKeyRequestDto()), List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("CxTypeAuthFleet PA not allowed"))
-                .verify();
-    }
-
-    @Test
     void createPublicKey_withInvalidRole_throwsApiKeyManagerException() {
         StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(new PublicKeyRequestDto()), List.of(), "invalidRole"))
                 .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException && throwable.getMessage().contains("Accesso negato!"))

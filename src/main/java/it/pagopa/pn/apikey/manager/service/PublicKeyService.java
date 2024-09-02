@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
@@ -22,8 +21,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,32 +32,23 @@ public class PublicKeyService {
     private final PublicKeyValidator validator;
 
     public Mono<PublicKeyResponseDto> createPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
-        if (!ApiKeyConstant.ALLOWED_CX_TYPE_PUBLIC_KEY.contains(xPagopaPnCxType)) {
-            log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
-        }
-
         Mono<PublicKeyRequestDto> cachedRequestDto = publicKeyRequestDto.cache();
 
-        return cachedRequestDto.flatMap(dto -> PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups, dto))
+        return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(cachedRequestDto)
                 .flatMap(validator::validatePublicKeyRequest)
                 .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()).hasElements())
                 .zipWith(cachedRequestDto)
                 .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.BAD_REQUEST))
                         : createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, response.getT2()))
                 .flatMap(publicKeyRepository::save)
-                .flatMap(model -> {
-                    model.setKid(model.getKid()+"_COPY");
-                    model.setStatus(null);
-                    model.setStatusHistory(null);
-                    model.setTtl(model.getExpireAt());
-                    return publicKeyRepository.save(model);
-                })
-                .flatMap(model -> {
+                .zipWhen(this::savePublicKeyCopyItem)
+                .map(tuple -> {
+                    PublicKeyModel originalPublicKey = tuple.getT1();
                     PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
-                    publicKeyResponseDto.setKid(model.getKid());
-                    publicKeyResponseDto.setIssuer(model.getIssuer());
-                    return Mono.just(publicKeyResponseDto);
+                    publicKeyResponseDto.setKid(originalPublicKey.getKid());
+                    publicKeyResponseDto.setIssuer(originalPublicKey.getIssuer());
+                    return publicKeyResponseDto;
                 });
     }
 
@@ -90,5 +78,13 @@ public class PublicKeyService {
         return statusHistoryItem;
     }
 
+    private Mono<PublicKeyModel> savePublicKeyCopyItem(PublicKeyModel publicKeyModel) {
+        PublicKeyModel copyItem = new PublicKeyModel(publicKeyModel);
+        copyItem.setKid(publicKeyModel.getKid()+"_COPY");
+        copyItem.setStatus(null);
+        copyItem.setStatusHistory(null);
+        copyItem.setTtl(publicKeyModel.getExpireAt());
+        return publicKeyRepository.save(copyItem);
+    }
 
 }
