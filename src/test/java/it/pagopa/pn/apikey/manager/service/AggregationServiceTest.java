@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
@@ -47,7 +47,7 @@ class AggregationServiceTest {
     private UsagePlanService usagePlanService;
 
     @MockBean
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
+    private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     @MockBean
     private AggregationConverter aggregationConverter;

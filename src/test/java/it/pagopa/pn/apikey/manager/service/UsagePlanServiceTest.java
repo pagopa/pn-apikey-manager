@@ -3,7 +3,7 @@ package it.pagopa.pn.apikey.manager.service;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +22,7 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.services.apigateway.ApiGatewayAsyncClient;
 import software.amazon.awssdk.services.apigateway.model.*;
 
-@ContextConfiguration(classes = {UsagePlanService.class, PnApikeyManagerConfig.class})
+@ContextConfiguration(classes = {UsagePlanService.class, PnApikeyManagerUsagePlanConfig.class})
 @ExtendWith(SpringExtension.class)
 @PropertySource("classpath:application-test.properties")
 @EnableConfigurationProperties
@@ -32,7 +32,7 @@ class UsagePlanServiceTest {
     private ApiGatewayAsyncClient apiGatewayAsyncClient;
 
     @Autowired
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
+    private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     @Autowired
     private UsagePlanService usagePlanService;
