@@ -14,7 +14,13 @@ import org.springframework.context.annotation.Import;
 @Import({SharedAutoConfiguration.class})
 public class PnApikeyManagerConfig {
 
+    private Sqs sqs;
     private Dao dao;
+
+    @Data
+    public static class Sqs {
+        private String internalQueueName;
+    }
 
     @Data
     public static class Dao {
