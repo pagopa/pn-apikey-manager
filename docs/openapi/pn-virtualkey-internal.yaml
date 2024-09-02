@@ -113,19 +113,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/virtual-keys/{id}/status":
+  /virtual-keys/{id}/status":
     put:
-      summary: Blocco/Riattivazione virtual key
+      summary: Cambia lo stato della virtualKey
       description: >-
-        Servizio per il blocco o la riattivazione di una virtual key.
+        servizio di cambio stato della virtualKey
       tags:
-        - VirtualKeys
-      operationId: changeStatusVirtualKey
+        - virtualKeys
+      operationId: changeStatusVirtualKeys
       parameters:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
-        - $ref: '#/components/parameters/pathVirtualKeyId'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/pathVirtualKey'
       requestBody:
         content:
           application/json:
@@ -142,48 +143,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '409':
-          description: Wrong state transition
+          description: Wrong state transition (i.e. enable an enabled key)
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '500':
-          description: Internal error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-
-  "/virtual-keys/{id}/rotate":
-    put:
-      summary: Rotazione virtual key
-      description: >-
-        Servizio per la rotazione di una virtual key.
-      tags:
-        - VirtualKeys
-      operationId: rotateVirtualKey
-      parameters:
-        - $ref: '#/components/parameters/uidAuthFleet'
-        - $ref: '#/components/parameters/cxTypeAuthFleet'
-        - $ref: '#/components/parameters/cxIdAuthFleet'
-        - $ref: '#/components/parameters/pathVirtualKeyId'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RequestRotateVirtualKey"
-        required: true
-      responses:
-        '200':
-          description: OK
-        '400':
-          description: Bad request
           content:
             application/problem+json:
               schema:
@@ -238,6 +204,9 @@ paths:
 
 components:
   parameters:
+    ############################################################################################
+    ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
+    ############################################################################################
     cxTypeAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
     cxIdAuthFleet:
@@ -247,6 +216,11 @@ components:
       required: false
     uidAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'
+
+    ############################################################################################
+    ###                        PARAMETRI RICERCA API KEY                                     ###
+    ############################################################################################
+
     pathVirtualKeyId:
       description: >-
         Identificativo univoco della virtual key.
@@ -308,4 +282,51 @@ components:
       type: string
       enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED' ]
 
+    RequestNewVirtualKey:
+      title: Request creazione virtual key
+      description: >-
+        Request per la creazione di una nuova virtual key
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          pattern: '^(?!\s).+(?<!\s)$'
+          description: nome dell'api key
+
+    ResponseNewVirtualKey:
+      title: Response creazione virtual key
+      description: >-
+        Response per la creazione di una nuova virtual key
+      type: object
+      required:
+        - id
+        - virtualKey
+      properties:
+        id:
+          type: string
+          description: id della virtual key appena generata
+          x-field-extra-annotation: "@lombok.ToString.Exclude"
+        virtualKey:
+          type: string
+          description: Valore della virtual key appena generata
+          x-field-extra-annotation: "@lombok.ToString.Exclude"
+
+
+    RequestVirtualKeyStatus:
+      title: Richiesta di cambio stato per una virtual key
+      description: >-
+        Richiesta di cambio stato per una virtual key
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Action per il cambio stato di una virtual key
+          enum:
+            - 'BLOCK'
+            - 'ENABLE'
+            - 'ROTATE'
 
