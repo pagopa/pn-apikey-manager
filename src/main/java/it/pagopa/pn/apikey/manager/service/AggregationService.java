@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.converter.AggregationConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -38,20 +38,20 @@ public class AggregationService {
 
     private final AggregateRepository aggregateRepository;
     private final PaAggregationRepository paAggregationRepository;
-    private final PnApikeyManagerConfig pnApikeyManagerConfig;
+    private final PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
     private final UsagePlanService usagePlanService;
     private final AggregationConverter aggregationConverter;
     private final ApiGatewayService apiGatewayService;
 
     public AggregationService(AggregateRepository aggregateRepository,
                               PaAggregationRepository paAggregationRepository,
-                              PnApikeyManagerConfig pnApikeyManagerConfig,
+                              PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig,
                               UsagePlanService usagePlanService,
                               AggregationConverter aggregationConverter,
                               ApiGatewayService apiGatewayService) {
         this.aggregateRepository = aggregateRepository;
         this.paAggregationRepository = paAggregationRepository;
-        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
+        this.pnApikeyManagerUsagePlanConfig = pnApikeyManagerUsagePlanConfig;
         this.usagePlanService = usagePlanService;
         this.aggregationConverter = aggregationConverter;
         this.apiGatewayService = apiGatewayService;
@@ -195,7 +195,7 @@ public class AggregationService {
     public Mono<String> createNewAggregate(InternalPaDetailDto internalPaDetailDto) {
         AggregateRequestDto dto = new AggregateRequestDto();
         dto.setName("AGG_" + internalPaDetailDto.getName());
-        dto.setUsagePlanId(pnApikeyManagerConfig.getDefaultPlan());
+        dto.setUsagePlanId(pnApikeyManagerUsagePlanConfig.getDefaultPlan());
         return createAggregate(Mono.just(dto)).map(SaveAggregateResponseDto::getId);
     }
 
