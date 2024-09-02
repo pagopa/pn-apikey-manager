@@ -69,6 +69,9 @@ public class ApiKeyModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("pdnd")}))
     private boolean pdnd;
 
+    @Getter(onMethod = @__({@DynamoDbAttribute("scope")}))
+    private Scope scope;
+
     public ApiKeyModel(ApiKeyModel apiKeyModel) {
         id = apiKeyModel.id;
         virtualKey = apiKeyModel.virtualKey;
@@ -87,6 +90,11 @@ public class ApiKeyModel {
         cxGroup = apiKeyModel.cxGroup;
         correlationId = apiKeyModel.correlationId;
         pdnd = apiKeyModel.pdnd;
+        scope = apiKeyModel.scope;
     }
 
+    public enum Scope {
+        APIKEY,
+        CLIENTID
+    }
 }
