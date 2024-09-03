@@ -38,6 +38,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
         - $ref: '#/components/parameters/cxRoleAuthFleet'
         - name: limit
           in: query
@@ -128,6 +129,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
         - $ref: '#/components/parameters/cxRoleAuthFleet'
         - $ref: '#/components/parameters/pathVirtualKeyId'
       responses:
@@ -170,6 +172,7 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
         - $ref: '#/components/parameters/cxRoleAuthFleet'
         - $ref: '#/components/parameters/pathVirtualKeyId'
       requestBody:
@@ -217,6 +220,8 @@ components:
       $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
     uidAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'
+    cxGroupsAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'
     cxRoleAuthFleet:
       $ref: './remote-refs.yaml#/components/parameters/cxRoleAuthFleet'
     ############################################################################################
@@ -272,6 +277,9 @@ components:
           type: string
           description: Data ultima modifica
           format: date-time
+        user:
+          type: object
+          $ref: '#/components/schemas/UserDto'
         groups:
           type: array
           description: Gruppi a cui appartiene la virtual key
@@ -279,6 +287,23 @@ components:
             type: string
         status:
           $ref: '#/components/schemas/VirtualKeyStatus'
+
+    UserDto:
+      type: object
+      properties:
+        firstName:
+          type: string
+          maxLength: 80
+          pattern: '^([\x20-\xFF]{1,80})$'
+        lastName:
+          type: string
+          maxLength: 80
+          pattern: '^([\x20-\xFF]{1,80})$'
+        fiscalCode:
+          type: string
+          maxLength: 16
+          pattern: '^([A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1})|([0-9]{11})$'
+
 
     VirtualKeyStatus:
       description: Stato della virtual key
