@@ -48,12 +48,16 @@ public class ApiKeyModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("statusHistory")}))
     private List<ApiKeyHistoryModel> statusHistory = new ArrayList<>();
 
-    @Getter(onMethod = @__({@DynamoDbAttribute("x-pagopa-pn-uid")}))
+    @Getter(onMethod = @__({
+            @DynamoDbAttribute(ApiKeyConstant.UID),
+            @DynamoDbSecondaryPartitionKey(indexNames = {ApiKeyConstant.GSI_UID_CXID}),
+    }))
     private String uid;
 
     @Getter(onMethod = @__({
             @DynamoDbAttribute(ApiKeyConstant.PA_ID),
-            @DynamoDbSecondaryPartitionKey(indexNames = ApiKeyConstant.GSI_PA)
+            @DynamoDbSecondaryPartitionKey(indexNames = {ApiKeyConstant.GSI_PA}),
+            @DynamoDbSecondarySortKey(indexNames = {ApiKeyConstant.GSI_UID_CXID})
     }))
     private String cxId;
 
