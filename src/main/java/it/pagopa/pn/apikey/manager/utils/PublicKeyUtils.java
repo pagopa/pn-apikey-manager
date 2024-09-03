@@ -21,7 +21,7 @@ public class PublicKeyUtils {
      * @param pnCxRole   ruolo (admin, operator)
      * @param pnCxGroups gruppi
      */
-    public static Mono<Object> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups) {
+    public static Mono<Void> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups) {
         String process = "validating access admin only";
         log.logChecking(process);
         if (!CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
@@ -32,6 +32,6 @@ public class PublicKeyUtils {
         }
         log.debug("access granted for {}, role: {}, groups: {}", pnCxType, pnCxRole, pnCxGroups);
         log.logCheckingOutcome(process, true);
-        return Mono.just(new Object());
+        return Mono.empty();
     }
 }

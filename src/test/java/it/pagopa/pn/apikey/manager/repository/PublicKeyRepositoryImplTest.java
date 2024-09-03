@@ -9,10 +9,7 @@ import org.reactivestreams.Subscriber;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
@@ -84,10 +81,9 @@ class PublicKeyRepositoryImplTest {
 
     @Test
     void getAllPaginated_withValidCxIdAndPageable_returnsMonoOfPage() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PublicKeyRepositoryImpl publicKeyRepository = new PublicKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
 
-        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(table.index(any())).thenReturn(index);
         when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
         PublicKeyPageable pageable = PublicKeyPageable.builder()
@@ -96,7 +92,7 @@ class PublicKeyRepositoryImplTest {
                 .limit(10)
                 .build();
 
-        StepVerifier.create(publicKeyRepository.getAllPaginated("cxId", pageable, any()))
+        StepVerifier.create(repository.getAllPaginated("cxId", pageable, any()))
                 .expectNext(Page.create(new ArrayList<>()));
     }
 }
