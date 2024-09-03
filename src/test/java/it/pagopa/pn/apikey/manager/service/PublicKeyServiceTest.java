@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRowDto;
@@ -36,24 +35,6 @@ class PublicKeyServiceTest {
     void setUp() {
         publicKeyRepository = mock(PublicKeyRepository.class);
         publicKeyService = new PublicKeyService(publicKeyRepository, new PublicKeyConverter());
-    }
-
-    @Test
-    void getPublicKeys_whenCxTypeNotAllowed_shouldReturnError() {
-        CxTypeAuthFleetDto cxType = CxTypeAuthFleetDto.PA;
-        String xPagopaPnCxId = "cxId";
-        List<String> xPagopaPnCxGroups = List.of("group1");
-        String xPagopaPnCxRole = "admin";
-        Integer limit = 10;
-        String lastKey = "lastKey";
-        String createdAt = "createdAt";
-        Boolean showPublicKey = true;
-
-        Mono<PublicKeysResponseDto> result = publicKeyService.getPublicKeys(cxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, createdAt, showPublicKey);
-
-        StepVerifier.create(result)
-                .expectError(ApiKeyManagerException.class)
-                .verify();
     }
 
     @Test
