@@ -4,7 +4,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.UsagePlanResponseDto;
 import it.pagopa.pn.apikey.manager.service.UsagePlanService;
 
@@ -31,7 +31,7 @@ import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-@ContextConfiguration(classes = {UsagePlanController.class, UsagePlanService.class, PnApikeyManagerConfig.class})
+@ContextConfiguration(classes = {UsagePlanController.class, UsagePlanService.class, PnApikeyManagerUsagePlanConfig.class})
 @ExtendWith(SpringExtension.class)
 @PropertySource("classpath:application-test.properties")
 @EnableConfigurationProperties

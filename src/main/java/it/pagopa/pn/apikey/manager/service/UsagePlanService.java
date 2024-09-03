@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.UsagePlanDetailDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.aggregate.dto.UsagePlanResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
 public class UsagePlanService {
 
     private final ApiGatewayAsyncClient apiGatewayAsyncClient;
-    private final PnApikeyManagerConfig pnApikeyManagerConfig;
+    private final PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     public UsagePlanService(ApiGatewayAsyncClient apiGatewayAsyncClient,
-                            PnApikeyManagerConfig pnApikeyManagerConfig) {
+                            PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig) {
         this.apiGatewayAsyncClient = apiGatewayAsyncClient;
-        this.pnApikeyManagerConfig = pnApikeyManagerConfig;
+        this.pnApikeyManagerUsagePlanConfig = pnApikeyManagerUsagePlanConfig;
     }
 
     public Mono<UsagePlanResponseDto> getUsagePlanList() {
@@ -48,8 +48,8 @@ public class UsagePlanService {
     private UsagePlanResponseDto createUsagePlanResponseDto(List<UsagePlan> items) {
         UsagePlanResponseDto dto = new UsagePlanResponseDto();
         List<UsagePlan> list = items.stream().filter(usagePlan ->
-                        usagePlan.tags().get(pnApikeyManagerConfig.getTag()) != null &&
-                                usagePlan.tags().get(pnApikeyManagerConfig.getTag()).equalsIgnoreCase(pnApikeyManagerConfig.getScope()))
+                        usagePlan.tags().get(pnApikeyManagerUsagePlanConfig.getTag()) != null &&
+                                usagePlan.tags().get(pnApikeyManagerUsagePlanConfig.getTag()).equalsIgnoreCase(pnApikeyManagerUsagePlanConfig.getScope()))
                 .collect(Collectors.toList());
         dto.setItems(convertToUsagePlanDto(list));
         return dto;
