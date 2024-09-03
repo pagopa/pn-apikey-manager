@@ -79,8 +79,16 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
 
         Map<String, String> names = new HashMap<>();
         names.put("#ttl", PublicKeyModel.COL_TTL);
+        names.put("#status", PublicKeyModel.COL_STATUS);
+
+        Map<String, AttributeValue> values = new HashMap<>();
+        values.put(":ACTIVE", AttributeValue.builder().s("ACTIVE").build());
+        values.put(":ROTATED", AttributeValue.builder().s("ROTATED").build());
+
         Expression expression = Expression.builder()
-                .expression("attribute_not_exists(#ttl)").expressionNames(names)
+                .expression("attribute_not_exists(#ttl) AND (#status = :ACTIVE OR #status = :ROTATED)")
+                .expressionNames(names)
+                .expressionValues(values)
                 .build();
 
         Map<String, AttributeValue> startKey = null;

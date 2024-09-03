@@ -1,13 +1,17 @@
 package it.pagopa.pn.apikey.manager.utils;
 
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
+import it.pagopa.pn.apikey.manager.constant.PublicKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
+import it.pagopa.pn.apikey.manager.repository.PublicKeyPageable;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,6 +66,23 @@ class QueryUtilsTest {
     }
 
     @Test
+    void getNewPageable_returnsCorrectPageable() {
+        Map<String, AttributeValue> attributeValues = new HashMap<>();
+        attributeValues.put(PublicKeyConstant.KID, AttributeValue.builder().s("kid1").build());
+        attributeValues.put(PublicKeyConstant.CREATED_AT, AttributeValue.builder().s("2023-10-01T00:00:00Z").build());
+        Page<PublicKeyModel> page = Page.create(new ArrayList<>(), attributeValues);
+        PublicKeyPageable oldPageable = PublicKeyPageable.builder()
+                .lastEvaluatedKey("oldKey")
+                .createdAt("oldCreatedAt")
+                .limit(1)
+                .build();
+        PublicKeyPageable newPageable = QueryUtils.getNewPageable(page, oldPageable);
+        assertEquals("kid1", newPageable.getLastEvaluatedKey());
+        assertEquals("2023-10-01T00:00:00Z", newPageable.getCreatedAt());
+        assertEquals(oldPageable.getLimit(), newPageable.getLimit());
+    }
+
+    @Test
     void testAdjustPageResult() {
         ApiKeyPageable pageable = ApiKeyPageable.builder()
                 .lastEvaluatedKey("key")
@@ -81,6 +102,81 @@ class QueryUtilsTest {
         assertEquals(1, result.size());
         assertEquals("newId", attributeValues.get(ApiKeyConstant.PK).s());
         assertEquals("-999999999-01-01T00:00:00", attributeValues.get(ApiKeyConstant.LAST_UPDATE).s());
+    }
+
+    @Test
+    void adjustPageResult_truncatesResultWhenLimitExceeded() {
+        PublicKeyPageable pageable = PublicKeyPageable.builder()
+                .limit(1)
+                .build();
+
+        Map<String, AttributeValue> attributeValues = new HashMap<>();
+        attributeValues.put(PublicKeyConstant.KID, AttributeValue.builder().s("1").build());
+        attributeValues.put(PublicKeyConstant.CREATED_AT, AttributeValue.builder().s("2").build());
+
+        Instant now = Instant.now();
+        PublicKeyModel publicKey1 = new PublicKeyModel();
+        publicKey1.setKid("kid1");
+        publicKey1.setCreatedAt(now);
+
+        PublicKeyModel publicKey2 = new PublicKeyModel();
+        publicKey2.setKid("kid2");
+        publicKey2.setCreatedAt(Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS));
+
+        List<PublicKeyModel> result = QueryUtils.adjustPageResult(List.of(publicKey1, publicKey2), pageable, attributeValues);
+        assertEquals(1, result.size());
+        assertEquals("kid1", attributeValues.get(PublicKeyConstant.KID).s());
+        assertEquals(now.toString(), attributeValues.get(PublicKeyConstant.CREATED_AT).s());
+    }
+
+    @Test
+    void adjustPageResult_doesNotTruncateWhenLimitNotExceeded() {
+        PublicKeyPageable pageable = PublicKeyPageable.builder()
+                .limit(2)
+                .build();
+
+        Map<String, AttributeValue> attributeValues = new HashMap<>();
+        attributeValues.put(PublicKeyConstant.KID, AttributeValue.builder().s("1").build());
+        attributeValues.put(PublicKeyConstant.CREATED_AT, AttributeValue.builder().s("2").build());
+
+        PublicKeyModel publicKey1 = new PublicKeyModel();
+        publicKey1.setKid("kid1");
+        publicKey1.setCreatedAt(Instant.now());
+
+        List<PublicKeyModel> result = QueryUtils.adjustPageResult(List.of(publicKey1), pageable, attributeValues);
+        assertEquals(1, result.size());
+        assertEquals("1", attributeValues.get(PublicKeyConstant.KID).s());
+        assertEquals("2", attributeValues.get(PublicKeyConstant.CREATED_AT).s());
+    }
+
+    @Test
+    void adjustPageResult_handlesEmptyResult() {
+        PublicKeyPageable pageable = PublicKeyPageable.builder()
+                .limit(1)
+                .build();
+
+        Map<String, AttributeValue> attributeValues = new HashMap<>();
+        attributeValues.put(PublicKeyConstant.KID, AttributeValue.builder().s("1").build());
+        attributeValues.put(PublicKeyConstant.CREATED_AT, AttributeValue.builder().s("2").build());
+
+        List<PublicKeyModel> result = QueryUtils.adjustPageResult(List.of(), pageable, attributeValues);
+        assertTrue(result.isEmpty());
+        assertEquals("1", attributeValues.get(PublicKeyConstant.KID).s());
+        assertEquals("2", attributeValues.get(PublicKeyConstant.CREATED_AT).s());
+    }
+
+    @Test
+    void adjustPageResult_handlesNullLastEvaluatedKey() {
+        PublicKeyPageable pageable = PublicKeyPageable.builder()
+                .limit(1)
+                .build();
+
+        PublicKeyModel publicKey1 = new PublicKeyModel();
+        publicKey1.setKid("kid1");
+        publicKey1.setCreatedAt(Instant.now());
+
+        List<PublicKeyModel> result = QueryUtils.adjustPageResult(List.of(publicKey1), pageable, null);
+        assertEquals(1, result.size());
     }
 
 }
