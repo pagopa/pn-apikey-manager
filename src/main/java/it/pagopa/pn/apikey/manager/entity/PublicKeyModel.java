@@ -103,6 +103,4 @@ public class PublicKeyModel {
         @Getter(onMethod = @__({@DynamoDbAttribute(COL_STATUS)}))
         private String status;
     }
-
-
 }
