@@ -14,4 +14,6 @@ import org.springframework.context.annotation.Import;
 @Import({SharedAutoConfiguration.class})
 public class PnApikeyManagerConfig {
 
+    private String userAttributesBaseUrl;
+
 }
