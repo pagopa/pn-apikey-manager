@@ -26,4 +26,6 @@ public interface ApiKeyRepository {
 
     Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd);
 
+    Mono<Page<ApiKeyModel>> findByUidAndCxIdAndStatusAndScope(String uid, String cxId, String status, String scope);
+
 }

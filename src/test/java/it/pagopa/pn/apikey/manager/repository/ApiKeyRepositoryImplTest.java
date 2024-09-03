@@ -193,4 +193,20 @@ class ApiKeyRepositoryImplTest {
         when(dynamoDbAsyncTable.index(any())).thenReturn(index);
         StepVerifier.create(apiKeyRepository.countWithFilters("id",new ArrayList<>())).expectNext(0);
     }
+
+    @Test
+    void findByUidAndCxIdAndStatusAndScope(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
+        apiKeyModelList.add(apiKeyModel);
+
+        StepVerifier.create(apiKeyRepository.findByUidAndCxIdAndStatusAndScope("uid","cxId", "ENABLED", ApiKeyModel.Scope.CLIENTID.name())).expectNextCount(0);
+    }
 }
