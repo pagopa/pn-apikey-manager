@@ -21,54 +21,45 @@ class PublicKeyValidatorTest {
     }
 
    @Test
-void validateChangeStatus_withBlockedToActive_returnsPublicKeyModel() {
-    PublicKeyModel publicKeyModel = new PublicKeyModel();
-    publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
+    void validateChangeStatus_withBlockedToActive_returnsPublicKeyModel() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
 
-    StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.ACTIVE.getValue()))
-            .expectNext(publicKeyModel)
-            .verifyComplete();
-}
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.ACTIVE.getValue()))
+                .expectNext(publicKeyModel)
+                .verifyComplete();
+    }
 
-@Test
-void validateChangeStatus_withBlockedToInvalid_throwsApiKeyManagerException() {
-    PublicKeyModel publicKeyModel = new PublicKeyModel();
-    publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
+    @Test
+    void validateChangeStatus_withBlockedToInvalid_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
 
-    StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
-            .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                    throwable.getMessage().contains("Invalid state transition"))
-            .verify();
-}
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().contains("Invalid state transition"))
+                .verify();
+    }
 
-@Test
-void validateChangeStatus_withActiveToBlocked_returnsPublicKeyModel() {
-    PublicKeyModel publicKeyModel = new PublicKeyModel();
-    publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
+    @Test
+    void validateChangeStatus_withActiveToBlocked_returnsPublicKeyModel() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
 
-    StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.BLOCKED.getValue()))
-            .expectNext(publicKeyModel)
-            .verifyComplete();
-}
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.BLOCKED.getValue()))
+                .expectNext(publicKeyModel)
+                .verifyComplete();
+    }
 
-@Test
-void validateChangeStatus_withActiveToInvalid_throwsApiKeyManagerException() {
-    PublicKeyModel publicKeyModel = new PublicKeyModel();
-    publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
+    @Test
+    void validateChangeStatus_withActiveToInvalid_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
 
-    StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
-            .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                    throwable.getMessage().contains("Invalid state transition"))
-            .verify();
-}
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().contains("Invalid state transition"))
+                .verify();
+    }
 
-@Test
-void validateChangeStatus_withInvalidCurrentStatus_returnsPublicKeyModel() {
-    PublicKeyModel publicKeyModel = new PublicKeyModel();
-    publicKeyModel.setStatus("INVALID");
-
-    StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.ACTIVE.getValue()))
-            .expectNext(publicKeyModel)
-            .verifyComplete();
-}
 }

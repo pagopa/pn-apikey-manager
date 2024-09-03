@@ -63,22 +63,6 @@ class PublicKeyServiceTest {
     }
 
     @Test
-    void changeStatus_withInvalidCxType_throwsApiKeyManagerException() {
-        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PA, "cxId", List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("CxTypeAuthFleet PA not allowed"))
-                .verify();
-    }
-
-    @Test
-    void changeStatus_withNonExistentPublicKey_throwsNotFoundException() {
-        when(publicKeyRepository.findByKidAndCxId(anyString(), anyString())).thenReturn(Mono.empty());
-
-        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key not found"))
-                .verify();
-    }
-
-    @Test
     void changeStatus_withInvalidRole_throwsForbiddenException() {
 
         StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "USER"))

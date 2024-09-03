@@ -5,7 +5,6 @@ import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -81,17 +80,14 @@ class PublicKeyRepositoryImplTest {
 
     @Test
     void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
-        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PublicKeyRepositoryImpl publicKeyRepository = new PublicKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "");
-
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
 
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> null);
-        when(dynamoDbAsyncTable.putItem(publicKeyModel)).thenReturn(completableFuture);
+        when(table.putItem(publicKeyModel)).thenReturn(completableFuture);
 
-        StepVerifier.create(publicKeyRepository.save(publicKeyModel))
+        StepVerifier.create(repository.save(publicKeyModel))
                 .expectNext(publicKeyModel).verifyComplete();
     }
 }

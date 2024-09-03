@@ -2,7 +2,7 @@ package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
-import org.springframework.beans.factory.annotation.Value;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -77,5 +77,4 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
                 .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
                 .thenReturn(publicKeyModel);
     }
-
 }

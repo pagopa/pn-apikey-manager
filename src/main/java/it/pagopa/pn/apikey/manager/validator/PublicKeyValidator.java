@@ -13,11 +13,12 @@ import reactor.core.publisher.Mono;
 public class PublicKeyValidator {
 
     public Mono<PublicKeyModel> validateChangeStatus(PublicKeyModel publicKeyModel, String status) {
-        if (PublicKeyStatusDto.BLOCKED.getValue().equals(publicKeyModel.getStatus()) && !PublicKeyStatusDto.ACTIVE.getValue().equals(status)) {
-            return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.BAD_REQUEST));
-        } else if (PublicKeyStatusDto.ACTIVE.getValue().equals(publicKeyModel.getStatus()) && !PublicKeyStatusDto.BLOCKED.getValue().equals(status)) {
+        if(status.equals(PublicKeyStatusDto.ACTIVE.name()) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.BLOCKED.name())) {
+            return Mono.just(publicKeyModel);
+        } else if(status.equals(PublicKeyStatusDto.BLOCKED.name()) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.ACTIVE.name())) {
+            return Mono.just(publicKeyModel);
+        } else {
             return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.BAD_REQUEST));
         }
-        return Mono.just(publicKeyModel);
     }
 }
