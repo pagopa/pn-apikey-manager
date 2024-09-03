@@ -8,10 +8,12 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFle
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -31,28 +33,49 @@ class PublicKeyServiceTest {
 
     private PublicKeyService publicKeyService;
     private PublicKeyRepository publicKeyRepository;
-    private final PublicKeyValidator validator = new PublicKeyValidator();
+    private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
 
     @BeforeEach
     void setUp() {
         publicKeyRepository = mock(PublicKeyRepository.class);
+        validator = new PublicKeyValidator(publicKeyRepository);
         publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
     }
 
     @Test
-    void changeStatus_withValidData_updatesStatusSuccessfully() {
+    void changeStatus_toReactivate_updatesStatusSuccessfully() {
+        String apiKeyStatus = "BLOCKED";
+        PublicKeyModel publicKeyModel = mockPublicKeyModel(apiKeyStatus);
 
+
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
+
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+                .verifyComplete();
+    }
+
+    @NotNull
+    private static PublicKeyModel mockPublicKeyModel(String apiKeyStatus) {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
         publicKeyModel.setName("Test Key");
         publicKeyModel.setCorrelationId("correlationId");
         publicKeyModel.setPublicKey("publicKeyData");
-        publicKeyModel.setStatus("ACTIVE");
+        publicKeyModel.setStatus(apiKeyStatus);
         publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
         publicKeyModel.setIssuer("issuer");
         publicKeyModel.setCxId("cxId");
         publicKeyModel.setStatusHistory(new ArrayList<>());
+        return publicKeyModel;
+    }
+
+    @Test
+    void changeStatus_toBlock_updatesStatusSuccessfully() {
+        String apiKeyStatus = "ACTIVE";
+        PublicKeyModel publicKeyModel = mockPublicKeyModel(apiKeyStatus);
 
 
         when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
@@ -64,7 +87,6 @@ class PublicKeyServiceTest {
 
     @Test
     void changeStatus_withInvalidRole_throwsForbiddenException() {
-
         StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "USER"))
                 .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException && Objects.requireNonNull(throwable.getMessage()).contains("Accesso negato!"))
                 .verify();

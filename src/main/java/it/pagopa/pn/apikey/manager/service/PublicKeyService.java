@@ -2,17 +2,18 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -27,15 +28,23 @@ public class PublicKeyService {
 
     public Mono<Void> changeStatus(String kid, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(Mono.defer(() -> checkIfExistsActivePublicKey(xPagopaPnCxId, status)))
                 .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
                 .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
-                .flatMap(publicKeyModel -> {
-                    publicKeyModel.setStatus(status);
-                    ArrayList<PublicKeyModel.StatusHistoryItem> statusHistory = new ArrayList<>(publicKeyModel.getStatusHistory());
-                    statusHistory.add(createNewHistoryItem(xPagopaPnUid, status));
-                    publicKeyModel.setStatusHistory(statusHistory);
-                    return publicKeyRepository.save(publicKeyModel);
-                })
+                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid));
+    }
+
+    private Mono<Void> checkIfExistsActivePublicKey(String xPagoPaCxId, String status) {
+        return status.equals(PublicKeyStatusDto.ACTIVE.name())
+                ? validator.checkPublicKeyAlreadyExistsWithStatus(xPagoPaCxId, PublicKeyStatusDto.ACTIVE.name())
+                : Mono.empty();
+    }
+
+    @NotNull
+    private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
+            publicKeyModel.setStatus(status);
+            publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, status));
+            return publicKeyRepository.save(publicKeyModel)
                 .then();
     }
 

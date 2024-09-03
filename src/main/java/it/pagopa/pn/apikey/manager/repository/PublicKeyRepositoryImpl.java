@@ -5,13 +5,17 @@ import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.HashMap;
 import java.util.List;
@@ -71,10 +75,24 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     }
 
     @Override
+    public Flux<PublicKeyModel> findByCxIdAndStatus(String xPagopaPnCxId, String status) {
+        Key key = Key.builder().partitionValue(xPagopaPnCxId).sortValue(status).build();
+        QueryConditional conditional = QueryConditional.keyEqualTo(key);
+
+        QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
+                .builder()
+                .queryConditional(conditional);
+
+        return Flux.from(this.table.index(PublicKeyModel.GSI_CXID_STATUS).query(qeRequest.build()).flatMapIterable(Page::items));
+    }
+
+    @Override
     public Mono<PublicKeyModel> save(PublicKeyModel publicKeyModel) {
         log.debug("Inserting data {} in DynamoDB table {}",publicKeyModel,table);
         return Mono.fromFuture(table.putItem(publicKeyModel))
                 .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
                 .thenReturn(publicKeyModel);
     }
+
+
 }
