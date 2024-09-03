@@ -5,7 +5,6 @@ import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.reactivestreams.Subscriber;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
@@ -82,34 +81,29 @@ class PublicKeyRepositoryImplTest {
 
     @Test
     void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
-        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(),any())).thenReturn(dynamoDbAsyncTable);
-        PublicKeyRepositoryImpl publicKeyRepository = new PublicKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
 
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
 
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         completableFuture.completeAsync(() -> null);
-        when(dynamoDbAsyncTable.putItem(publicKeyModel)).thenReturn(completableFuture);
+        when(table.putItem(publicKeyModel)).thenReturn(completableFuture);
 
-        StepVerifier.create(publicKeyRepository.save(publicKeyModel))
+        StepVerifier.create(repository.save(publicKeyModel))
                 .expectNext(publicKeyModel).verifyComplete();
     }
 
     @Test
     void findByCxIdAndStatus_withValidCxIdAndStatus_returnsFluxOfPublicKeyModels() {
-        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
-        PublicKeyRepositoryImpl publicKeyRepository = new PublicKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"");
-
-        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
-        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+        when(table.index(any())).thenReturn(index);
         when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         List<PublicKeyModel> publicKeyModelList = new ArrayList<>();
         publicKeyModelList.add(publicKeyModel);
 
-        StepVerifier.create(publicKeyRepository.findByCxIdAndStatus("cxId", "ACTIVE"))
+        StepVerifier.create(repository.findByCxIdAndStatus("cxId", "ACTIVE"))
                 .expectNextCount(0);
     }
 }

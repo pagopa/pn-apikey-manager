@@ -7,6 +7,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStat
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -19,7 +20,7 @@ public class PublicKeyValidator {
     private final PublicKeyRepository publicKeyRepository;
 
     public Mono<PublicKeyRequestDto> validatePublicKeyRequest(PublicKeyRequestDto publicKeyRequestDto) {
-        if (publicKeyRequestDto.getName() == null || publicKeyRequestDto.getName().isEmpty()) {
+        if (StringUtils.isEmpty(publicKeyRequestDto.getName())) {
             return Mono.error(new ApiKeyManagerException("Name is mandatory", HttpStatus.BAD_REQUEST));
         }
         return Mono.just(publicKeyRequestDto);

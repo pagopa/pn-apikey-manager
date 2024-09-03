@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.utils;
 
 import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import lombok.CustomLog;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Mono;
@@ -22,7 +21,7 @@ public class PublicKeyUtils {
      * @param pnCxRole   ruolo (admin, operator)
      * @param pnCxGroups gruppi
      */
-    public static Mono<Boolean> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups) {
+    public static Mono<Void> validaAccessoOnlyAdmin(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups) {
         String process = "validating access admin only";
         log.logChecking(process);
         if (!CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
@@ -33,6 +32,6 @@ public class PublicKeyUtils {
         }
         log.debug("access granted for {}, role: {}, groups: {}", pnCxType, pnCxRole, pnCxGroups);
         log.logCheckingOutcome(process, true);
-        return Mono.just(true);
+        return Mono.empty();
     }
 }

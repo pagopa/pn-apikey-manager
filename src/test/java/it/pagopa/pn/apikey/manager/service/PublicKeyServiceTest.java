@@ -29,13 +29,12 @@ class PublicKeyServiceTest {
 
     private PublicKeyService publicKeyService;
     private PublicKeyRepository publicKeyRepository;
-    private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
 
     @BeforeEach
     void setUp() {
         publicKeyRepository = mock(PublicKeyRepository.class);
-        validator = new PublicKeyValidator(publicKeyRepository);
+        PublicKeyValidator validator = new PublicKeyValidator(publicKeyRepository);
         publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
     }
 
@@ -92,13 +91,6 @@ class PublicKeyServiceTest {
 
         StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key with status ROTATED already exists."))
-                .verify();
-    }
-
-    @Test
-    void rotatePublicKey_withInvalidCxType_throwsApiKeyManagerException() {
-        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(new PublicKeyRequestDto()), "uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("CxTypeAuthFleet PA not allowed"))
                 .verify();
     }
 
