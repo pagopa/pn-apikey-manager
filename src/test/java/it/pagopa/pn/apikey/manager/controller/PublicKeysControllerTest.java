@@ -48,9 +48,10 @@ class PublicKeysControllerTest {
         publicKeysResponseDto.setLastKey(lastKey);
         publicKeysResponseDto.setCreatedAt(createdAt);
 
-        when(publicKeyService.getPublicKeys(eq(xPagopaPnCxType), anyString(), anyList(), anyString(), anyInt(), anyString(), anyString(), anyBoolean()))
+        when(publicKeyService.getPublicKeys(any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(publicKeysResponseDto));
         StepVerifier.create(publicKeysController.getPublicKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, 10, lastKey, createdAt, showPublicKey, null))
-                .expectNext(ResponseEntity.ok().body(publicKeysResponseDto));
+                .expectNext(ResponseEntity.ok().body(publicKeysResponseDto))
+                .verifyComplete();
     }
 }
