@@ -17,6 +17,4 @@ public class ApiKeyManagerExceptionError {
 
     public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
 
-    public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
-
 }
