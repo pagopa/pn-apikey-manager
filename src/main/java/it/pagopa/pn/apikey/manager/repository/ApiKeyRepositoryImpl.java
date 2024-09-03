@@ -242,4 +242,27 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .build();
     }
 
+    @Override
+    public Mono<Page<ApiKeyModel>> findByUidAndCxIdAndStatusAndScope(String uid, String cxId, String status, String scope) {
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#status", "status");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":statusActive", AttributeValue.builder().s("ACTIVE").build());
+
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(uid).sortValue(cxId)
+                        .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(expressionBuilder("(#status = :statusActive)", expressionValues, expressionNames))
+                .build();
+
+        return Flux.from(table.index(ApiKeyConstant.GSI_UID_CXID).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList()
+                .map(Page::create)
+                .switchIfEmpty(Mono.error(new ApiKeyManagerException("Public key does not exists", HttpStatus.NOT_FOUND)));
+    }
+
 }

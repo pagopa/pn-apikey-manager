@@ -107,6 +107,18 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
                 \"ReadCapacityUnits\": 10,
                 \"WriteCapacityUnits\": 5
             }
+        },
+        {
+            \"IndexName\": \"uid-cxId-index\",
+            \"KeySchema\": [{\"AttributeName\":\"x-pagopa-pn-uid\",\"KeyType\":\"HASH\"},
+                            {\"AttributeName\":\"x-pagopa-pn-cx-id\",\"KeyType\":\"RANGE\"}],
+            \"Projection\":{
+                \"ProjectionType\":\"ALL\"
+            },
+            \"ProvisionedThroughput\": {
+                \"ReadCapacityUnits\": 10,
+                \"WriteCapacityUnits\": 5
+            }
         }
     ]"
 
