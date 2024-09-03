@@ -308,7 +308,7 @@ components:
     VirtualKeyStatus:
       description: Stato della virtual key
       type: string
-      enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED' ]
+      enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED', 'DELETED' ]
 
     RequestNewVirtualKey:
       title: Request creazione virtual key
