@@ -14,4 +14,6 @@ public class ApiKeyManagerExceptionError {
 
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
 
+    public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
+
 }
