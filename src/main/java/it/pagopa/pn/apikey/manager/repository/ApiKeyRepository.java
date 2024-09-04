@@ -16,7 +16,7 @@ public interface ApiKeyRepository {
 
     Mono<ApiKeyModel> findById(String id);
 
-    Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId);
+    Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId, String scope);
 
     Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId);
 
