@@ -10,12 +10,12 @@ import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CAN_NOT_DELETE;
@@ -35,41 +35,30 @@ public class VirtualKeyService {
         }
 
         return apiKeyRepository.findById(id)
-                .flatMap(virtualKeyModel -> this.validateRole(virtualKeyModel, xPagopaPnUid, xPagopaPnCxRole, xPagopaPnCxGroups))
-                .flatMap(this::isOperationAllowed)
-                .flatMap(virtualKeyModel -> this.createVirtualKeyModelToDelete(virtualKeyModel, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, id))
+                .flatMap(virtualKeyModel -> this.validateRoleForDeletion(virtualKeyModel, xPagopaPnUid, xPagopaPnCxRole, xPagopaPnCxGroups))
+                .flatMap(this::isDeleteOperationAllowed)
+                .map(virtualKeyModel -> this.updateVirtualKeyStatusToDelete(virtualKeyModel, xPagopaPnUid))
                 .flatMap(apiKeyRepository::save)
                 .thenReturn("VirtualKey deleted");
     }
 
-    private Mono<ApiKeyModel> createVirtualKeyModelToDelete(ApiKeyModel virtualKeyModel, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String id) {
-
-        ApiKeyModel apiKeyModel = new ApiKeyModel();
-        apiKeyModel.setId(id);
-        apiKeyModel.setVirtualKey(id);
-        apiKeyModel.setStatus("DELETED");
-        apiKeyModel.setCxId(xPagopaPnCxId);
-        apiKeyModel.setCxGroup(xPagopaPnCxGroups);
-        apiKeyModel.setName(virtualKeyModel.getName());
-        apiKeyModel.setPdnd(virtualKeyModel.isPdnd());
-        apiKeyModel.setUid(xPagopaPnUid);
-        apiKeyModel.setCxType(xPagopaPnCxType.toString());
-
-        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
-        //TODO aggiungere un nuovo stato nel VirtualKeyStatusDto ?
-        apiKeyHistoryModel.setStatus("DELETED");
-        apiKeyHistoryModel.setDate(LocalDateTime.now());
-        apiKeyHistoryModel.setChangeByDenomination(xPagopaPnUid);
-
-        List<ApiKeyHistoryModel> apiKeyHistoryModelList = new ArrayList<>(apiKeyModel.getStatusHistory());
-        apiKeyHistoryModelList.add(apiKeyHistoryModel);
-
-        apiKeyModel.setStatusHistory(apiKeyHistoryModelList);
-
-        return Mono.just(apiKeyModel);
+    private ApiKeyModel updateVirtualKeyStatusToDelete(ApiKeyModel virtualKeyModel, String xPagopaPnUid) {
+        virtualKeyModel.setStatus(VirtualKeyStatusDto.DELETED.getValue());
+        virtualKeyModel.getStatusHistory().add(createNewHistory(xPagopaPnUid, VirtualKeyStatusDto.DELETED.getValue()));
+        return virtualKeyModel;
     }
 
-    private Mono<ApiKeyModel> validateRole(ApiKeyModel virtualKeyModel, String xPagopaPnUid, String xPagopaPnCxRole, List<String> xPagopaPnCxGroups) {
+    @NotNull
+    private static ApiKeyHistoryModel createNewHistory(String xPagopaPnUid, String status) {
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistoryModel.setStatus(status);
+        apiKeyHistoryModel.setChangeByDenomination(xPagopaPnUid);
+        return apiKeyHistoryModel;
+    }
+
+    private Mono<ApiKeyModel> validateRoleForDeletion(ApiKeyModel virtualKeyModel, String xPagopaPnUid, String xPagopaPnCxRole, List<String> xPagopaPnCxGroups) {
+        log.debug("validateRoleForDeletion - xPagopaPnUid: {}, xPagopaPnCxRole: {}, xPagopaPnCxGroups: {}", xPagopaPnUid, xPagopaPnCxRole, xPagopaPnCxGroups);
         return VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
                 .flatMap(isAdmin -> {
                     if (!isAdmin && !virtualKeyModel.getUid().equals(xPagopaPnUid)) {
@@ -79,7 +68,7 @@ public class VirtualKeyService {
                 });
     }
 
-    private Mono<ApiKeyModel> isOperationAllowed(ApiKeyModel virtualKeyModel) {
+    private Mono<ApiKeyModel> isDeleteOperationAllowed(ApiKeyModel virtualKeyModel) {
         VirtualKeyStatusDto status = VirtualKeyStatusDto.fromValue(virtualKeyModel.getStatus());
         if (!status.getValue().equals(VirtualKeyStatusDto.BLOCKED.getValue())) {
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, virtualKeyModel.getStatus()), HttpStatus.BAD_REQUEST));
