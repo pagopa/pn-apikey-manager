@@ -51,6 +51,8 @@ Resources:
           AttributeType: "S"
         - AttributeName: "x-pagopa-pn-cx-id"
           AttributeType: "S"
+        - AttributeName: "x-pagopa-pn-uid"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "id"
           KeyType: "HASH"
@@ -68,6 +70,14 @@ Resources:
             - AttributeName: x-pagopa-pn-cx-id
               KeyType: HASH
             - AttributeName: lastUpdate
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: "uid-cxId-index"
+          KeySchema:
+            - AttributeName: x-pagopa-pn-uid
+              KeyType: HASH
+            - AttributeName: x-pagopa-pn-cx-id
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
