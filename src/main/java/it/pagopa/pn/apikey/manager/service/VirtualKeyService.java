@@ -47,7 +47,7 @@ public class VirtualKeyService {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId(id);
         apiKeyModel.setVirtualKey(id);
-        apiKeyModel.setStatus(virtualKeyModel.getStatus());
+        apiKeyModel.setStatus("DELETED");
         apiKeyModel.setCxId(xPagopaPnCxId);
         apiKeyModel.setCxGroup(xPagopaPnCxGroups);
         apiKeyModel.setName(virtualKeyModel.getName());
