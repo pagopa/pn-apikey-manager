@@ -78,6 +78,7 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
         AttributeName=x-pagopa-pn-cx-id,AttributeType=S \
         AttributeName=lastUpdate,AttributeType=S \
         AttributeName=virtualKey,AttributeType=S \
+        AttributeName=x-pagopa-pn-uid,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \

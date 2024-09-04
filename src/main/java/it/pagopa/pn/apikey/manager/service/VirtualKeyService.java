@@ -38,10 +38,21 @@ public class VirtualKeyService {
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
         return this.validateTosConsent(xPagopaPnUid, xPagopaPnCxType)
+                .then(this.validateActiveVirtualKey(xPagopaPnUid, xPagopaPnCxId))
                 .then(requestNewVirtualKeyDto)
                 .flatMap(dto -> createVirtualKeyModel(dto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId))
                 .flatMap(apiKeyRepository::save)
                 .flatMap(this::createVirtualKeyDto);
+    }
+
+    private Mono<Void> validateActiveVirtualKey(String xPagopaPnUid, String xPagopaPnCxId) {
+        return apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue(), String.valueOf(ApiKeyModel.Scope.CLIENTID))
+                .flatMap(apiKeyModelList -> {
+                    if (apiKeyModelList.items() != null && !apiKeyModelList.items().isEmpty()) {
+                        return Mono.error(new ApiKeyManagerException("Virtual key with status ACTIVE already exists.", HttpStatus.BAD_REQUEST));
+                    }
+                    return Mono.empty();
+                });
     }
 
     private Mono<ApiKeyModel> createVirtualKeyModel(RequestNewVirtualKeyDto dto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
