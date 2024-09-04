@@ -78,6 +78,7 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
         AttributeName=x-pagopa-pn-cx-id,AttributeType=S \
         AttributeName=lastUpdate,AttributeType=S \
         AttributeName=virtualKey,AttributeType=S \
+        AttributeName=x-pagopa-pn-uid,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
@@ -100,6 +101,18 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
             \"IndexName\": \"virtualKey-id-index\",
             \"KeySchema\": [{\"AttributeName\":\"virtualKey\",\"KeyType\":\"HASH\"},
                             {\"AttributeName\":\"id\",\"KeyType\":\"RANGE\"}],
+            \"Projection\":{
+                \"ProjectionType\":\"ALL\"
+            },
+            \"ProvisionedThroughput\": {
+                \"ReadCapacityUnits\": 10,
+                \"WriteCapacityUnits\": 5
+            }
+        },
+        {
+            \"IndexName\": \"uid-cxId-index\",
+            \"KeySchema\": [{\"AttributeName\":\"x-pagopa-pn-uid\",\"KeyType\":\"HASH\"},
+                            {\"AttributeName\":\"x-pagopa-pn-cx-id\",\"KeyType\":\"RANGE\"}],
             \"Projection\":{
                 \"ProjectionType\":\"ALL\"
             },

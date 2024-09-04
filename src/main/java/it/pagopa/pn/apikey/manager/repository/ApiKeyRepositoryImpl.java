@@ -242,4 +242,28 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .build();
     }
 
+    @Override
+    public Mono<Page<ApiKeyModel>> findByUidAndCxIdAndStatusAndScope(String uid, String cxId, String status, String scope) {
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#status", "status");
+        expressionNames.put("#scope", "scope");
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":status", AttributeValue.builder().s(status).build());
+        expressionValues.put(":scope", AttributeValue.builder().s(scope).build());
+
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(uid).sortValue(cxId)
+                        .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(expressionBuilder("(#status = :status AND #scope = :scope)", expressionValues, expressionNames))
+                .build();
+
+        return Flux.from(table.index(ApiKeyConstant.GSI_UID_CXID).query(queryEnhancedRequest).flatMapIterable(Page::items))
+                .collectList()
+                .map(Page::create);
+    }
+
 }
