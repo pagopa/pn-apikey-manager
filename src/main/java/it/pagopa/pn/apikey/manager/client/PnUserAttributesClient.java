@@ -11,6 +11,8 @@ import lombok.CustomLog;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 
 @AllArgsConstructor
 @Component
@@ -18,9 +20,9 @@ import reactor.core.publisher.Mono;
 public class PnUserAttributesClient extends CommonBaseClient {
 
     private final ConsentsApi consentsApi;
-    public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, String xPagopaPnCxType, ConsentTypeDto consentType, String version) {
+    public Mono<ConsentDto> getPgConsentByType(String xPagopaPnCxId, String xPagopaPnCxType, String xPagopaPnCxRole, ConsentTypeDto consentType, List<String> xPagopaPnCxGroups, String version) {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_USER_ATTRIBUTES, "getConsentByType");
-        return consentsApi.getConsentByType(xPagopaPnUid, CxTypeAuthFleetDto.fromValue(xPagopaPnCxType), consentType, version)
+        return consentsApi.getPgConsentByType(xPagopaPnCxId, CxTypeAuthFleetDto.fromValue(xPagopaPnCxType), xPagopaPnCxRole, consentType, xPagopaPnCxGroups, version)
                 .doOnError(ex -> log.logInvokationResultDownstreamFailed(PnLogger.EXTERNAL_SERVICES.PN_USER_ATTRIBUTES, ex.getMessage()));
     }
 }

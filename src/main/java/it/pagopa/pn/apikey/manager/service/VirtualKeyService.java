@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
 import it.pagopa.pn.apikey.manager.constant.VirtualKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
@@ -31,13 +32,14 @@ public class VirtualKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final PnUserAttributesClient pnUserAttributesClient;
+    private final PnExternalRegistriesClient pnExternalRegistriesClient;
 
-    public Mono<ResponseNewVirtualKeyDto> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto) {
+    public Mono<ResponseNewVirtualKeyDto> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, String role, List<String> groups) {
         if (!VirtualKeyConstant.ALLOWED_CX_TYPE_VIRTUAL_KEY.contains(xPagopaPnCxType)) {
             log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
-        return this.validateTosConsent(xPagopaPnUid, xPagopaPnCxType)
+        return this.validateTosConsent(xPagopaPnUid, xPagopaPnCxType, role, groups)
                 .then(this.validateActiveVirtualKey(xPagopaPnUid, xPagopaPnCxId))
                 .then(requestNewVirtualKeyDto)
                 .flatMap(dto -> createVirtualKeyModel(dto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId))
@@ -49,7 +51,7 @@ public class VirtualKeyService {
         return apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue(), String.valueOf(ApiKeyModel.Scope.CLIENTID))
                 .flatMap(apiKeyModelList -> {
                     if (apiKeyModelList.items() != null && !apiKeyModelList.items().isEmpty()) {
-                        return Mono.error(new ApiKeyManagerException("Virtual key with status ACTIVE already exists.", HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException("Virtual key with status ENABLED already exists.", HttpStatus.BAD_REQUEST));
                     }
                     return Mono.empty();
                 });
@@ -84,13 +86,14 @@ public class VirtualKeyService {
         return Mono.just(response);
     }
 
-    private Mono<Void> validateTosConsent(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
-        return pnUserAttributesClient.getConsentByType(xPagopaPnUid, xPagopaPnCxType.getValue() , ConsentTypeDto.TOS, "2")
+    private Mono<Void> validateTosConsent(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, List<String> groups) {
+        return pnExternalRegistriesClient.findPrivacyNoticeVersion(ConsentTypeDto.TOS_DEST_B2B.getValue(), CxTypeAuthFleetDto.PG.getValue())
+                .flatMap(versionDto -> pnUserAttributesClient.getPgConsentByType(xPagopaPnUid, xPagopaPnCxType.getValue(), xPagopaPnCxRole, ConsentTypeDto.TOS_DEST_B2B, groups, Integer.toString(versionDto.getVersion())))
                 .flatMap(consentDto -> {
                     if (Boolean.TRUE.equals(consentDto.getAccepted())) {
                         return Mono.empty();
                     } else {
-                        return Mono.error(new ApiKeyManagerException("TOS consent not found", HttpStatus.FORBIDDEN));
+                        return Mono.error(new ApiKeyManagerException("TOS DEST B2B consent not found", HttpStatus.FORBIDDEN));
                     }
                 });
     }

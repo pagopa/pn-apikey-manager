@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class UserAttributesClientConfigurator extends CommonBaseClient {
     @Bean
-    public ConsentsApi deliveryApi(PnApikeyManagerConfig config) {
+    public ConsentsApi consentsApi(PnApikeyManagerConfig config) {
         ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(config.getUserAttributesBaseUrl());
         return new ConsentsApi(apiClient);

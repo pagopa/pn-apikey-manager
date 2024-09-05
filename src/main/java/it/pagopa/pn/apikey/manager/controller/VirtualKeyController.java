@@ -11,10 +11,13 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @CustomLog
@@ -36,7 +39,8 @@ public class VirtualKeyController implements VirtualKeysApi {
      *         or Bad request (status code 400)
      *         or Internal error (status code 500)
      */
-    public Mono<ResponseEntity<ResponseNewVirtualKeyDto>> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, final ServerWebExchange exchange) {
+    @Override
+    public Mono<ResponseEntity<ResponseNewVirtualKeyDto>> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
         String logMessage = String.format("Creazione di una Virtual Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s",
                 xPagopaPnUid,
                 xPagopaPnCxType.getValue(),
@@ -49,10 +53,10 @@ public class VirtualKeyController implements VirtualKeysApi {
 
         logEvent.log();
 
-        return virtualKeyService.createVirtualKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, requestNewVirtualKeyDto)
+        return virtualKeyService.createVirtualKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, requestNewVirtualKeyDto, xPagopaPnCxRole, xPagopaPnCxGroups)
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
-                    return ResponseEntity.ok().body(s);
+                    return ResponseEntity.status(HttpStatus.CREATED).body(s);
                 })
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }

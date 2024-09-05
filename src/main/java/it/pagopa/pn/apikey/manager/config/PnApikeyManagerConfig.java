@@ -15,5 +15,6 @@ import org.springframework.context.annotation.Import;
 public class PnApikeyManagerConfig {
 
     private String userAttributesBaseUrl;
+    private String externalRegistriesBaseUrl;
 
 }

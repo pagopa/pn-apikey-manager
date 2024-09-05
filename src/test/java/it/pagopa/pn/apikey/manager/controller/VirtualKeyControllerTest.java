@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -47,10 +48,10 @@ class VirtualKeyControllerTest {
         ResponseNewVirtualKeyDto responseDto = new ResponseNewVirtualKeyDto();
         responseDto.setId("id");
 
-        when(virtualKeyService.createVirtualKey(any(), any(), any(), any())).thenReturn(Mono.just(responseDto));
+        when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(responseDto));
 
-        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), exchange))
-                .expectNext(ResponseEntity.ok().body(responseDto))
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+                .expectNext(ResponseEntity.status(HttpStatus.CREATED).body(responseDto))
                 .verifyComplete();
     }
 
@@ -60,9 +61,9 @@ class VirtualKeyControllerTest {
         ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
 
-        when(virtualKeyService.createVirtualKey(any(), any(), any(), any())).thenReturn(Mono.error(new IllegalArgumentException("Bad request")));
+        when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(new IllegalArgumentException("Bad request")));
 
-        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), exchange))
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
                 .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException && throwable.getMessage().equals("Bad request"))
                 .verify();
     }
@@ -73,9 +74,9 @@ class VirtualKeyControllerTest {
         ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
 
-        when(virtualKeyService.createVirtualKey(any(), any(), any(), any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
+        when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
 
-        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), exchange))
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Internal error"))
                 .verify();
     }
