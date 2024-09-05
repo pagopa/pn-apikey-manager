@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -20,8 +19,8 @@ import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(SpringExtension.class)
 class PublicKeyServiceTest {
 
@@ -93,6 +92,28 @@ class PublicKeyServiceTest {
 
         StepVerifier.create(result)
                 .verifyComplete();
+    }
+
+    @Test
+    void handlePublicKeyEventKeyAlreadyDeleted() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setExpireAt(Instant.now().minusSeconds(60));
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setCxId("cxId");
+        publicKeyModel.setStatus("DELETED");
+
+        MessageHeaders messageHeaders = new MessageHeaders(null);
+        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
+        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
+
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+
+        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(publicKeyRepository, never()).updateItemStatus(any(), anyList());
     }
 
     @Test

@@ -39,6 +39,7 @@ public class PublicKeyService {
         return validator.validatePayload(publicKeyEvent)
                 .flatMap(payload -> repository.findByKidAndCxId(kid, publicKeyEvent.getCxId()))
                 .flatMap(validator::checkItemExpiration)
+                .flatMap(validator::checkIfItemIsNotAlreadyDeleted)
                 .flatMap(publicKeyModel -> {
                     publicKeyModel.setStatus("DELETED"); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
                     publicKeyModel.getStatusHistory().add(createNewPublicKeyHistory("DELETED", AUTOMATIC_DELETE)); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
@@ -47,6 +48,8 @@ public class PublicKeyService {
                 .doOnNext(item -> logEvent.generateSuccess().log())
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
+
+
 
     private String retrieveBaseKidFromPayload(String kid) {
         return kid.replace("_COPY", "");

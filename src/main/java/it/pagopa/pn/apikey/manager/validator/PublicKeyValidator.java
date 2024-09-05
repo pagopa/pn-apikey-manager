@@ -10,6 +10,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
+import static it.pagopa.pn.apikey.manager.model.PublicKeyEventAction.DELETE;
+
 @Component
 @Slf4j
 public class PublicKeyValidator {
@@ -18,7 +20,7 @@ public class PublicKeyValidator {
         if (payload.getKid().isEmpty() || payload.getCxId().isEmpty()) {
             return Mono.error(new ApiKeyManagerException("The key or cxid is empty.", HttpStatus.BAD_REQUEST));
         }
-        if (payload.getAction().isEmpty() || !"DELETE".equals(payload.getAction())) {
+        if (payload.getAction().isEmpty() || !DELETE.name().equals(payload.getAction())) {
             return Mono.error(new ApiKeyManagerException("The status is empty or not valid.", HttpStatus.BAD_REQUEST));
         }
 
@@ -28,6 +30,15 @@ public class PublicKeyValidator {
     public Mono<PublicKeyModel> checkItemExpiration(PublicKeyModel publicKeyModel) {
         if (Instant.now().isBefore(publicKeyModel.getExpireAt())) {
             log.warn(String.format("PublicKey with kid [%s] and cxid [%s], is not expired. Event will ignore",
+                    publicKeyModel.getKid(), publicKeyModel.getCxId()));
+            return Mono.empty();
+        }
+        return Mono.just(publicKeyModel);
+    }
+
+    public Mono<PublicKeyModel> checkIfItemIsNotAlreadyDeleted(PublicKeyModel publicKeyModel) {
+        if ("DELETED".equals(publicKeyModel.getStatus())) { //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
+            log.debug(String.format("PublicKey with kid [%s] and cxid [%s], is already DELETED. Event will ignore",
                     publicKeyModel.getKid(), publicKeyModel.getCxId()));
             return Mono.empty();
         }
