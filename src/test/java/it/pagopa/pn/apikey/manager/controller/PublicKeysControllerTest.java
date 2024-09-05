@@ -41,7 +41,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.deletePublicKey(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole))
                 .thenReturn(Mono.just("Public key deleted"));
 
-        Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole, exchange);
+        Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, kid, xPagopaPnCxGroups, exchange);
 
         StepVerifier.create(response)
                 .expectNext(ResponseEntity.ok().build())
@@ -60,7 +60,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.deletePublicKey(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole))
                 .thenReturn(Mono.error(new RuntimeException("Not Found")));
 
-        Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole, exchange);
+        Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, kid, xPagopaPnCxGroups, exchange);
 
         StepVerifier.create(response)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Not Found"))
@@ -79,7 +79,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.deletePublicKey(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole))
                 .thenReturn(Mono.error(new RuntimeException("Internal Error")));
 
-        Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole, exchange);
+        Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, kid, xPagopaPnCxGroups, exchange);
 
         StepVerifier.create(response)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Internal Error"))

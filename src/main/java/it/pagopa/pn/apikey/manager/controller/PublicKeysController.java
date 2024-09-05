@@ -41,7 +41,7 @@ public class PublicKeysController implements PublicKeysApi {
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<Void>> deletePublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole,  final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> deletePublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
         String logMessage = String.format("Cancellazione di una Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s - kid=%s",
                 xPagopaPnUid,
                 xPagopaPnCxType.getValue(),

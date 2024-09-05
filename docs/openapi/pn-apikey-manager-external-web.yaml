@@ -4,7 +4,7 @@ info:
   x-api-id: api-internal-web-pa
   title: 'Piattaforma Notifiche: API per il Front End delle PA'
   x-summary: 'Piattaforma Notifiche: API per il Front End delle PA'
-  version: '1.0.0'
+  version: '2.0.0'
   description: >-
     ## Abstract
       API utilizzate dal portale di Piattaforma Notifiche dedicato alle Pubbliche Amministrazioni
@@ -35,12 +35,11 @@ paths:
       tags:
         - ApiKeys
       operationId: getApiKeys
-      parameters:
         - name: limit
           in: query
-          required: false
           schema:
             type: integer
+            default: 10
         - name: lastKey
           in: query
           required: false
@@ -198,6 +197,7 @@ components:
     ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
     ############################################################################################
     ### N.B. PRENDERLE DA AUTH FLEET ###
+      required: false
 
     ############################################################################################
     ###                        PARAMETRI RICERCA API KEY                                     ###
@@ -210,7 +210,6 @@ components:
       required: true
       schema:
         type: string
-        x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'
@@ -240,14 +239,12 @@ components:
         id:
           type: string
           description: Id dell'api key
-          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         name:
           type: string
           description: Nome dell'api key
         value:
           type: string
           description: Valore dell'api key
-          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         lastUpdate:
           type: string
           description: Data ultima modifica
@@ -314,11 +311,9 @@ components:
         id:
           type: string
           description: id dell'api key appena generata
-          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         apiKey:
           type: string
           description: Valore dell'api key appena generata
-          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
 
     RequestApiKeyStatus:
       title: Richiesta di cambio stato per una api key
@@ -335,6 +330,7 @@ components:
             - 'BLOCK'
             - 'ENABLE'
             - 'ROTATE'
+
 
   securitySchemes:                                      # ONLY EXTERNAL
     bearerAuth:                                         # ONLY EXTERNAL
