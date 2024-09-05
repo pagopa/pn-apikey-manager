@@ -30,7 +30,7 @@ public class VirtualKeyService {
 
         if (!VirtualKeyConstant.ALLOWED_CX_TYPE_VIRTUAL_KEY.contains(xPagopaPnCxType)) {
             log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
+            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.BAD_REQUEST));
         }
 
         return apiKeyRepository.findById(id)
