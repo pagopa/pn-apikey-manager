@@ -25,7 +25,7 @@ public class PublicKeyValidator {
         if (PublicKeyStatusDto.BLOCKED.getValue().equals(model.getStatus())) {
             return Mono.just(model);
         } else {
-            return Mono.error(new ApiKeyManagerException("Public key can not be deleted", HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException("Public key can not be deleted", HttpStatus.CONFLICT));
         }
     }
 }
