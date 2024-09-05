@@ -62,10 +62,10 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any()))
+        when(virtualKeyValidator.checkExistingRotatedKeys(any(), any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxId(any(), any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
                 .thenReturn(Mono.just(existingApiKey));
 
         when(virtualKeyValidator.checkStatus(any()))
@@ -98,7 +98,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any()))
+        when(virtualKeyValidator.checkExistingRotatedKeys(any(), any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("User already has a rotated key", null)));
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
@@ -127,10 +127,10 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any()))
+        when(virtualKeyValidator.checkExistingRotatedKeys(any(),any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxId(any(), any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("CxId does not match", HttpStatus.BAD_REQUEST)));
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
@@ -159,10 +159,10 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any()))
+        when(virtualKeyValidator.checkExistingRotatedKeys(any(),any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxId(any(), any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
                 .thenReturn(Mono.just(existingApiKey));
 
         when(virtualKeyValidator.checkStatus(any()))

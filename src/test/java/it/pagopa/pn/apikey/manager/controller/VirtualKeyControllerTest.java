@@ -41,6 +41,7 @@ class VirtualKeyControllerTest {
         virtualKeyService = mock(VirtualKeyService.class);
         virtualKeyController = new VirtualKeyController(virtualKeyService, new PnAuditLogBuilder());
     }
+
     @ParameterizedTest
     @CsvSource({
             "ROTATE, 200",
@@ -129,6 +130,21 @@ class VirtualKeyControllerTest {
         StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
                         ((ResponseStatusException) throwable).getStatus() == HttpStatus.INTERNAL_SERVER_ERROR)
+                .verify();
+    }
+
+    @Test
+    void changeStatusVirtualKeys_Forbidden() {
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+        RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
+        requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
+
+        when(virtualKeyService.changeStatusVirtualKeys(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(Mono.error(new ApiKeyManagerException("Forbidden", HttpStatus.FORBIDDEN)));
+
+        StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
+                .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
+                        ((ResponseStatusException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
     }
 }

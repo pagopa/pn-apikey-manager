@@ -41,32 +41,27 @@ public class VirtualKeyService {
 }
 
     private Mono<Void> rotateVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
-        log.info("Starting rotateVirtualKey - id={}, xPagopaPnUid={}", id, xPagopaPnUid);
-        return apiKeyRepository.findByUidAndCxIdAndStatusAndScope(
-                        xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString(), ApiKeyModel.Scope.CLIENTID.toString())
-                .flatMap(existingRotatedKeys -> {
-                    log.info("Checking existing rotated keys for xPagopaPnUid={}, xPagopaPnCxId={}", xPagopaPnUid, xPagopaPnCxId);
-                    return virtualKeyValidator.checkExistingRotatedKeys(existingRotatedKeys);
-                })
+        log.info("Starting rotate of virtualKey - id={}, xPagopaPnUid={}", id, xPagopaPnUid);
+        return virtualKeyValidator.checkExistingRotatedKeys(xPagopaPnUid, xPagopaPnCxId)
                 .then(Mono.defer(() -> {
-                    log.info("Finding API key by id={}", id);
+                    log.info("Finding virtualKey by id={}", id);
                     return apiKeyRepository.findById(id);
                 }))
                 .flatMap(apiKey -> {
-                    log.info("Checking CxId for API key - id={}, cxId={}", apiKey.getId(), apiKey.getCxId());
-                    return virtualKeyValidator.checkCxId(xPagopaPnCxId, apiKey);
+                    log.info("Checking CxId for virtualKey - id={}, cxId={}, uid={}", apiKey.getId(),apiKey.getCxId(), apiKey.getUid());
+                    return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId,xPagopaPnUid,apiKey);
                 })
                 .flatMap(apiKey -> {
-                    log.info("Checking status for API key - id={}, status={}", apiKey.getId(), apiKey.getStatus());
+                    log.info("Checking status for virtualKey - id={}, status={}", apiKey.getId(), apiKey.getStatus());
                     return virtualKeyValidator.checkStatus(apiKey);
                 })
                 .flatMap(apiKey -> {
-                    log.info("Rotating VirtualKey - id={}, xPagopaPnUid={}", apiKey.getId(), xPagopaPnUid);
+                    log.info("Rotating virtualKey - id={}, xPagopaPnUid={}", apiKey.getId(), xPagopaPnUid);
                     return createAndSaveNewApiKey(apiKey, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId)
                             .flatMap(updatedApiKey -> updateExistingApiKey(apiKey, xPagopaPnUid));
                 })
-                .doOnSuccess(a -> log.info("Successfully changed status of VirtualKey - id={}", id))
-                .doOnError(throwable -> log.error("Error changing status of VirtualKey - id={}, error={}", id, throwable.getMessage()))
+                .doOnSuccess(a -> log.info("Successfully changed status of virtualKey - id={}", id))
+                .doOnError(throwable -> log.error("Error changing status of virtualKey - id={}, error={}", id, throwable.getMessage()))
                 .then();
     }
 

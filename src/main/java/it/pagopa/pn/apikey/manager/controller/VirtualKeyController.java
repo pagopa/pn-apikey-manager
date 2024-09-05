@@ -60,7 +60,7 @@ public class VirtualKeyController implements VirtualKeysApi {
                             .build();
 
                     logEvent.log();
-                    return virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups,id, dto)
+                    return virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, dto)
                             .doOnError(throwable -> {
                                 CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent);
                                 if (throwable instanceof ApiKeyManagerException ex) {
@@ -70,6 +70,8 @@ public class VirtualKeyController implements VirtualKeysApi {
                                         throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
                                     } else if (ex.getStatus() == HttpStatus.NOT_FOUND) {
                                         throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+                                    } else if (ex.getStatus() == HttpStatus.FORBIDDEN) {
+                                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
                                     }
                                 }
                                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
