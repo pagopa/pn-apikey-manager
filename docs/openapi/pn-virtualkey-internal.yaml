@@ -91,6 +91,8 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
       requestBody:
         content:
           application/json:
@@ -280,11 +282,6 @@ components:
         user:
           type: object
           $ref: '#/components/schemas/UserDto'
-        groups:
-          type: array
-          description: Gruppi a cui appartiene la virtual key
-          items:
-            type: string
         status:
           $ref: '#/components/schemas/VirtualKeyStatus'
 
