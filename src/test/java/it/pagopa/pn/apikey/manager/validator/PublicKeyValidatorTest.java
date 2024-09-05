@@ -29,6 +29,40 @@ class PublicKeyValidatorTest {
         validator = new PublicKeyValidator(publicKeyRepository);
     }
 
+    @Test
+    void validatePublicKeyRequest_withValidName_returnsMonoOfRequest() {
+        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
+        requestDto.setName("validName");
+
+        StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
+                .expectNext(requestDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void validatePublicKeyRequest_withNullPublicKey_throwsApiKeyManagerException() {
+        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
+        requestDto.setName(null);
+
+        StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals("Name is mandatory") &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
+    @Test
+    void validatePublicKeyRequest_withEmptyPublicKey_throwsApiKeyManagerException() {
+        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
+        requestDto.setName("");
+
+        StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals("Name is mandatory") &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
    @Test
     void validateChangeStatus_withBlockedToActive_returnsPublicKeyModel() {
         PublicKeyModel publicKeyModel = new PublicKeyModel();

@@ -1,6 +1,3 @@
-
-package it.pagopa.pn.apikey.manager.service;
-
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
@@ -14,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,8 +25,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
+
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -35,14 +34,57 @@ class PublicKeyServiceTest {
 
     private PublicKeyService publicKeyService;
     private PublicKeyRepository publicKeyRepository;
-    private PublicKeyValidator validator;
+    private final PublicKeyValidator validator = new PublicKeyValidator();
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
 
     @BeforeEach
     void setUp() {
-        publicKeyRepository = mock(PublicKeyRepository.class);
+        publicKeyRepository = Mockito.mock(PublicKeyRepository.class);
         validator = new PublicKeyValidator(publicKeyRepository);
         publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
+    }
+
+    @Test
+    void deletePublicKey_Success() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setStatusHistory(List.of());
+        publicKeyModel.setStatus("BLOCKED");
+
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
+
+        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "ADMIN");
+
+        StepVerifier.create(result)
+                .expectNext("Public key deleted")
+                .verifyComplete();
+    }
+
+    @Test
+    void deletePublicKey_Conflict() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setStatusHistory(List.of());
+        publicKeyModel.setStatus("DELETED");
+
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
+
+        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "ADMIN");
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
+                .verify();
+    }
+
+    @Test
+    void deletePublicKey_CxTypeNotAllowed() {
+        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, "ADMIN");
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException)
+                .verify();
     }
 
     @ParameterizedTest

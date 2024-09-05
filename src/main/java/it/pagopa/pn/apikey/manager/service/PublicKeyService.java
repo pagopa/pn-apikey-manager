@@ -18,6 +18,8 @@ import java.util.List;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
 
+import java.util.ArrayList;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,6 +29,28 @@ public class PublicKeyService {
     private final PublicKeyRepository publicKeyRepository;
     private final PnAuditLogBuilder auditLogBuilder;
     private final PublicKeyValidator validator;
+
+    public Mono<String> deletePublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
+        return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
+                .flatMap(validator::validateDeletePublicKey)
+                .doOnNext(model -> {
+                    ArrayList<PublicKeyModel.StatusHistoryItem> history = new ArrayList<>(model.getStatusHistory());
+                    model.setStatus(PublicKeyStatusDto.DELETED.getValue());
+                    history.add(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.DELETED.getValue()));
+                    model.setStatusHistory(history);
+                    publicKeyRepository.save(model);
+                })
+                .thenReturn("Public key deleted");
+    }
+
+    private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String status) {
+        PublicKeyModel.StatusHistoryItem statusHistoryItem = new PublicKeyModel.StatusHistoryItem();
+        statusHistoryItem.setChangeByDenomination(xPagopaPnUid);
+        statusHistoryItem.setStatus(status);
+        statusHistoryItem.setDate(Instant.now());
+        return statusHistoryItem;
+    }
 
     public Mono<Void> changeStatus(String kid, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
@@ -38,22 +62,14 @@ public class PublicKeyService {
 
     @NotNull
     private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
-            String decodedStatus = decodeToEntityStatus(status);
-            publicKeyModel.setStatus(decodedStatus);
-            publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
-            return publicKeyRepository.save(publicKeyModel)
+        String decodedStatus = decodeToEntityStatus(status);
+        publicKeyModel.setStatus(decodedStatus);
+        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
+        return publicKeyRepository.save(publicKeyModel)
                 .then();
     }
 
     private String decodeToEntityStatus(String status) {
         return status.equals(ENABLE_OPERATION) ? PublicKeyStatusDto.ACTIVE.name() : PublicKeyStatusDto.BLOCKED.name();
-    }
-
-    private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String status) {
-        PublicKeyModel.StatusHistoryItem statusHistoryItem = new PublicKeyModel.StatusHistoryItem();
-        statusHistoryItem.setChangeByDenomination(xPagopaPnUid);
-        statusHistoryItem.setStatus(status);
-        statusHistoryItem.setDate(Instant.now());
-        return statusHistoryItem;
     }
 }

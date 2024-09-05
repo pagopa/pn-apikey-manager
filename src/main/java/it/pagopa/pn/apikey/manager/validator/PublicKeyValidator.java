@@ -20,6 +20,22 @@ public class PublicKeyValidator {
 
     private final PublicKeyRepository publicKeyRepository;
 
+    public Mono<PublicKeyRequestDto> validatePublicKeyRequest(PublicKeyRequestDto publicKeyRequestDto) {
+        if (publicKeyRequestDto.getName() == null || publicKeyRequestDto.getName().isEmpty()) {
+            return Mono.error(new ApiKeyManagerException("Name is mandatory", HttpStatus.BAD_REQUEST));
+        }
+        return Mono.just(publicKeyRequestDto);
+    }
+
+    public Mono<PublicKeyModel> validateDeletePublicKey(PublicKeyModel model) {
+        log.debug("Validating delete public key with status {}", model.getStatus());
+        if (PublicKeyStatusDto.BLOCKED.getValue().equals(model.getStatus())) {
+            return Mono.just(model);
+        } else {
+            return Mono.error(new ApiKeyManagerException("Public key can not be deleted", HttpStatus.CONFLICT));
+        }
+    }
+
     public Mono<PublicKeyModel> validateChangeStatus(PublicKeyModel publicKeyModel, String status) {
         log.debug("validateChangeStatus for publicKeyModel with status: {}, to status: {}", publicKeyModel.getStatus(), status);
         if(status.equals(ENABLE_OPERATION) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.BLOCKED.name())) {
