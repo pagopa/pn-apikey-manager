@@ -17,15 +17,8 @@ components:
     cxTaxIdAuthFleet:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/f34eabb77a2ee56f17afd3cc63e3e42498029f3c/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxTaxIdAuthFleet'
     cxRoleAuthFleet:
-      name: x-pagopa-pn-cx-role
-      in: header
-      description: User role
-      required: false
-      schema:
-        type: string
-        # ASCII printable characters
-        pattern: ^[ -~]*$
-        maxLength: 64
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/cf5ef970a9f5fe4d20d39984a05e0c3c2b9775e3/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxRoleAuthFleet'
+
     ############################################################################################
     ###                          STRUTTURE DATI DI PN-COMMONS                                ###
     ############################################################################################
