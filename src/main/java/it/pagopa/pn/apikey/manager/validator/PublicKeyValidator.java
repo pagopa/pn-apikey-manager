@@ -27,7 +27,7 @@ public class PublicKeyValidator {
         } else if(status.equals(BLOCK_OPERATION) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.ACTIVE.name())) {
             return Mono.just(publicKeyModel);
         } else {
-            return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.CONFLICT));
         }
     }
 
@@ -37,7 +37,7 @@ public class PublicKeyValidator {
                 .hasElements()
                 .flatMap(hasElements -> {
                     if (Boolean.TRUE.equals(hasElements)) {
-                        return Mono.error(new ApiKeyManagerException(String.format("Public key with status %s already exists.", status), HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException(String.format("Public key with status %s already exists.", status), HttpStatus.CONFLICT));
                     }
                     return Mono.empty();
                 });

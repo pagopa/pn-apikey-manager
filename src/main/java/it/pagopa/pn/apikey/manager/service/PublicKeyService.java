@@ -30,28 +30,22 @@ public class PublicKeyService {
 
     public Mono<Void> changeStatus(String kid, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
-                .then(Mono.defer(() -> checkIfExistsActivePublicKey(xPagopaPnCxId, status)))
+                .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, decodeToEntityStatus(status))))
                 .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
                 .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
                 .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid));
     }
 
-    private Mono<Void> checkIfExistsActivePublicKey(String xPagoPaCxId, String status) {
-        return status.equals(ENABLE_OPERATION)
-                ? validator.checkPublicKeyAlreadyExistsWithStatus(xPagoPaCxId, PublicKeyStatusDto.ACTIVE.name())
-                : Mono.empty();
-    }
-
     @NotNull
     private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
-            String decodedStatus = decodeStatus(status);
+            String decodedStatus = decodeToEntityStatus(status);
             publicKeyModel.setStatus(decodedStatus);
             publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
             return publicKeyRepository.save(publicKeyModel)
                 .then();
     }
 
-    private String decodeStatus(String status) {
+    private String decodeToEntityStatus(String status) {
         return status.equals(ENABLE_OPERATION) ? PublicKeyStatusDto.ACTIVE.name() : PublicKeyStatusDto.BLOCKED.name();
     }
 
