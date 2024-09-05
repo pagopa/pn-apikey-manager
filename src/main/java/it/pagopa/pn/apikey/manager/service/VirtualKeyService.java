@@ -18,8 +18,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CAN_NOT_DELETE;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 
 @Service
 @AllArgsConstructor
@@ -35,7 +34,7 @@ public class VirtualKeyService {
         }
 
         return apiKeyRepository.findById(id)
-                .flatMap(virtualKeyModel -> this.validateRoleForDeletion(virtualKeyModel, xPagopaPnUid, xPagopaPnCxRole, xPagopaPnCxGroups))
+                .flatMap(virtualKeyModel -> this.validateRoleForDeletion(virtualKeyModel, xPagopaPnUid, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups))
                 .flatMap(this::isDeleteOperationAllowed)
                 .map(virtualKeyModel -> this.updateVirtualKeyStatusToDelete(virtualKeyModel, xPagopaPnUid))
                 .flatMap(apiKeyRepository::save)
@@ -57,21 +56,21 @@ public class VirtualKeyService {
         return apiKeyHistoryModel;
     }
 
-    private Mono<ApiKeyModel> validateRoleForDeletion(ApiKeyModel virtualKeyModel, String xPagopaPnUid, String xPagopaPnCxRole, List<String> xPagopaPnCxGroups) {
+    private Mono<ApiKeyModel> validateRoleForDeletion(ApiKeyModel virtualKeyModel, String xPagopaPnUid, String xPagopaCxId,String xPagopaPnCxRole, List<String> xPagopaPnCxGroups) {
         log.debug("validateRoleForDeletion - xPagopaPnUid: {}, xPagopaPnCxRole: {}, xPagopaPnCxGroups: {}", xPagopaPnUid, xPagopaPnCxRole, xPagopaPnCxGroups);
         return VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
                 .flatMap(isAdmin -> {
-                    if (!isAdmin && !virtualKeyModel.getUid().equals(xPagopaPnUid)) {
-                        return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, virtualKeyModel.getStatus()), HttpStatus.BAD_REQUEST));
+                    if((isAdmin && virtualKeyModel.getCxId().equals(xPagopaCxId)) || virtualKeyModel.getUid().equals(xPagopaPnUid)) {
+                        return Mono.just(virtualKeyModel);
                     }
-                    return Mono.just(virtualKeyModel);
+                    return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_DELETE, HttpStatus.FORBIDDEN));
                 });
     }
 
     private Mono<ApiKeyModel> isDeleteOperationAllowed(ApiKeyModel virtualKeyModel) {
         VirtualKeyStatusDto status = VirtualKeyStatusDto.fromValue(virtualKeyModel.getStatus());
         if (!status.getValue().equals(VirtualKeyStatusDto.BLOCKED.getValue())) {
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, virtualKeyModel.getStatus()), HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CAN_NOT_DELETE, virtualKeyModel.getStatus()), HttpStatus.CONFLICT));
         }
         return Mono.just(virtualKeyModel);
     }

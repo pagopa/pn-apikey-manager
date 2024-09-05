@@ -72,7 +72,7 @@ class VirtualKeyServiceTest {
         apiKeyModel.setCxGroup(xPagopaPnCxGroups);
         apiKeyModel.setName("name");
         apiKeyModel.setPdnd(true);
-        apiKeyModel.setUid("xPagopaPnUid");
+        apiKeyModel.setUid("otherUser");
         apiKeyModel.setCxType(CxTypeAuthFleetDto.PG.toString());
 
         ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
@@ -87,7 +87,8 @@ class VirtualKeyServiceTest {
 
         when(apiKeyRepository.findById("id")).thenReturn(Mono.just(apiKeyModel));
         StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", xPagopaPnCxGroups, "xPagopaPnCxRole"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Can not delete ApiKey - current state is"));
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Not authorized to delete ApiKey"))
+                .verify();
     }
 
     @Test

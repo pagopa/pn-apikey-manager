@@ -6,6 +6,7 @@ public class ApiKeyManagerExceptionError {
 
     public static final String APIKEY_INVALID_STATUS = "Can not change ApiKey status from %s to %s";
     public static final String APIKEY_CAN_NOT_DELETE = "Can not delete ApiKey - current state is %s";
+    public static final String APIKEY_FORBIDDEN_DELETE = "Not authorized to delete ApiKey";
     public static final String APIKEY_DOES_NOT_EXISTS = "ApiKey does not exist";
     public static final String APIKEY_CX_TYPE_NOT_ALLOWED = "CxTypeAuthFleet %s not allowed";
 
