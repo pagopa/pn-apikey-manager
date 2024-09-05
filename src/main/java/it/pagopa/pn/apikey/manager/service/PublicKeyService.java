@@ -16,6 +16,8 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.List;
 
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,17 +37,22 @@ public class PublicKeyService {
     }
 
     private Mono<Void> checkIfExistsActivePublicKey(String xPagoPaCxId, String status) {
-        return status.equals(PublicKeyStatusDto.ACTIVE.name())
+        return status.equals(ENABLE_OPERATION)
                 ? validator.checkPublicKeyAlreadyExistsWithStatus(xPagoPaCxId, PublicKeyStatusDto.ACTIVE.name())
                 : Mono.empty();
     }
 
     @NotNull
     private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
-            publicKeyModel.setStatus(status);
-            publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, status));
+            String decodedStatus = decodeStatus(status);
+            publicKeyModel.setStatus(decodedStatus);
+            publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
             return publicKeyRepository.save(publicKeyModel)
                 .then();
+    }
+
+    private String decodeStatus(String status) {
+        return status.equals(ENABLE_OPERATION) ? PublicKeyStatusDto.ACTIVE.name() : PublicKeyStatusDto.BLOCKED.name();
     }
 
     private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String status) {

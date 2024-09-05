@@ -34,7 +34,7 @@ class PublicKeyValidatorTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
 
-        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.ACTIVE.getValue()))
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "ENABLE"))
                 .expectNext(publicKeyModel)
                 .verifyComplete();
     }
@@ -55,7 +55,7 @@ class PublicKeyValidatorTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
 
-        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, PublicKeyStatusDto.BLOCKED.getValue()))
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "BLOCK"))
                 .expectNext(publicKeyModel)
                 .verifyComplete();
     }

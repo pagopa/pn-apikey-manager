@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.BLOCK_OPERATION;
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+
 @Component
 @Slf4j
 @AllArgsConstructor
@@ -19,9 +22,9 @@ public class PublicKeyValidator {
 
     public Mono<PublicKeyModel> validateChangeStatus(PublicKeyModel publicKeyModel, String status) {
         log.debug("validateChangeStatus for publicKeyModel with status: {}, to status: {}", publicKeyModel.getStatus(), status);
-        if(status.equals(PublicKeyStatusDto.ACTIVE.name()) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.BLOCKED.name())) {
+        if(status.equals(ENABLE_OPERATION) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.BLOCKED.name())) {
             return Mono.just(publicKeyModel);
-        } else if(status.equals(PublicKeyStatusDto.BLOCKED.name()) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.ACTIVE.name())) {
+        } else if(status.equals(BLOCK_OPERATION) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.ACTIVE.name())) {
             return Mono.just(publicKeyModel);
         } else {
             return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.BAD_REQUEST));

@@ -53,7 +53,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
 
-        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ENABLE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
                 .verifyComplete();
     }
 
@@ -81,13 +81,13 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
 
-        StepVerifier.create(publicKeyService.changeStatus("kid", "BLOCKED", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.changeStatus("kid", "BLOCK", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
                 .verifyComplete();
     }
 
     @Test
     void changeStatus_withInvalidRole_throwsForbiddenException() {
-        StepVerifier.create(publicKeyService.changeStatus("kid", "ACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "USER"))
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ENABLE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "USER"))
                 .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException && Objects.requireNonNull(throwable.getMessage()).contains("Accesso negato!"))
                 .verify();
     }

@@ -35,8 +35,8 @@ class PublicKeysControllerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "BLOCKED",
-            "ACTIVE"
+            "BLOCK",
+            "ENABLE"
     })
     void changeStatusPublicKey_Success(String status) {
         ServerWebExchange exchange = mock(ServerWebExchange.class);
@@ -57,7 +57,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.changeStatus(anyString(), anyString(), anyString(), any(), anyString(), anyList(), anyString()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("User is not authorized to perform this action", HttpStatus.FORBIDDEN)));
 
-        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ACTIVE", List.of(), "USER", exchange))
+        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ENABLE", List.of(), "USER", exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
     }
@@ -68,7 +68,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.changeStatus(anyString(), anyString(), anyString(), any(), anyString(), anyList(), anyString()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("Not found", HttpStatus.NOT_FOUND)));
 
-        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ACTIVE", List.of(), "ADMIN", exchange))
+        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ENABLE", List.of(), "ADMIN", exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.NOT_FOUND)
                 .verify();
     }
@@ -79,7 +79,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.changeStatus(anyString(), anyString(), anyString(), any(), anyString(), anyList(), anyString()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("Internal error", HttpStatus.INTERNAL_SERVER_ERROR)));
 
-        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ACTIVE", List.of(), "ADMIN", exchange))
+        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ENABLE", List.of(), "ADMIN", exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.INTERNAL_SERVER_ERROR)
                 .verify();
     }

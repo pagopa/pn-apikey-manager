@@ -17,6 +17,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.BLOCK_OPERATION;
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+
 @RestController
 @RequiredArgsConstructor
 @lombok.CustomLog
@@ -46,7 +49,7 @@ public class PublicKeysController implements PublicKeysApi {
     @Override
     public Mono<ResponseEntity<Void>> changeStatusPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, String status, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole, final ServerWebExchange exchange) {
 
-        String logMessage = String.format("Start cambio stato chiave - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s, kid=%s, status=%s",
+        String logMessage = String.format("Start cambio stato chiave pubblica - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s, kid=%s, status=%s",
                 xPagopaPnUid,
                 xPagopaPnCxType.getValue(),
                 xPagopaPnCxId,
@@ -69,9 +72,9 @@ public class PublicKeysController implements PublicKeysApi {
     }
 
     private PnAuditLogEventType selectAuditLogEventType(String status) {
-        if ("BLOCKED".equalsIgnoreCase(status)) {
+        if (BLOCK_OPERATION.equalsIgnoreCase(status)) {
             return PnAuditLogEventType.AUD_AK_BLOCK;
-        } else if ("ACTIVE".equalsIgnoreCase(status)) {
+        } else if (ENABLE_OPERATION.equalsIgnoreCase(status)) {
             return PnAuditLogEventType.AUD_AK_REACTIVATE;
         } else {
             throw new ApiKeyManagerException("Invalid state", HttpStatus.BAD_REQUEST);
