@@ -292,6 +292,9 @@ components:
         name:
           type: string
           description: Nome della public key
+        issuer:
+          type: string
+          description: Issuer della public key
         value:
           type: string
           description: Valore dell public key restituito solo se il query param showPublicKey == True
