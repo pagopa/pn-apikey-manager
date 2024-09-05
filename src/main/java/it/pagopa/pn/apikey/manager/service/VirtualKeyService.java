@@ -51,7 +51,7 @@ public class VirtualKeyService {
         return apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue(), String.valueOf(ApiKeyModel.Scope.CLIENTID))
                 .flatMap(apiKeyModelList -> {
                     if (apiKeyModelList.items() != null && !apiKeyModelList.items().isEmpty()) {
-                        return Mono.error(new ApiKeyManagerException("Virtual key with status ENABLED already exists.", HttpStatus.BAD_REQUEST));
+                        return Mono.error(new ApiKeyManagerException("Virtual key with status ENABLED already exists.", HttpStatus.CONFLICT));
                     }
                     return Mono.empty();
                 });
