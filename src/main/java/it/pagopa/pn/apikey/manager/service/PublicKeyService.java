@@ -9,12 +9,16 @@ import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+
+import java.util.ArrayList;
 
 @Slf4j
 @Service
@@ -46,5 +50,26 @@ public class PublicKeyService {
         statusHistoryItem.setStatus(status);
         statusHistoryItem.setDate(Instant.now());
         return statusHistoryItem;
+    }
+
+    public Mono<Void> changeStatus(String kid, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
+        return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, decodeToEntityStatus(status))))
+                .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
+                .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
+                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid));
+    }
+
+    @NotNull
+    private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
+        String decodedStatus = decodeToEntityStatus(status);
+        publicKeyModel.setStatus(decodedStatus);
+        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
+        return publicKeyRepository.save(publicKeyModel)
+                .then();
+    }
+
+    private String decodeToEntityStatus(String status) {
+        return status.equals(ENABLE_OPERATION) ? PublicKeyStatusDto.ACTIVE.name() : PublicKeyStatusDto.BLOCKED.name();
     }
 }
