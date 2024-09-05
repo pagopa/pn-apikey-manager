@@ -324,6 +324,10 @@ components:
           type: string
           description: Id della public key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+        issuer:
+          type: string
+          description: Issuer della public key
+          x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
         name:
           type: string
           description: Nome della public key

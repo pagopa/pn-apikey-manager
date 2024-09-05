@@ -12,14 +12,18 @@ import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
 
 @Slf4j
 @Service
@@ -30,6 +34,49 @@ public class PublicKeyService {
     private final PublicKeyRepository publicKeyRepository;
     private final PnAuditLogBuilder auditLogBuilder;
     private final PublicKeyValidator validator;
+
+    public Mono<String> deletePublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
+        return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
+                .flatMap(validator::validateDeletePublicKey)
+                .doOnNext(model -> {
+                    ArrayList<PublicKeyModel.StatusHistoryItem> history = new ArrayList<>(model.getStatusHistory());
+                    model.setStatus(PublicKeyStatusDto.DELETED.getValue());
+                    history.add(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.DELETED.getValue()));
+                    model.setStatusHistory(history);
+                    publicKeyRepository.save(model);
+                })
+                .thenReturn("Public key deleted");
+    }
+
+    private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String status) {
+        PublicKeyModel.StatusHistoryItem statusHistoryItem = new PublicKeyModel.StatusHistoryItem();
+        statusHistoryItem.setChangeByDenomination(xPagopaPnUid);
+        statusHistoryItem.setStatus(status);
+        statusHistoryItem.setDate(Instant.now());
+        return statusHistoryItem;
+    }
+
+    public Mono<Void> changeStatus(String kid, String status, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
+        return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, decodeToEntityStatus(status))))
+                .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
+                .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
+                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid));
+    }
+
+    @NotNull
+    private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
+        String decodedStatus = decodeToEntityStatus(status);
+        publicKeyModel.setStatus(decodedStatus);
+        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
+        return publicKeyRepository.save(publicKeyModel)
+                .then();
+    }
+
+    private String decodeToEntityStatus(String status) {
+        return status.equals(ENABLE_OPERATION) ? PublicKeyStatusDto.ACTIVE.name() : PublicKeyStatusDto.BLOCKED.name();
+    }
 
     public Mono<PublicKeyResponseDto> createPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
         Mono<PublicKeyRequestDto> cachedRequestDto = publicKeyRequestDto.cache();
@@ -70,14 +117,6 @@ public class PublicKeyService {
         return UUID.nameUUIDFromBytes((publicKey+name).getBytes()).toString();
     }
 
-    private PublicKeyModel.StatusHistoryItem createNewHistoryItem(String xPagopaPnUid, String status) {
-        PublicKeyModel.StatusHistoryItem statusHistoryItem = new PublicKeyModel.StatusHistoryItem();
-        statusHistoryItem.setChangeByDenomination(xPagopaPnUid);
-        statusHistoryItem.setStatus(status);
-        statusHistoryItem.setDate(Instant.now());
-        return statusHistoryItem;
-    }
-
     private Mono<PublicKeyModel> savePublicKeyCopyItem(PublicKeyModel publicKeyModel) {
         PublicKeyModel copyItem = new PublicKeyModel(publicKeyModel);
         copyItem.setKid(publicKeyModel.getKid()+"_COPY");
@@ -86,5 +125,4 @@ public class PublicKeyService {
         copyItem.setTtl(publicKeyModel.getExpireAt());
         return publicKeyRepository.save(copyItem);
     }
-
 }
