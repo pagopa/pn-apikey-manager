@@ -28,4 +28,8 @@ public interface ApiKeyRepository {
 
     Mono<Page<ApiKeyModel>> findByUidAndCxIdAndStatusAndScope(String uid, String cxId, String status, String scope);
 
+    Mono<Page<ApiKeyModel>> getVirtualKeys(String xPagopaPnUid, String xPagopaPnCxId, List<ApiKeyModel> cumulativeQueryResult, ApiKeyPageable pageable, boolean admin);
+
+    Mono<Integer> countWithFilters(String xPagopaPnUid, String xPagopaPnCxId, boolean admin);
+
 }
