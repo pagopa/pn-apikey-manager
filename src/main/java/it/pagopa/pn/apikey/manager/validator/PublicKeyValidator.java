@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.validator;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import lombok.AllArgsConstructor;

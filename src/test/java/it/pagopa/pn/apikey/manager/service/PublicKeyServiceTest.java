@@ -1,3 +1,5 @@
+package it.pagopa.pn.apikey.manager.service;
+
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
@@ -34,7 +36,7 @@ class PublicKeyServiceTest {
 
     private PublicKeyService publicKeyService;
     private PublicKeyRepository publicKeyRepository;
-    private final PublicKeyValidator validator = new PublicKeyValidator();
+    private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
 
     @BeforeEach

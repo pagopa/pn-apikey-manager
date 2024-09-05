@@ -86,7 +86,7 @@ public class PublicKeysController implements PublicKeysApi {
      */
 
     @Override
-    public Mono<ResponseEntity<Void>> changeStatusPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, String status, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> changeStatusPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
 
         String logMessage = String.format("Start cambio stato chiave pubblica - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s, kid=%s, status=%s",
                 xPagopaPnUid,

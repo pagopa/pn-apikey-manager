@@ -3,11 +3,13 @@ package it.pagopa.pn.apikey.manager.validator;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
