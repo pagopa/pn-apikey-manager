@@ -137,7 +137,7 @@ public class PublicKeysController implements PublicKeysApi {
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<PublicKeyResponseDto>> newPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<PublicKeyResponseDto>> newPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
         String logMessage = String.format("Creazione di una Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s",
                 xPagopaPnUid,
                 xPagopaPnCxType.getValue(),

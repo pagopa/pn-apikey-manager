@@ -172,7 +172,7 @@ class PublicKeysControllerTest {
         PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
         when(publicKeyService.createPublicKey(any(), any(), anyString(), any(), any(), any())).thenReturn(Mono.just(publicKeyResponseDto));
 
-        StepVerifier.create(publicKeysController.newPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(new PublicKeyRequestDto()), List.of(), "role",
+        StepVerifier.create(publicKeysController.newPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "role", Mono.just(new PublicKeyRequestDto()), List.of(),
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
                 .expectNext(ResponseEntity.ok().body(publicKeyResponseDto))
