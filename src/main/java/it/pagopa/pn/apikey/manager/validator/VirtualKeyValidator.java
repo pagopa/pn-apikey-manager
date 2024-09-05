@@ -20,7 +20,7 @@ public class VirtualKeyValidator {
 
     public Mono<Void> validateCxType(CxTypeAuthFleetDto xPagopaPnCxType) {
         if (!Objects.equals(CxTypeAuthFleetDto.PG.toString(), xPagopaPnCxType.getValue())) {
-            return Mono.error(new ApiKeyManagerException("Error, cxType must be PG", HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException("Error, cxType must be PG", HttpStatus.FORBIDDEN));
         }
         return Mono.empty();
     }

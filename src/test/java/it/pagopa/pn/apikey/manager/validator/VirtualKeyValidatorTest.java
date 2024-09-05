@@ -49,7 +49,7 @@ class VirtualKeyValidatorTest {
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         throwable.getMessage().equals("Error, cxType must be PG") &&
-                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
     }
 
