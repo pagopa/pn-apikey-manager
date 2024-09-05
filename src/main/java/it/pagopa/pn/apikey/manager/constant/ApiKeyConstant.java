@@ -17,4 +17,5 @@ public final class ApiKeyConstant {
     public static final String GSI_PA = "paId-lastUpdate-index";
 
     public static final Set<CxTypeAuthFleetDto> ALLOWED_CX_TYPE = Set.of(CxTypeAuthFleetDto.PA);
+    public static final Set<CxTypeAuthFleetDto> ALLOWED_CX_TYPE_PUBLIC_KEY = Set.of(CxTypeAuthFleetDto.PG);
 }

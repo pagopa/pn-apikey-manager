@@ -9,4 +9,6 @@ public interface PublicKeyRepository {
     Mono<PublicKeyModel> findByKidAndCxId(String kid, String cxId);
 
     Mono<PublicKeyModel> updateItemStatus(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus);
+
+    Mono<PublicKeyModel> save(PublicKeyModel publicKeyModel);
 }

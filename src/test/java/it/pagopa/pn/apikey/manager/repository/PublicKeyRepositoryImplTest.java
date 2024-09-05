@@ -77,4 +77,17 @@ class PublicKeyRepositoryImplTest {
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.NOT_FOUND)
                 .verify();
     }
+
+    @Test
+    void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+
+        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> null);
+        when(table.putItem(publicKeyModel)).thenReturn(completableFuture);
+
+        StepVerifier.create(repository.save(publicKeyModel))
+                .expectNext(publicKeyModel).verifyComplete();
+    }
 }

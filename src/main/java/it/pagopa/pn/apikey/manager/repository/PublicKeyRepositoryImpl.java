@@ -48,27 +48,35 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
 
     }
 
-        private UpdateItemEnhancedRequest<PublicKeyModel> createUpdateItemEnhancedRequest(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus) {
-            Map<String, String> expressionNames = new HashMap<>();
-            expressionNames.put("#status", "status");
+    private UpdateItemEnhancedRequest<PublicKeyModel> createUpdateItemEnhancedRequest(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus) {
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#status", "status");
 
-            Map<String, AttributeValue> expressionValues = new HashMap<>();
-            StringBuilder expressionBuilder = new StringBuilder();
-            IntStream.range(0, invalidStartedStatus.size()).forEach(idx -> {
-                expressionValues.put(":" + invalidStartedStatus.get(idx), AttributeValue.builder().s(invalidStartedStatus.get(idx)).build());
-                if(idx == invalidStartedStatus.size() - 1) {
-                    expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx));
-                } else {
-                    expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx)).append(" AND ");
-                }
-            });
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        StringBuilder expressionBuilder = new StringBuilder();
+        IntStream.range(0, invalidStartedStatus.size()).forEach(idx -> {
+            expressionValues.put(":" + invalidStartedStatus.get(idx), AttributeValue.builder().s(invalidStartedStatus.get(idx)).build());
+            if(idx == invalidStartedStatus.size() - 1) {
+                expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx));
+            } else {
+                expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx)).append(" AND ");
+            }
+        });
 
-            return UpdateItemEnhancedRequest
-                    .builder(PublicKeyModel.class)
-                    .conditionExpression(expressionBuilder(expressionBuilder.toString(), expressionValues, expressionNames))
-                    .item(publicKeyModel)
-                    .ignoreNulls(true)
-                    .build();
-        }
+        return UpdateItemEnhancedRequest
+                .builder(PublicKeyModel.class)
+                .conditionExpression(expressionBuilder(expressionBuilder.toString(), expressionValues, expressionNames))
+                .item(publicKeyModel)
+                .ignoreNulls(true)
+                .build();
+    }
+
+    @Override
+    public Mono<PublicKeyModel> save(PublicKeyModel publicKeyModel) {
+        log.debug("Inserting data {} in DynamoDB table {}",publicKeyModel,table);
+        return Mono.fromFuture(table.putItem(publicKeyModel))
+                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
+                .thenReturn(publicKeyModel);
+    }
 
 }
