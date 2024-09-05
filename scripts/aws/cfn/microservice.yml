@@ -111,6 +111,10 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing public keys'
 
+  PublicKeyTableStreamArn:
+    Type: String
+    Description: 'Arn of dynamodb table stream containing Public Key information'
+
   FlagPdnd:
     Type: String
     Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
@@ -286,6 +290,7 @@ Resources:
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
         ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
 
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
@@ -303,21 +308,21 @@ Resources:
     Properties:
       RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
       Name: !Sub ${ProjectName}-apikey-manager-publickey-ttl-pipe
-      Source: !GetAtt PublicKeyTable.StreamArn
+      Source: !Ref PublicKeyTableStreamArn
       SourceParameters:
         DynamoDBStreamParameters:
           StartingPosition: TRIM_HORIZON
           BatchSize: !Ref ApiKeyManagerPipeBatchSize
-      FilterCriteria:
-        Filters:
-          - Pattern: '{ "eventName": ["DELETE"] }'
-      Target: !Ref ApikeyInternalQueueARN
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["DELETE"] }'
+      Target: !Ref ApikeyManagerInternalQueueARN
       TargetParameters:
         InputTemplate: |
           {
             "cxId": <$.dynamodb.Keys.cxId.S>,
             "kid": <$.dynamodb.Keys.kid.S>,
-            "action": "JWKS"
+            "action": "DELETE"
           }
 
   PgPublicKeyPipe:
@@ -325,15 +330,15 @@ Resources:
     Properties:
       RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
       Name: !Sub ${ProjectName}-apikey-manager-publickey-pipe
-      Source: !GetAtt PublicKeyTable.StreamArn
+      Source: !Ref PublicKeyTableStreamArn
       SourceParameters:
         DynamoDBStreamParameters:
           StartingPosition: TRIM_HORIZON
           BatchSize: !Ref ApiKeyManagerPipeBatchSize
-      FilterCriteria:
-        Filters:
-          - Pattern: '{ "eventName": ["INSERT", "MODIFY"] }'
-      Target: !Ref ApikeyInternalQueueARN
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["INSERT", "MODIFY"] }'
+      Target: !Ref ApikeyManagerInternalQueueARN
       TargetParameters:
         InputTemplate: |
           {
@@ -371,7 +376,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sqs:SendMessage
-                Resource: !Ref ApikeyInternalQueueARN
+                Resource: !Ref ApikeyManagerInternalQueueARN
 
   ApikeyManagerMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -431,8 +436,8 @@ Resources:
               - sqs:GetQueueAttributes
               - sqs:ReceiveMessage
             Resource:
-              - !Ref ApikeyInternalQueueARN
-              - !Ref ApikeyInternalQueueDLQARN
+              - !Ref ApikeyManagerInternalQueueARN
+              - !Ref ApikeyManagerInternalQueueDLQARN
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
@@ -533,7 +538,7 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
         QueueArns: !Join
           - ','
-          - - !Ref ApikeyInternalQueueName
+          - - !Ref ApikeyManagerInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
@@ -543,4 +548,4 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
         LogGroupsNames: !Join
           - ','
-          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'    
+          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'

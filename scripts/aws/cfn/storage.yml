@@ -323,6 +323,10 @@ Outputs:
     Description: Name of dynamodb table containing publickey
     Value: !Ref PublicKeyTable
 
+  PublicKeyTableStreamArn:
+    Description: Stream ARN of PublicKeyTable
+    Value: !GetAtt PublicKeyTable.StreamArn
+
   UsagePlanDefault:
     Description: Id Usage Plan default
     Value: !Ref UsagePlanMedium
