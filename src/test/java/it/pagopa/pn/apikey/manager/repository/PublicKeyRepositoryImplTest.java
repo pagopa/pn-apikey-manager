@@ -80,7 +80,7 @@ class PublicKeyRepositoryImplTest {
     }
 
     @Test
-    void getAllPaginated_withValidCxIdAndPageable_returnsMonoOfPage() {
+    void getAllWithFilterPaginated_withValidCxIdAndPageable_returnsMonoOfPage() {
         DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
 
         when(table.index(any())).thenReturn(index);
@@ -92,7 +92,19 @@ class PublicKeyRepositoryImplTest {
                 .limit(10)
                 .build();
 
-        StepVerifier.create(repository.getAllPaginated("cxId", pageable, any()))
+        StepVerifier.create(repository.getAllWithFilterPaginated("cxId", pageable, any()))
                 .expectNext(Page.create(new ArrayList<>()));
+    }
+
+    @Test
+    void countWithFilters_withValidCxIdAndPageable_returnsMonoOfInt() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+
+        StepVerifier.create(repository.countWithFilters("cxId"))
+                .expectNext(0);
     }
 }

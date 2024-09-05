@@ -50,6 +50,7 @@ public class PublicKeyConverter {
     private PublicKeyRowDto getPublicKeyRowDtoFromPublicKeyModel(PublicKeyModel publicKeyModel, Boolean showPublicKey) {
         PublicKeyRowDto publicKeyRowDto = new PublicKeyRowDto();
         publicKeyRowDto.setKid(publicKeyModel.getKid());
+        publicKeyRowDto.setIssuer(publicKeyModel.getIssuer());
         publicKeyRowDto.setName(publicKeyModel.getName());
         if (Boolean.TRUE.equals(showPublicKey)) {
             publicKeyRowDto.setValue(publicKeyModel.getPublicKey());

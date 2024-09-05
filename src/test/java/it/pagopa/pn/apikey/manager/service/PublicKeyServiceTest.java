@@ -71,8 +71,10 @@ class PublicKeyServiceTest {
         responseDto.setItems(List.of(publicKeyRowDto));
         responseDto.setLastKey(null);
         responseDto.setCreatedAt(null);
+        responseDto.setTotal(1);
 
-        when(publicKeyRepository.getAllPaginated(any(), any(), any())).thenReturn(Mono.just(page));
+        when(publicKeyRepository.getAllWithFilterPaginated(any(), any(), any())).thenReturn(Mono.just(page));
+        when(publicKeyRepository.countWithFilters(any())).thenReturn(Mono.just(1));
 
         Mono<PublicKeysResponseDto> result = publicKeyService.getPublicKeys(cxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, createdAt, showPublicKey);
 

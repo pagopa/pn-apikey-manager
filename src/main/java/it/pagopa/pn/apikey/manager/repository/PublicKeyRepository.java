@@ -11,5 +11,7 @@ public interface PublicKeyRepository {
 
     Mono<PublicKeyModel> updateItemStatus(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus);
 
-    Mono<Page<PublicKeyModel>> getAllPaginated(String xPagopaPnCxId, PublicKeyPageable pageable, List<PublicKeyModel> cumulativeQueryResult);
+    Mono<Page<PublicKeyModel>> getAllWithFilterPaginated(String xPagopaPnCxId, PublicKeyPageable pageable, List<PublicKeyModel> cumulativeQueryResult);
+
+    Mono<Integer> countWithFilters(String xPagopaPnCxId);
 }

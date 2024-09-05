@@ -19,6 +19,7 @@ class PublicKeyConverterTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid1");
         publicKeyModel.setName("name1");
+        publicKeyModel.setIssuer("issuer1");
         publicKeyModel.setPublicKey("publicKey1");
         publicKeyModel.setCreatedAt(new Date().toInstant());
         publicKeyModel.setStatus("ACTIVE");
@@ -39,6 +40,7 @@ class PublicKeyConverterTest {
         assertEquals(1, responseDto.getItems().size());
         assertEquals("kid1", responseDto.getItems().get(0).getKid());
         assertEquals("publicKey1", responseDto.getItems().get(0).getValue());
+        assertEquals("issuer1", responseDto.getItems().get(0).getIssuer());
     }
 
     @Test
