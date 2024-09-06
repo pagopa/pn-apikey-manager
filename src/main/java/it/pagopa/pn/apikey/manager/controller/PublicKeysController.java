@@ -3,6 +3,8 @@ package it.pagopa.pn.apikey.manager.controller;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.PublicKeysApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
@@ -118,5 +120,41 @@ public class PublicKeysController implements PublicKeysApi {
         } else {
             throw new ApiKeyManagerException("Invalid state", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    /**
+     * POST /pg-self/public-key : Censimento public key
+     * servizio di censimento di una public key
+     *
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param publicKeyRequestDto  (required)
+     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @param xPagopaPnCxRole User role (optional)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<PublicKeyResponseDto>> newPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("Creazione di una Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s",
+                xPagopaPnUid,
+                xPagopaPnCxType.getValue(),
+                xPagopaPnCxId,
+                xPagopaPnCxGroups);
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
+                .build();
+
+        logEvent.log();
+
+        return publicKeyService.createPublicKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, publicKeyRequestDto, xPagopaPnCxGroups, xPagopaPnCxRole)
+                .map(s -> {
+                    logEvent.generateSuccess(logMessage).log();
+                    return ResponseEntity.ok().body(s);
+                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
 }
