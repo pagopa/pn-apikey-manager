@@ -75,6 +75,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '500':
           description: Internal error
           content:
@@ -144,6 +150,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Wrong state transition (i.e. delete an enabled key)
           content:
@@ -184,6 +196,12 @@ paths:
           description: No content
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -236,6 +254,12 @@ paths:
                 $ref: '#/components/schemas/PublicKeyResponse'
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:

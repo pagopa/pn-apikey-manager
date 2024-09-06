@@ -61,20 +61,9 @@ public class PublicKeyValidator {
                 });
     }
 
-    public Mono<Boolean> validateRotatedKeyAlreadyExists(String xPagopaPnCxId) {
-        return publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ROTATED.getValue())
-                .hasElements()
-                .flatMap(hasElements -> {
-                    if (Boolean.TRUE.equals(hasElements)) {
-                        return Mono.error(new ApiKeyManagerException("Public key with status ROTATED already exists.", HttpStatus.BAD_REQUEST));
-                    }
-                    return Mono.just(true);
-                });
-    }
-
     public Mono<PublicKeyModel> validatePublicKeyRotation(PublicKeyModel model) {
         if (!PublicKeyStatusDto.ACTIVE.getValue().equals(model.getStatus())) {
-            return Mono.error(new ApiKeyManagerException("Public key with status ACTIVE not found.", HttpStatus.NOT_FOUND));
+            return Mono.error(new ApiKeyManagerException("Public key can not be rotated.", HttpStatus.CONFLICT));
         }
         return Mono.just(model);
     }

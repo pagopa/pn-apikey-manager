@@ -8,6 +8,8 @@ import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
@@ -122,5 +124,27 @@ class PublicKeyValidatorTest {
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         throwable.getMessage().contains("Public key with status ACTIVE already exists."))
                 .verify();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "ACTIVE, true",
+        "BLOCKED, false",
+        "DELETED, false"
+    })
+    void validatePublicKeyRotation_handlesVariousStatuses(String status, boolean shouldPass) {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(status);
+
+        if (shouldPass) {
+            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel))
+                    .expectNext(publicKeyModel)
+                    .verifyComplete();
+        } else {
+            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel))
+                    .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                            throwable.getMessage().contains("Public key can not be rotated."))
+                    .verify();
+        }
     }
 }

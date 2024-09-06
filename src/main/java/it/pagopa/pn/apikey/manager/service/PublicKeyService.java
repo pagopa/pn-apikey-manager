@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
 
@@ -84,10 +85,10 @@ public class PublicKeyService {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
                 .then(cachedRequestDto)
                 .flatMap(validator::validatePublicKeyRequest)
-                .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()).hasElements())
-                .zipWith(cachedRequestDto)
-                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.BAD_REQUEST))
-                        : createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, response.getT2()))
+                .flatMap(req -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()))
+                .onErrorMap(isPublicKeyAlreadyExistsError(), e -> new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.CONFLICT))
+                .then(cachedRequestDto)
+                .flatMap(publicKeyRequestDto1 -> createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, publicKeyRequestDto1))
                 .flatMap(publicKeyRepository::save)
                 .zipWhen(this::savePublicKeyCopyItem)
                 .map(tuple -> {
@@ -97,6 +98,11 @@ public class PublicKeyService {
                     publicKeyResponseDto.setIssuer(originalPublicKey.getIssuer());
                     return publicKeyResponseDto;
                 });
+    }
+
+    @NotNull
+    private static Predicate<Throwable> isPublicKeyAlreadyExistsError() {
+        return t -> t instanceof ApiKeyManagerException && ((ApiKeyManagerException) t).getStatus() == HttpStatus.CONFLICT;
     }
 
     private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, PublicKeyRequestDto publicKeyRequestDto) {
@@ -132,8 +138,8 @@ public class PublicKeyService {
         return cachedPublicKeyRequestDto
                 .flatMap(validator::validatePublicKeyRequest)
                 .flatMap(model -> PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups))
-                .then(Mono.defer(() -> validator.validateRotatedKeyAlreadyExists(xPagopaPnCxId)))
-                .flatMap(valid -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId))
+                .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, PublicKeyStatusDto.ROTATED.getValue())))
+                .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
                 .flatMap(validator::validatePublicKeyRotation)
                 .flatMap(model -> rotatePublicKeyAndSave(xPagopaPnUid, model))
                 .flatMap(unused -> cachedPublicKeyRequestDto)

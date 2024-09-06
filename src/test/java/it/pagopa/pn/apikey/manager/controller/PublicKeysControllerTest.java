@@ -191,7 +191,7 @@ class PublicKeysControllerTest {
         PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
         when(publicKeyService.rotatePublicKey(any(), any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(publicKeyResponseDto));
 
-        StepVerifier.create(publicKeysController.rotatePublicKey("xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", "kid", Mono.just(new PublicKeyRequestDto()), List.of("group"), "ADMIN", null))
+        StepVerifier.create(publicKeysController.rotatePublicKey("xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", "ADMIN", "kid", Mono.just(new PublicKeyRequestDto()), List.of("group"), null))
                 .expectNext(ResponseEntity.ok().body(publicKeyResponseDto))
                 .verifyComplete();
     }
