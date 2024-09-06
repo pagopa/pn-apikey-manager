@@ -86,7 +86,7 @@ public class PublicKeyService {
                 .flatMap(validator::validatePublicKeyRequest)
                 .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()).hasElements())
                 .zipWith(cachedRequestDto)
-                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.BAD_REQUEST))
+                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.CONFLICT))
                         : createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, response.getT2()))
                 .flatMap(publicKeyRepository::save)
                 .zipWhen(this::savePublicKeyCopyItem)
