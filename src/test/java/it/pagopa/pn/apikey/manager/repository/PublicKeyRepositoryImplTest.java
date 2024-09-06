@@ -80,20 +80,6 @@ class PublicKeyRepositoryImplTest {
     }
 
     @Test
-    void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
-
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setKid("kid");
-
-        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
-        completableFuture.completeAsync(() -> null);
-        when(table.putItem(publicKeyModel)).thenReturn(completableFuture);
-
-        StepVerifier.create(repository.save(publicKeyModel))
-                .expectNext(publicKeyModel).verifyComplete();
-    }
-
-    @Test
     void findByCxIdAndStatus_withValidCxIdAndStatus_returnsFluxOfPublicKeyModels() {
         DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
         when(table.index(any())).thenReturn(index);
@@ -105,5 +91,19 @@ class PublicKeyRepositoryImplTest {
 
         StepVerifier.create(repository.findByCxIdAndStatus("cxId", "ACTIVE"))
                 .expectNextCount(0);
+    }
+
+    @Test
+    void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+
+        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> null);
+        when(table.putItem(publicKeyModel)).thenReturn(completableFuture);
+
+        StepVerifier.create(repository.save(publicKeyModel))
+                .expectNext(publicKeyModel).verifyComplete();
     }
 }
