@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.List;
 
@@ -11,4 +12,6 @@ public interface PublicKeyRepository {
     Mono<PublicKeyModel> updateItemStatus(PublicKeyModel publicKeyModel, List<String> invalidStartedStatus);
 
     Mono<PublicKeyModel> save(PublicKeyModel publicKeyModel);
+
+    Mono<Page<PublicKeyModel>> getIssuer(String xPagopaPnCxId);
 }

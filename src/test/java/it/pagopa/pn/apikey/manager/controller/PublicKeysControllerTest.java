@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeysIssuerResponseDto;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +84,42 @@ class PublicKeysControllerTest {
 
         StepVerifier.create(response)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Internal Error"))
+                .verify();
+    }
+
+    @Test
+    void getIssuerStatusSuccessfully() {
+        String xPagopaPnUid = "user123";
+        String xPagopaPnCxId = "cxId123";
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        PublicKeysIssuerResponseDto responseDto = new PublicKeysIssuerResponseDto();
+        responseDto.setIsPresent(true);
+        responseDto.setIssuerStatus(PublicKeysIssuerResponseDto.IssuerStatusEnum.ACTIVE);
+
+        when(publicKeyService.getIssuer(xPagopaPnCxId))
+                .thenReturn(Mono.just(responseDto));
+
+        Mono<ResponseEntity<PublicKeysIssuerResponseDto>> response = publicKeysController.getIssuerStatus(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, exchange);
+
+        StepVerifier.create(response)
+                .expectNext(ResponseEntity.ok().body(responseDto))
+                .verifyComplete();
+    }
+
+    @Test
+    void getIssuerStatusForbidden() {
+        String xPagopaPnUid = "user123";
+        String xPagopaPnCxId = "cxId123";
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        when(publicKeyService.getIssuer(xPagopaPnCxId))
+                .thenReturn(Mono.error(new RuntimeException("Forbidden")));
+
+        Mono<ResponseEntity<PublicKeysIssuerResponseDto>> response = publicKeysController.getIssuerStatus(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, exchange);
+
+        StepVerifier.create(response)
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Forbidden"))
                 .verify();
     }
 
