@@ -13,5 +13,7 @@ public class ApiKeyManagerExceptionError {
     public static final String AGGREGATE_NOT_FOUND = "Aggregato non trovato";
 
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
+    public static final String APIKEY_FORBIDDEN_OPERATION = "Given virtual key doesn't belong to user";
+    public static final String SAME_STATUS_APIKEY_ALREADY_EXISTS = "User has another Virtual key with status %s";
 
 }
