@@ -62,13 +62,13 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any(), any()))
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
         when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
                 .thenReturn(Mono.just(existingApiKey));
 
-        when(virtualKeyValidator.checkStatus(any()))
+        when(virtualKeyValidator.validateRotateVirtualKey(any()))
                 .thenReturn(Mono.just(existingApiKey));
 
         when(apiKeyRepository.findById("existingId"))
@@ -98,7 +98,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any(), any()))
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("User already has a rotated key", null)));
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
@@ -127,7 +127,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any(),any()))
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(),any(),any()))
                 .thenReturn(Mono.empty());
 
         when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
@@ -159,13 +159,13 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkExistingRotatedKeys(any(),any()))
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(),any(),any()))
                 .thenReturn(Mono.empty());
 
         when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
                 .thenReturn(Mono.just(existingApiKey));
 
-        when(virtualKeyValidator.checkStatus(any()))
+        when(virtualKeyValidator.validateRotateVirtualKey(any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("virtualKey is not in enabled state", HttpStatus.BAD_REQUEST)));
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))

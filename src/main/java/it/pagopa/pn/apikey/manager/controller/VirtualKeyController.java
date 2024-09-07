@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.VirtualKeysApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
@@ -10,10 +9,8 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -61,24 +58,9 @@ public class VirtualKeyController implements VirtualKeysApi {
 
                     logEvent.log();
                     return virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, dto)
-                            .doOnError(throwable -> {
-                                CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent);
-                                if (throwable instanceof ApiKeyManagerException ex) {
-                                    if (ex.getStatus() == HttpStatus.BAD_REQUEST) {
-                                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
-                                    } else if (ex.getStatus() == HttpStatus.CONFLICT) {
-                                        throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
-                                    } else if (ex.getStatus() == HttpStatus.NOT_FOUND) {
-                                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
-                                    } else if (ex.getStatus() == HttpStatus.FORBIDDEN) {
-                                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
-                                    }
-                                }
-                                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
-                            })
+                            .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                             .then(Mono.defer(() -> {
-                                logEvent.generateSuccess(logMessage)
-                                        .log();
+                                logEvent.generateSuccess(logMessage).log();
                                 return Mono.just(ResponseEntity.ok().build());
                             }));
                 });

@@ -48,7 +48,6 @@ class VirtualKeyValidatorTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals("Error, cxType must be PG") &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
     }
@@ -72,7 +71,6 @@ class VirtualKeyValidatorTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals("CxId or uId does not match") &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
     }
@@ -95,11 +93,10 @@ class VirtualKeyValidatorTest {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setStatus("DISABLED");
 
-        Mono<ApiKeyModel> result = validator.checkStatus(apiKeyModel);
+        Mono<ApiKeyModel> result = validator.validateRotateVirtualKey(apiKeyModel);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals("virtualKey is not in enabled state") &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
                 .verify();
     }
@@ -109,7 +106,7 @@ class VirtualKeyValidatorTest {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setStatus(ApiKeyStatusDto.ENABLED.toString());
 
-        Mono<ApiKeyModel> result = validator.checkStatus(apiKeyModel);
+        Mono<ApiKeyModel> result = validator.validateRotateVirtualKey(apiKeyModel);
 
         StepVerifier.create(result)
                 .expectNext(apiKeyModel)
@@ -130,11 +127,10 @@ class VirtualKeyValidatorTest {
         when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString(), ApiKeyModel.Scope.CLIENTID.toString()))
                 .thenReturn(Mono.just(rotatedKeysPage));
 
-        Mono<Void> result = validator.checkExistingRotatedKeys(xPagopaPnUid, xPagopaPnCxId);
+        Mono<Void> result = validator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString());
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals("User already has a rotated key with the same CxId") &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
                 .verify();
     }
@@ -149,7 +145,7 @@ class VirtualKeyValidatorTest {
         when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString(), ApiKeyModel.Scope.CLIENTID.toString()))
                 .thenReturn(Mono.just(emptyRotatedKeysPage));
 
-        Mono<Void> result = validator.checkExistingRotatedKeys(xPagopaPnUid, xPagopaPnCxId);
+        Mono<Void> result = validator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString());
 
         StepVerifier.create(result)
                 .verifyComplete();

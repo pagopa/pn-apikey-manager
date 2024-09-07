@@ -42,19 +42,13 @@ public class VirtualKeyService {
 
     private Mono<Void> rotateVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
         log.info("Starting rotate of virtualKey - id={}, xPagopaPnUid={}", id, xPagopaPnUid);
-        return virtualKeyValidator.checkExistingRotatedKeys(xPagopaPnUid, xPagopaPnCxId)
+        return virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString())
                 .then(Mono.defer(() -> {
                     log.info("Finding virtualKey by id={}", id);
                     return apiKeyRepository.findById(id);
                 }))
-                .flatMap(apiKey -> {
-                    log.info("Checking CxId for virtualKey - id={}, cxId={}, uid={}", apiKey.getId(),apiKey.getCxId(), apiKey.getUid());
-                    return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId,xPagopaPnUid,apiKey);
-                })
-                .flatMap(apiKey -> {
-                    log.info("Checking status for virtualKey - id={}, status={}", apiKey.getId(), apiKey.getStatus());
-                    return virtualKeyValidator.checkStatus(apiKey);
-                })
+                .flatMap(apiKey -> virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId,xPagopaPnUid,apiKey))
+                .flatMap(virtualKeyValidator::validateRotateVirtualKey)
                 .flatMap(apiKey -> {
                     log.info("Rotating virtualKey - id={}, xPagopaPnUid={}", apiKey.getId(), xPagopaPnUid);
                     return createAndSaveNewApiKey(apiKey, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId)
@@ -77,18 +71,17 @@ public class VirtualKeyService {
 
     private Mono<ApiKeyModel> createAndSaveNewApiKey(ApiKeyModel existingApiKey, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
         log.info("Creating and saving new ApiKey - correlationId={}", existingApiKey.getId());
-        String newVirtualKey = generateNewVirtualKey();
-        ApiKeyModel newApiKey = createNewApiKey(existingApiKey, newVirtualKey, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
+        ApiKeyModel newApiKey = createNewApiKey(existingApiKey, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
         return apiKeyRepository.save(newApiKey);
     }
 
-    private String generateNewVirtualKey() {
+    private String generateUUID() {
         return java.util.UUID.randomUUID().toString();
     }
 
-    private ApiKeyModel createNewApiKey(ApiKeyModel existingApiKey, String newVirtualKey, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
+    private ApiKeyModel createNewApiKey(ApiKeyModel existingApiKey, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
         ApiKeyModel newApiKey = new ApiKeyModel();
-        newApiKey.setId(java.util.UUID.randomUUID().toString());
+        newApiKey.setId(generateUUID());
         newApiKey.setCorrelationId(existingApiKey.getId());
         newApiKey.setGroups(existingApiKey.getGroups());
         newApiKey.setLastUpdate(LocalDateTime.now());
@@ -96,7 +89,7 @@ public class VirtualKeyService {
         newApiKey.setPdnd(false);
         newApiKey.setStatus(ApiKeyStatusDto.ENABLED.toString());
         newApiKey.setStatusHistory(List.of(createApiKeyHistory(ApiKeyStatusDto.CREATED.toString(), xPagopaPnUid)));
-        newApiKey.setVirtualKey(newVirtualKey);
+        newApiKey.setVirtualKey(generateUUID());
         newApiKey.setCxId(xPagopaPnCxId);
         newApiKey.setCxType(xPagopaPnCxType.toString());
         newApiKey.setUid(xPagopaPnUid);

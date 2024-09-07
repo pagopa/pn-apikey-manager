@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -83,8 +82,8 @@ class VirtualKeyControllerTest {
                 .thenReturn(Mono.error(new ApiKeyManagerException("Bad request", HttpStatus.BAD_REQUEST)));
 
         StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
-                .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
-                        ((ResponseStatusException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
                 .verify();
     }
 
@@ -98,8 +97,8 @@ class VirtualKeyControllerTest {
                 .thenReturn(Mono.error(new ApiKeyManagerException("Conflict", HttpStatus.CONFLICT)));
 
         StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
-                .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
-                        ((ResponseStatusException) throwable).getStatus() == HttpStatus.CONFLICT)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
                 .verify();
     }
 
@@ -113,23 +112,8 @@ class VirtualKeyControllerTest {
                 .thenReturn(Mono.error(new ApiKeyManagerException("Not found", HttpStatus.NOT_FOUND)));
 
         StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
-                .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
-                        ((ResponseStatusException) throwable).getStatus() == HttpStatus.NOT_FOUND)
-                .verify();
-    }
-
-    @Test
-    void changeStatusVirtualKeys_InternalServerError() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
-        RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
-        requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
-
-        when(virtualKeyService.changeStatusVirtualKeys(any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(Mono.error(new RuntimeException("Internal error")));
-
-        StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
-                .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
-                        ((ResponseStatusException) throwable).getStatus() == HttpStatus.INTERNAL_SERVER_ERROR)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.NOT_FOUND)
                 .verify();
     }
 
@@ -143,8 +127,8 @@ class VirtualKeyControllerTest {
                 .thenReturn(Mono.error(new ApiKeyManagerException("Forbidden", HttpStatus.FORBIDDEN)));
 
         StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
-                .expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
-                        ((ResponseStatusException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
     }
 }
