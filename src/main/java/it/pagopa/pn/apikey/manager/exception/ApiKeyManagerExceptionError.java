@@ -6,7 +6,6 @@ public class ApiKeyManagerExceptionError {
 
     public static final String APIKEY_INVALID_STATUS = "Can not change ApiKey status from %s to %s";
     public static final String APIKEY_CAN_NOT_DELETE = "Can not delete ApiKey - current state is %s";
-    public static final String APIKEY_FORBIDDEN_DELETE = "Not authorized to delete ApiKey";
     public static final String APIKEY_DOES_NOT_EXISTS = "ApiKey does not exist";
     public static final String APIKEY_CX_TYPE_NOT_ALLOWED = "CxTypeAuthFleet %s not allowed";
 
@@ -16,5 +15,7 @@ public class ApiKeyManagerExceptionError {
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
     public static final String APIKEY_FORBIDDEN_OPERATION = "Given virtual key doesn't belong to user";
     public static final String SAME_STATUS_APIKEY_ALREADY_EXISTS = "User has another Virtual key with status %s";
+
+    public static final String VIRTUALKEY_INVALID_STATUS = "Can not change Virtual key status from %s to %s";
 
 }

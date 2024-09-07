@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -149,5 +150,70 @@ class VirtualKeyValidatorTest {
 
         StepVerifier.create(result)
                 .verifyComplete();
+    }
+
+    @Test
+    void validateRoleForDeletion_shouldReturnApiKey_whenRoleIsAdminAndCxIdMatches() {
+        ApiKeyModel virtualKeyModel = new ApiKeyModel();
+        virtualKeyModel.setCxId("testCxId");
+        virtualKeyModel.setUid("testUid");
+
+        Mono<ApiKeyModel> result = validator.validateRoleForDeletion(virtualKeyModel, "testUid", "testCxId", "ADMIN", List.of("group1"));
+
+        StepVerifier.create(result)
+                .expectNext(virtualKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void validateRoleForDeletion_shouldReturnApiKey_whenUidMatches() {
+        ApiKeyModel virtualKeyModel = new ApiKeyModel();
+        virtualKeyModel.setCxId("differentCxId");
+        virtualKeyModel.setUid("testUid");
+
+        Mono<ApiKeyModel> result = validator.validateRoleForDeletion(virtualKeyModel, "testUid", "testCxId", "USER", List.of("group1"));
+
+        StepVerifier.create(result)
+                .expectNext(virtualKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void validateRoleForDeletion_shouldReturnError_whenRoleIsNotAdminAndCxIdOrUidDoesNotMatch() {
+        ApiKeyModel virtualKeyModel = new ApiKeyModel();
+        virtualKeyModel.setCxId("differentCxId");
+        virtualKeyModel.setUid("differentUid");
+
+        Mono<ApiKeyModel> result = validator.validateRoleForDeletion(virtualKeyModel, "testUid", "testCxId", "USER", List.of("group1"));
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .verify();
+    }
+
+    @Test
+    void isDeleteOperationAllowed_shouldReturnApiKey_whenStatusIsBlocked() {
+        ApiKeyModel virtualKeyModel = new ApiKeyModel();
+        virtualKeyModel.setStatus(VirtualKeyStatusDto.BLOCKED.getValue());
+
+        Mono<ApiKeyModel> result = validator.isDeleteOperationAllowed(virtualKeyModel);
+
+        StepVerifier.create(result)
+                .expectNext(virtualKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void isDeleteOperationAllowed_shouldReturnError_whenStatusIsNotBlocked() {
+        ApiKeyModel virtualKeyModel = new ApiKeyModel();
+        virtualKeyModel.setStatus(VirtualKeyStatusDto.ENABLED.getValue());
+
+        Mono<ApiKeyModel> result = validator.isDeleteOperationAllowed(virtualKeyModel);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
+                .verify();
     }
 }

@@ -154,12 +154,13 @@ class VirtualKeyControllerTest {
 
         when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
                 "xPagopaPnCxId", null, "xPagopaPnCxRole"))
-                .thenReturn(Mono.error(new RuntimeException("Internal error")));
+                .thenReturn(Mono.just("Successfully deleted"));
 
         StepVerifier.create(virtualKeyController.deleteVirtualKey("xPagopaPnUid", null,
                         "xPagopaPnCxId", "xPagopaPnCxRole",
                         "id", null, exchange))
-                .expectNext(ResponseEntity.ok().build());
+                .expectNext(ResponseEntity.ok().build())
+                .verifyComplete();
     }
 
     @Test
