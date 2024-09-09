@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
@@ -139,7 +138,12 @@ public class PublicKeyService {
                 .flatMap(model -> PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups))
                 .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, PublicKeyStatusDto.ROTATED.getValue())))
                 .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
-                .flatMap(validator::validatePublicKeyRotation)
+                .zipWith(cachedPublicKeyRequestDto)
+                .flatMap(tuple -> {
+                    PublicKeyModel publicKeyModel = tuple.getT1();
+                    PublicKeyRequestDto requestDto = tuple.getT2();
+                    return validator.validatePublicKeyRotation(publicKeyModel, requestDto.getPublicKey());
+                })
                 .flatMap(model -> rotatePublicKeyAndSave(xPagopaPnUid, model))
                 .flatMap(unused -> cachedPublicKeyRequestDto)
                 .flatMap(requestDto -> createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, requestDto.getPublicKey(), requestDto.getName()))
@@ -162,7 +166,7 @@ public class PublicKeyService {
 
     private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, String publicKey, String name) {
         PublicKeyModel model = new PublicKeyModel();
-        model.setKid(generateNewKid(publicKey, name));
+        model.setKid(UUID.randomUUID().toString());
         model.setName(name);
         model.setPublicKey(publicKey);
         model.setExpireAt(Instant.now().plus(360, ChronoUnit.DAYS));

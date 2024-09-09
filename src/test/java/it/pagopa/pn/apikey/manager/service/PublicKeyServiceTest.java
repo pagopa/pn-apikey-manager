@@ -205,7 +205,7 @@ class PublicKeyServiceTest {
     void rotatePublicKey_withValidData_returnsPublicKeyResponseDto() {
         PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
         requestDto.setName("Test Key");
-        requestDto.setPublicKey("publicKeyData");
+        requestDto.setPublicKey("newPublicKey");
 
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
@@ -263,7 +263,7 @@ class PublicKeyServiceTest {
         dto.setName("Test Key");
         dto.setPublicKey("publicKey");
         StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "USER"))
-                .expectErrorMatches(throwable -> throwable instanceof PnForbiddenException && throwable.getMessage().contains("Accesso negato!"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && (((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN))
                 .verify();
     }
 }

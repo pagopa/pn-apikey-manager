@@ -62,9 +62,13 @@ public class PublicKeyValidator {
                 });
     }
 
-    public Mono<PublicKeyModel> validatePublicKeyRotation(PublicKeyModel model) {
+    public Mono<PublicKeyModel> validatePublicKeyRotation(PublicKeyModel model, String newPublicKey) {
         if (!PublicKeyStatusDto.ACTIVE.getValue().equals(model.getStatus())) {
-            return Mono.error(new ApiKeyManagerException("Public key can not be rotated.", HttpStatus.CONFLICT));
+            return Mono.error(new ApiKeyManagerException(String.format(ApiKeyManagerExceptionError.APIKEY_INVALID_STATUS, model.getStatus(), PublicKeyStatusDto.ROTATED.getValue()), HttpStatus.CONFLICT));
+        }
+
+        if(model.getPublicKey().equalsIgnoreCase(newPublicKey)) {
+            return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_USED, HttpStatus.CONFLICT));
         }
         return Mono.just(model);
     }

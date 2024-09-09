@@ -135,17 +135,30 @@ class PublicKeyValidatorTest {
     })
     void validatePublicKeyRotation_handlesVariousStatuses(String status, boolean shouldPass) {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setPublicKey("oldPublicKey");
         publicKeyModel.setStatus(status);
 
         if (shouldPass) {
-            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel))
+            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel, "newPublicKey"))
                     .expectNext(publicKeyModel)
                     .verifyComplete();
         } else {
-            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel))
+            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel, "newPublicKey"))
                     .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                            throwable.getMessage().contains("Public key can not be rotated."))
+                            ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
                     .verify();
         }
+    }
+
+    @Test
+    void validatePublicKeyRotation_withSamePublicKey_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setPublicKey("oldPublicKey");
+        publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
+
+        StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel, "oldPublicKey"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_USED))
+                .verify();
     }
 }

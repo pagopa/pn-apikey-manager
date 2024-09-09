@@ -21,5 +21,6 @@ public class ApiKeyManagerExceptionError {
     public static final String PUBLIC_KEY_ALREADY_EXISTS = "Public key with status %s already exists.";
     public static final String PUBLIC_KEY_ALREADY_EXISTS_ACTIVE = "Public key with status ACTIVE already exists, to create a new public key use the rotate operation.";
     public static final String ACCESS_DENIED = "Access denied.";
+    public static final String PUBLIC_KEY_ALREADY_USED = "Public key already used.";
 
 }
