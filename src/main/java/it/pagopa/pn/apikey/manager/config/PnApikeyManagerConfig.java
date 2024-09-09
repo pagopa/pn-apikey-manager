@@ -16,5 +16,10 @@ public class PnApikeyManagerConfig {
 
     private String userAttributesBaseUrl;
     private String externalRegistriesBaseUrl;
+    private Dao dao;
 
+    @Data
+    public static class Dao {
+        private String publicKeyTableName;
+    }
 }

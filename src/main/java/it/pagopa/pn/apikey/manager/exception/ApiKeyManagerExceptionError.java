@@ -8,10 +8,10 @@ public class ApiKeyManagerExceptionError {
     public static final String APIKEY_CAN_NOT_DELETE = "Can not delete ApiKey - current state is %s";
     public static final String APIKEY_DOES_NOT_EXISTS = "ApiKey does not exist";
     public static final String APIKEY_CX_TYPE_NOT_ALLOWED = "CxTypeAuthFleet %s not allowed";
-
     public static final String AGGREGATE_INVALID_STATUS = "Non è possibile eliminare l'aggregato perché ci sono delle PA associate";
     public static final String AGGREGATE_NOT_FOUND = "Aggregato non trovato";
-
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
+    public static final String TOS_CONSENT_NOT_FOUND = "TOS consent for the B2B api usage not accepted.";
+    public static final String VALID_PUBLIC_KEY_NOT_FOUND = "Valid public key not found, there must be at least a public key with status ACTIVE, ROTATED or BLOCKED.";
 
 }
