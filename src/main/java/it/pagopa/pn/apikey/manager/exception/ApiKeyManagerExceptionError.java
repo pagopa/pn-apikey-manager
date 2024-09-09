@@ -16,4 +16,6 @@ public class ApiKeyManagerExceptionError {
     public static final String APIKEY_FORBIDDEN_OPERATION = "Given virtual key doesn't belong to user";
     public static final String SAME_STATUS_APIKEY_ALREADY_EXISTS = "User has another Virtual key with status %s";
 
+    public static final String VIRTUALKEY_INVALID_STATUS = "Can not change Virtual key status from %s to %s";
+
 }

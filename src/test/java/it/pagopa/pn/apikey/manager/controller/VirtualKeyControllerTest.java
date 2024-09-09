@@ -24,7 +24,8 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ContextConfiguration(classes = {PnApikeyManagerConfig.class})
 @ExtendWith(SpringExtension.class)
@@ -129,6 +130,51 @@ class VirtualKeyControllerTest {
         StepVerifier.create(virtualKeyController.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "cxRole", "id", Mono.just(requestDto), List.of(), exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .verify();
+    }
+
+    @Test
+    void deleteVirtualKey_InternalErrorTest() {
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
+                "xPagopaPnCxId", null, "xPagopaPnCxRole"))
+                .thenReturn(Mono.error(new RuntimeException("Internal error")));
+
+        StepVerifier.create(virtualKeyController.deleteVirtualKey("xPagopaPnUid", null,
+                        "xPagopaPnCxId", "xPagopaPnCxRole",
+                        "id", null, exchange))
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Internal error"))
+                .verify();
+    }
+
+    @Test
+    void deleteVirtualKey_SuccessTest() {
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
+                "xPagopaPnCxId", null, "xPagopaPnCxRole"))
+                .thenReturn(Mono.just("Successfully deleted"));
+
+        StepVerifier.create(virtualKeyController.deleteVirtualKey("xPagopaPnUid", null,
+                        "xPagopaPnCxId", "xPagopaPnCxRole",
+                        "id", null, exchange))
+                .expectNext(ResponseEntity.ok().build())
+                .verifyComplete();
+    }
+
+    @Test
+    void deleteVirtualKey_BadRequest() {
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
+                "xPagopaPnCxId", null, "xPagopaPnCxRole"))
+                .thenReturn(Mono.error(new IllegalArgumentException("Bad Request")));
+
+        StepVerifier.create(virtualKeyController.deleteVirtualKey("xPagopaPnUid", null,
+                        "xPagopaPnCxId", "xPagopaPnCxRole",
+                        "id", null, exchange))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException && throwable.getMessage().equals("Bad Request"))
                 .verify();
     }
 }

@@ -1,11 +1,13 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.VirtualKeyValidator;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,8 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -166,10 +170,105 @@ class VirtualKeyServiceTest {
                 .thenReturn(Mono.just(existingApiKey));
 
         when(virtualKeyValidator.validateRotateVirtualKey(any()))
-                .thenReturn(Mono.error(new ApiKeyManagerException("virtualKey is not in enabled state", HttpStatus.BAD_REQUEST)));
+                .thenReturn(Mono.error(new ApiKeyManagerException("virtualKey is not in enabled state", HttpStatus.CONFLICT)));
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
+    }
+
+    @Test
+    void deleteVirtualKey_InternalErrorTest() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+        apiKeyModel.setVirtualKey("id");
+        apiKeyModel.setStatus(String.valueOf(VirtualKeyStatusDto.BLOCKED));
+        apiKeyModel.setCxId("xPagopaPnCxId");
+        apiKeyModel.setCxGroup(new ArrayList<>());
+        apiKeyModel.setName("name");
+        apiKeyModel.setPdnd(true);
+        apiKeyModel.setUid("xPagopaPnUid");
+        apiKeyModel.setCxType(CxTypeAuthFleetDto.PG.toString());
+
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setStatus("DELETED");
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistoryModel.setChangeByDenomination("xPagopaPnUid");
+
+        List<ApiKeyHistoryModel> apiKeyHistoryModelList = new ArrayList<>(apiKeyModel.getStatusHistory());
+        apiKeyHistoryModelList.add(apiKeyHistoryModel);
+
+        apiKeyModel.setStatusHistory(apiKeyHistoryModelList);
+        when(apiKeyRepository.findById("id")).thenReturn(Mono.just(apiKeyModel));
+        StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Internal error"));
+    }
+
+    @Test
+    void deleteVirtualKey_validateRoleErrorTest() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+        apiKeyModel.setVirtualKey("id");
+        apiKeyModel.setStatus(String.valueOf(VirtualKeyStatusDto.BLOCKED));
+        apiKeyModel.setCxId("xPagopaPnCxId");
+        apiKeyModel.setGroups(new ArrayList<>());
+        apiKeyModel.setName("name");
+        apiKeyModel.setPdnd(true);
+        apiKeyModel.setUid("otherUser");
+        apiKeyModel.setCxType(CxTypeAuthFleetDto.PG.toString());
+
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setStatus("DELETED");
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistoryModel.setChangeByDenomination("xPagopaPnUid");
+
+        List<ApiKeyHistoryModel> apiKeyHistoryModelList = new ArrayList<>(apiKeyModel.getStatusHistory());
+        apiKeyHistoryModelList.add(apiKeyHistoryModel);
+
+        apiKeyModel.setStatusHistory(apiKeyHistoryModelList);
+
+        when(apiKeyRepository.findById("id")).thenReturn(Mono.just(apiKeyModel));
+        when(virtualKeyValidator.validateRoleForDeletion(any(), any(), any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException("Forbidden operation", HttpStatus.FORBIDDEN)));
+        StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException)
+                .verify();
+    }
+
+    @Test
+    void deleteVirtualKey_CxTypeNotAllowedTest() {
+        StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PA, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException);
+    }
+
+    @Test
+    void deleteVirtualKey_SuccessTest() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+        apiKeyModel.setVirtualKey("id");
+        apiKeyModel.setStatus(String.valueOf(VirtualKeyStatusDto.BLOCKED));
+        apiKeyModel.setCxId("xPagopaPnCxId");
+        apiKeyModel.setCxGroup(new ArrayList<>());
+        apiKeyModel.setName("name");
+        apiKeyModel.setPdnd(true);
+        apiKeyModel.setUid("xPagopaPnUid");
+        apiKeyModel.setCxType(CxTypeAuthFleetDto.PG.toString());
+
+        ApiKeyHistoryModel apiKeyHistoryModel = new ApiKeyHistoryModel();
+        apiKeyHistoryModel.setStatus("DELETED");
+        apiKeyHistoryModel.setDate(LocalDateTime.now());
+        apiKeyHistoryModel.setChangeByDenomination("xPagopaPnUid");
+
+        List<ApiKeyHistoryModel> apiKeyHistoryModelList = new ArrayList<>(apiKeyModel.getStatusHistory());
+        apiKeyHistoryModelList.add(apiKeyHistoryModel);
+
+        apiKeyModel.setStatusHistory(apiKeyHistoryModelList);
+
+        when(apiKeyRepository.findById("id")).thenReturn(Mono.just(apiKeyModel));
+        when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
+        when(virtualKeyValidator.validateRoleForDeletion(any(), any(), any(), any(), any())).thenReturn(Mono.just(apiKeyModel));
+        when(virtualKeyValidator.isDeleteOperationAllowed(any())).thenReturn(Mono.just(apiKeyModel));
+        StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
+                .expectNextMatches(response -> response.equals("VirtualKey deleted"))
+                .verifyComplete();
     }
 }
