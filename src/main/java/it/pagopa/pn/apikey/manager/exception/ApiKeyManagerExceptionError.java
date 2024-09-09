@@ -18,4 +18,7 @@ public class ApiKeyManagerExceptionError {
 
     public static final String VIRTUALKEY_INVALID_STATUS = "Can not change Virtual key status from %s to %s";
 
+    public static final String TOS_CONSENT_NOT_FOUND = "TOS consent for the B2B api usage not accepted.";
+    public static final String VALID_PUBLIC_KEY_NOT_FOUND = "Valid public key not found, there must be at least a public key with status ACTIVE, ROTATED or BLOCKED.";
+
 }

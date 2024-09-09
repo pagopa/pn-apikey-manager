@@ -9,12 +9,15 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFle
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
+import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.VirtualKeyValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
@@ -31,6 +34,8 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
+@PropertySource("classpath:application-test.properties")
+@EnableConfigurationProperties
 class VirtualKeyServiceTest {
 
     @Autowired
@@ -41,6 +46,9 @@ class VirtualKeyServiceTest {
 
     @MockBean
     private ApiKeyRepository apiKeyRepository;
+
+    @MockBean
+    private PublicKeyRepository publicKeyRepository;
 
     @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;

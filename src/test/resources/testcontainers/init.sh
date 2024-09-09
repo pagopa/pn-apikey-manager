@@ -123,4 +123,40 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
         }
     ]"
 
+echo "### CREATE PUBLIC KEY TABLE ###"
+
+aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
+    dynamodb create-table \
+    --table-name pn-publicKey \
+    --attribute-definitions \
+        AttributeName=kid,AttributeType=S \
+        AttributeName=cxId,AttributeType=S \
+        AttributeName=status,AttributeType=S \
+        AttributeName=createdAt,AttributeType=S \
+    --key-schema \
+        AttributeName=kid,KeyType=HASH \
+        AttributeName=cxId,KeyType=RANGE \
+    --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 \
+    --global-secondary-indexes \
+    '[
+        {
+            "IndexName": "cxId-status-index",
+            "KeySchema": [
+                {"AttributeName":"cxId","KeyType":"HASH"},
+                {"AttributeName":"status","KeyType":"RANGE"}
+            ],
+            "Projection": {"ProjectionType":"ALL"},
+            "ProvisionedThroughput": {"ReadCapacityUnits": 10, "WriteCapacityUnits": 5}
+        },
+        {
+            "IndexName": "cxId-createdAt-index",
+            "KeySchema": [
+                {"AttributeName":"cxId","KeyType":"HASH"},
+                {"AttributeName":"createdAt","KeyType":"RANGE"}
+            ],
+            "Projection": {"ProjectionType":"ALL"},
+            "ProvisionedThroughput": {"ReadCapacityUnits": 10, "WriteCapacityUnits": 5}
+        }
+    ]'
+
 echo "Initialization terminated"
