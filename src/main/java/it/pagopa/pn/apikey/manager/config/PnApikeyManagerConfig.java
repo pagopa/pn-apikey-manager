@@ -16,6 +16,7 @@ public class PnApikeyManagerConfig {
 
     private String userAttributesBaseUrl;
     private String externalRegistriesBaseUrl;
+    private String clientDatavaultBasepath;
     private Dao dao;
 
     @Data
