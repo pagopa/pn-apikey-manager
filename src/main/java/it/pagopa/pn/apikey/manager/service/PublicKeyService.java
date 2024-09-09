@@ -63,16 +63,16 @@ public class PublicKeyService {
                 .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, decodeToEntityStatus(status))))
                 .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
                 .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
-                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid));
+                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid))
+                .then();
     }
 
     @NotNull
-    private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
+    private Mono<PublicKeyModel> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
         String decodedStatus = decodeToEntityStatus(status);
         publicKeyModel.setStatus(decodedStatus);
         publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
-        return publicKeyRepository.save(publicKeyModel)
-                .then();
+        return publicKeyRepository.save(publicKeyModel);
     }
 
     private String decodeToEntityStatus(String status) {
@@ -88,15 +88,12 @@ public class PublicKeyService {
                 .flatMap(req -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()))
                 .onErrorMap(isPublicKeyAlreadyExistsError(), e -> new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.CONFLICT))
                 .then(cachedRequestDto)
-                .flatMap(publicKeyRequestDto1 -> createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, publicKeyRequestDto1))
+                .flatMap(publicKeyRequestDto1 -> createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, publicKeyRequestDto1, null))
                 .flatMap(publicKeyRepository::save)
                 .zipWhen(this::savePublicKeyCopyItem)
                 .map(tuple -> {
                     PublicKeyModel originalPublicKey = tuple.getT1();
-                    PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
-                    publicKeyResponseDto.setKid(originalPublicKey.getKid());
-                    publicKeyResponseDto.setIssuer(originalPublicKey.getIssuer());
-                    return publicKeyResponseDto;
+                    return toDtoResponse(originalPublicKey);
                 });
     }
 
@@ -105,7 +102,7 @@ public class PublicKeyService {
         return t -> t instanceof ApiKeyManagerException && ((ApiKeyManagerException) t).getStatus() == HttpStatus.CONFLICT;
     }
 
-    private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, PublicKeyRequestDto publicKeyRequestDto) {
+    private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, PublicKeyRequestDto publicKeyRequestDto, String correlationId) {
         PublicKeyModel model = new PublicKeyModel();
         model.setKid(UUID.randomUUID().toString());
         model.setName(publicKeyRequestDto.getName());
@@ -118,6 +115,7 @@ public class PublicKeyService {
         model.setCxId(xPagopaPnCxId);
         model.setStatusHistory(List.of(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.CREATED.getValue())));
         model.setIssuer(xPagopaPnCxId);
+        model.setCorrelationId(correlationId);
         return Mono.just(model);
     }
 
@@ -128,6 +126,13 @@ public class PublicKeyService {
         copyItem.setStatusHistory(null);
         copyItem.setTtl(publicKeyModel.getExpireAt());
         return publicKeyRepository.save(copyItem);
+    }
+
+    private PublicKeyResponseDto toDtoResponse(PublicKeyModel publicKeyModel) {
+        PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
+        publicKeyResponseDto.setKid(publicKeyModel.getKid());
+        publicKeyResponseDto.setIssuer(publicKeyModel.getIssuer());
+        return publicKeyResponseDto;
     }
 
     public Mono<PublicKeyResponseDto> rotatePublicKey(Mono<PublicKeyRequestDto> publicKeyRequestDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
@@ -144,46 +149,18 @@ public class PublicKeyService {
                     PublicKeyRequestDto requestDto = tuple.getT2();
                     return validator.validatePublicKeyRotation(publicKeyModel, requestDto.getPublicKey());
                 })
-                .flatMap(model -> rotatePublicKeyAndSave(xPagopaPnUid, model))
-                .flatMap(unused -> cachedPublicKeyRequestDto)
-                .flatMap(requestDto -> createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, requestDto.getPublicKey(), requestDto.getName()))
+                .flatMap(model -> updatePublicKeyStatus(model, PublicKeyStatusDto.ROTATED.getValue(), xPagopaPnUid))
+                .zipWith(cachedPublicKeyRequestDto)
+                .flatMap(tuple -> {
+                    PublicKeyModel rotatedKey = tuple.getT1();
+                    PublicKeyRequestDto requestDto = tuple.getT2();
+                    return createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, requestDto, rotatedKey.getKid());
+                })
                 .flatMap(publicKeyRepository::save)
-                .zipWhen(this::savePublicKeyCopy)
+                .zipWhen(this::savePublicKeyCopyItem)
                 .map(tuple -> {
                     PublicKeyModel originalPublicKeyModel = tuple.getT1();
-                    PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
-                    publicKeyResponseDto.setKid(originalPublicKeyModel.getKid());
-                    publicKeyResponseDto.setIssuer(originalPublicKeyModel.getIssuer());
-                    return publicKeyResponseDto;
+                    return toDtoResponse(originalPublicKeyModel);
                 });
-    }
-
-    private Mono<PublicKeyModel> rotatePublicKeyAndSave(String xPagopaPnUid, PublicKeyModel model) {
-        model.setStatus(PublicKeyStatusDto.ROTATED.getValue());
-        model.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.ROTATED.getValue()));
-        return publicKeyRepository.save(model);
-    }
-
-    private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, String publicKey, String name) {
-        PublicKeyModel model = new PublicKeyModel();
-        model.setKid(UUID.randomUUID().toString());
-        model.setName(name);
-        model.setPublicKey(publicKey);
-        model.setExpireAt(Instant.now().plus(360, ChronoUnit.DAYS));
-        model.setCreatedAt(Instant.now());
-        model.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
-        model.setCxId(xPagopaPnCxId);
-        model.setStatusHistory(List.of(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.CREATED.getValue())));
-        model.setIssuer(xPagopaPnCxId);
-        return Mono.just(model);
-    }
-
-    private Mono<PublicKeyModel> savePublicKeyCopy(PublicKeyModel originalModel) {
-        PublicKeyModel copy = new PublicKeyModel(originalModel);
-        copy.setKid(originalModel.getKid() + "_COPY");
-        copy.setStatus(null);
-        copy.setStatusHistory(null);
-        copy.setTtl(originalModel.getExpireAt());
-        return publicKeyRepository.save(copy);
     }
 }
