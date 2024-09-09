@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,8 @@ class VirtualKeyControllerTest {
 
     private VirtualKeyService virtualKeyService;
     private VirtualKeyController virtualKeyController;
+    @MockBean
+    private ServerWebExchange exchange;
 
     @BeforeEach
     void setUp() {
@@ -52,7 +55,6 @@ class VirtualKeyControllerTest {
             "ENABLE, 200"
     })
     void changeStatusVirtualKeys_Success(String status, int expectedStatus) {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.valueOf(status));
 
@@ -65,7 +67,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void changeStatusVirtualKeys_Success() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
 
@@ -78,7 +79,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void changeStatusVirtualKeys_BadRequest() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
 
@@ -93,7 +93,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void changeStatusVirtualKeys_Conflict() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
 
@@ -108,7 +107,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void changeStatusVirtualKeys_NotFound() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
 
@@ -123,7 +121,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void changeStatusVirtualKeys_Forbidden() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
 
@@ -138,8 +135,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void deleteVirtualKey_InternalErrorTest() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
-
         when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
                 "xPagopaPnCxId", null, "xPagopaPnCxRole"))
                 .thenReturn(Mono.error(new RuntimeException("Internal error")));
@@ -153,8 +148,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void deleteVirtualKey_SuccessTest() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
-
         when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
                 "xPagopaPnCxId", null, "xPagopaPnCxRole"))
                 .thenReturn(Mono.just("Successfully deleted"));
@@ -168,8 +161,6 @@ class VirtualKeyControllerTest {
 
     @Test
     void deleteVirtualKey_BadRequest() {
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
-
         when(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", null,
                 "xPagopaPnCxId", null, "xPagopaPnCxRole"))
                 .thenReturn(Mono.error(new IllegalArgumentException("Bad Request")));
@@ -201,7 +192,7 @@ class VirtualKeyControllerTest {
         when(virtualKeyService.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, "ADMIN", 10, lastKey, lastUpdate, showVirtualKey))
                 .thenReturn(Mono.just(virtualKeysResponseDto));
 
-        StepVerifier.create(virtualKeyController.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, "ADMIN", xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, serverWebExchange))
+        StepVerifier.create(virtualKeyController.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, "ADMIN", xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, exchange))
                 .expectNext(ResponseEntity.ok().body(virtualKeysResponseDto))
                 .verifyComplete();
     }

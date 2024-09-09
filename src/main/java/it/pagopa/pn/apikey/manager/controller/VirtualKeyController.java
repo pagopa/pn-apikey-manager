@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.controller;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.VirtualKeysApi;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeysResponseDto;
 import it.pagopa.pn.apikey.manager.service.VirtualKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
