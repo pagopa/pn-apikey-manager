@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.validator;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -34,7 +35,7 @@ public class PublicKeyValidator {
         if (PublicKeyStatusDto.BLOCKED.getValue().equals(model.getStatus())) {
             return Mono.just(model);
         } else {
-            return Mono.error(new ApiKeyManagerException("Public key can not be deleted", HttpStatus.CONFLICT));
+            return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_CAN_NOT_DELETE, HttpStatus.CONFLICT));
         }
     }
 
@@ -45,7 +46,7 @@ public class PublicKeyValidator {
         } else if(status.equals(BLOCK_OPERATION) && publicKeyModel.getStatus().equals(PublicKeyStatusDto.ACTIVE.name())) {
             return Mono.just(publicKeyModel);
         } else {
-            return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.CONFLICT));
+            return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION, HttpStatus.CONFLICT));
         }
     }
 
@@ -55,7 +56,7 @@ public class PublicKeyValidator {
                 .hasElements()
                 .flatMap(hasElements -> {
                     if (Boolean.TRUE.equals(hasElements)) {
-                        return Mono.error(new ApiKeyManagerException(String.format("Public key with status %s already exists.", status), HttpStatus.CONFLICT));
+                        return Mono.error(new ApiKeyManagerException(String.format(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS, status), HttpStatus.CONFLICT));
                     }
                     return Mono.empty();
                 });

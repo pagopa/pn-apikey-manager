@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
@@ -107,9 +108,11 @@ public class PublicKeyService {
 
     private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, PublicKeyRequestDto publicKeyRequestDto) {
         PublicKeyModel model = new PublicKeyModel();
-        model.setKid(generateNewKid(publicKeyRequestDto.getPublicKey(), publicKeyRequestDto.getName()));
+        model.setKid(UUID.randomUUID().toString());
         model.setName(publicKeyRequestDto.getName());
         model.setPublicKey(publicKeyRequestDto.getPublicKey());
+        model.setExponent(publicKeyRequestDto.getExponent());
+        model.setAlgorithm(publicKeyRequestDto.getAlgorithm().getValue());
         model.setExpireAt(Instant.now().plus(355, ChronoUnit.DAYS));
         model.setCreatedAt(Instant.now());
         model.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
@@ -117,10 +120,6 @@ public class PublicKeyService {
         model.setStatusHistory(List.of(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.CREATED.getValue())));
         model.setIssuer(xPagopaPnCxId);
         return Mono.just(model);
-    }
-
-    private String generateNewKid(String publicKey, String name) {
-        return UUID.nameUUIDFromBytes((publicKey+name).getBytes()).toString();
     }
 
     private Mono<PublicKeyModel> savePublicKeyCopyItem(PublicKeyModel publicKeyModel) {

@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.validator;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -49,7 +50,7 @@ class PublicKeyValidatorTest {
 
         StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals("Name is mandatory") &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_NAME_MANDATORY) &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
                 .verify();
     }
@@ -61,7 +62,7 @@ class PublicKeyValidatorTest {
 
         StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals("Name is mandatory") &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_NAME_MANDATORY) &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
                 .verify();
     }
@@ -83,7 +84,7 @@ class PublicKeyValidatorTest {
 
         StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().contains("Invalid state transition"))
+                        throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
                 .verify();
     }
 
@@ -104,7 +105,7 @@ class PublicKeyValidatorTest {
 
         StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().contains("Invalid state transition"))
+                        throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
                 .verify();
     }
 
@@ -122,7 +123,7 @@ class PublicKeyValidatorTest {
 
         StepVerifier.create(validator.checkPublicKeyAlreadyExistsWithStatus("cxId", "ACTIVE"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().contains("Public key with status ACTIVE already exists."))
+                        throwable.getMessage().contains(String.format(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS, "ACTIVE")))
                 .verify();
     }
 
