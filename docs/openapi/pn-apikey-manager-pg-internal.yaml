@@ -379,6 +379,7 @@ components:
         exponent:
           type: string
           description: Esponente della public key
+          default: 'AQAB'
         algorithm:
           description: Algoritmo di crittografia usato per la public key
           type: string
