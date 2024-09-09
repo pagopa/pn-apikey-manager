@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
@@ -86,7 +87,7 @@ public class PublicKeyService {
                 .flatMap(validator::validatePublicKeyRequest)
                 .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()).hasElements())
                 .zipWith(cachedRequestDto)
-                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.CONFLICT))
+                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS_ACTIVE, HttpStatus.CONFLICT))
                         : createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, response.getT2()))
                 .flatMap(publicKeyRepository::save)
                 .zipWhen(this::savePublicKeyCopyItem)

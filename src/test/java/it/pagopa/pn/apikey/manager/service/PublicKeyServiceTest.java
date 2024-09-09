@@ -2,6 +2,8 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
+import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -122,7 +124,7 @@ class PublicKeyServiceTest {
     @Test
     void changeStatus_withInvalidRole_throwsForbiddenException() {
         StepVerifier.create(publicKeyService.changeStatus("kid", "ENABLE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "USER"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && Objects.requireNonNull(throwable.getMessage()).contains(ApiKeyManagerExceptionError.ACCESS_DENIED))
                 .verify();
     }
 
@@ -135,7 +137,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
 
         StepVerifier.create(publicKeyService.changeStatus("kid", "INACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Invalid state transition"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
                 .verify();
     }
 
@@ -188,14 +190,14 @@ class PublicKeyServiceTest {
         dto.setPublicKey("publicKey");
 
         StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(dto), List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key with status ACTIVE already exists, to create a new public key use the rotate operation."))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS_ACTIVE))
                 .verify();
     }
 
     @Test
     void createPublicKey_withInvalidRole_throwsApiKeyManagerException() {
         StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(new PublicKeyRequestDto()), List.of(), "invalidRole"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.ACCESS_DENIED))
                 .verify();
     }
 }
