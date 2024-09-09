@@ -104,6 +104,8 @@ public class PublicKeyService {
         model.setKid(generateNewKid(publicKeyRequestDto.getPublicKey(), publicKeyRequestDto.getName()));
         model.setName(publicKeyRequestDto.getName());
         model.setPublicKey(publicKeyRequestDto.getPublicKey());
+        model.setExponent(publicKeyRequestDto.getExponent());
+        model.setAlgorithm(publicKeyRequestDto.getAlgorithm().getValue());
         model.setExpireAt(Instant.now().plus(355, ChronoUnit.DAYS));
         model.setCreatedAt(Instant.now());
         model.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
