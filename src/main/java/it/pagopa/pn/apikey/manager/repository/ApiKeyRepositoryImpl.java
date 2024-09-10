@@ -86,13 +86,26 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     }
 
     @Override
-    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId) {
+    public Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId, String scope) {
         QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
                 .partitionValue(xPagopaPnCxId)
                 .build());
 
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#scope", "scope");
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":scope", AttributeValue.builder().s(scope).build());
+
+
+        Expression expression = Expression.builder()
+                .expression("#scope = :scope")
+                .expressionValues(expressionValues)
+                .expressionNames(expressionNames)
+                .build();
+
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
+                .filterExpression(expression)
                 .scanIndexForward(false)
                 .build();
 
@@ -104,10 +117,12 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     public Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId) {
         Map<String, String> expressionNames = new HashMap<>();
         expressionNames.put("#status", "status");
+        expressionNames.put("#scope", "scope");
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
         expressionValues.put(":statusEnabled", AttributeValue.builder().s("ENABLED").build());
         expressionValues.put(":statusRotated", AttributeValue.builder().s("ROTATED").build());
+        expressionValues.put(":scope", AttributeValue.builder().s(ApiKeyModel.Scope.APIKEY.name()).build());
 
         QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
                 .partitionValue(xPagopaPnCxId)
@@ -115,7 +130,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
-                .filterExpression(expressionBuilder("(#status = :statusEnabled OR #status = :statusRotated)", expressionValues, expressionNames))
+                .filterExpression(expressionBuilder("(#status = :statusEnabled OR #status = :statusRotated) AND #scope = :scope", expressionValues, expressionNames))
                 .scanIndexForward(false)
                 .build();
 
@@ -134,10 +149,11 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                                                      List<ApiKeyModel> cumulativeQueryResult,
                                                      ApiKeyPageable pageable) {
         Map<String, AttributeValue> expressionValues = new HashMap<>();
-
+        Map<String, String> expressionNames = new HashMap<>();
         Expression expression = Expression.builder()
-                .expression(buildExpressionGroupFilter(xPagopaPnCxGroups, expressionValues))
+                .expression(buildExpressionGroupFilter(xPagopaPnCxGroups, expressionValues, expressionNames))
                 .expressionValues(expressionValues)
+                .expressionNames(expressionNames)
                 .build();
 
         Map<String, AttributeValue> startKey = null;
@@ -192,10 +208,11 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
     @Override
     public Mono<Integer> countWithFilters(String xPagopaPnCxId, List<String> xPagopaPnCxGroups) {
         Map<String, AttributeValue> expressionValues = new HashMap<>();
-
+        Map<String, String> expressionNames = new HashMap<>();
         Expression expression = Expression.builder()
-                .expression(buildExpressionGroupFilter(xPagopaPnCxGroups, expressionValues))
+                .expression(buildExpressionGroupFilter(xPagopaPnCxGroups, expressionValues, expressionNames))
                 .expressionValues(expressionValues)
+                .expressionNames(expressionNames)
                 .build();
 
         QueryConditional queryConditional = QueryConditional
@@ -213,7 +230,7 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
                 .then(Mono.defer(() -> Mono.just(counter.get())));
     }
 
-    private String buildExpressionGroupFilter(List<String> xPagopaPnCxGroups, Map<String, AttributeValue> expressionValues) {
+    private String buildExpressionGroupFilter(List<String> xPagopaPnCxGroups, Map<String, AttributeValue> expressionValues, Map<String, String> expressionNames) {
         StringBuilder expressionGroup = new StringBuilder();
         if (xPagopaPnCxGroups != null && !xPagopaPnCxGroups.isEmpty()) {
             for (int i = 0; i < xPagopaPnCxGroups.size(); i++) {
@@ -225,6 +242,12 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
         } else {
             expressionGroup.append("attribute_exists(" + ApiKeyConstant.GROUPS + ")");
         }
+
+        expressionGroup.append(" AND #scope = :scope");
+        expressionValues.put(":scope", AttributeValue.builder().s(ApiKeyModel.Scope.APIKEY.name()).build());
+        expressionNames.put("#scope", "scope");
+
+
         return expressionGroup.toString();
     }
 

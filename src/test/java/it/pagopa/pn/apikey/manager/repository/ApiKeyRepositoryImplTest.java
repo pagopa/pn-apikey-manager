@@ -133,7 +133,7 @@ class ApiKeyRepositoryImplTest {
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
         apiKeyModelList.add(apiKeyModel);
 
-        StepVerifier.create(apiKeyRepository.findByCxId("cxId"))
+        StepVerifier.create(apiKeyRepository.findByCxId("cxId", ApiKeyModel.Scope.APIKEY.name()))
                 .expectNextCount(0);
 
     }
