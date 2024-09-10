@@ -6,14 +6,19 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFle
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
+import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
+import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -35,6 +40,9 @@ public class PublicKeyService {
     private final PublicKeyRepository publicKeyRepository;
     private final PnAuditLogBuilder auditLogBuilder;
     private final PublicKeyValidator validator;
+
+    private static final String AUTOMATIC_DELETE = "AUTOMATIC_DELETE";
+
 
     public Mono<String> deletePublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
@@ -63,15 +71,14 @@ public class PublicKeyService {
                 .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, decodeToEntityStatus(status))))
                 .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
                 .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
-                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid))
+                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, decodeToEntityStatus(status), xPagopaPnUid))
                 .then();
     }
 
     @NotNull
     private Mono<PublicKeyModel> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
-        String decodedStatus = decodeToEntityStatus(status);
-        publicKeyModel.setStatus(decodedStatus);
-        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
+        publicKeyModel.setStatus(status);
+        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, status));
         return publicKeyRepository.save(publicKeyModel);
     }
 
@@ -126,6 +133,38 @@ public class PublicKeyService {
         copyItem.setStatusHistory(null);
         copyItem.setTtl(publicKeyModel.getExpireAt());
         return publicKeyRepository.save(copyItem);
+    }
+
+    public Mono<PublicKeyModel> handlePublicKeyTtlEvent(Message<PublicKeyEvent.Payload> message) {
+        PnAuditLogEvent logEvent = this.logMessage(message);
+
+        PublicKeyEvent.Payload publicKeyEvent = message.getPayload();
+        String kid = retrieveBaseKidFromPayload(publicKeyEvent.getKid());
+
+        return validator.validatePayload(publicKeyEvent)
+                .flatMap(payload -> publicKeyRepository.findByKidAndCxId(kid, publicKeyEvent.getCxId()))
+                .flatMap(validator::checkItemExpiration)
+                .flatMap(validator::checkIfItemIsNotAlreadyDeleted)
+                .flatMap(publicKeyModel -> this.updatePublicKeyStatus(publicKeyModel, PublicKeyStatusDto.DELETED.name(), AUTOMATIC_DELETE))
+                .doOnNext(item -> logEvent.generateSuccess().log())
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+    }
+
+    private String retrieveBaseKidFromPayload(String kid) {
+        return kid.replace("_COPY", "");
+    }
+
+    public PnAuditLogEvent logMessage(Message<PublicKeyEvent.Payload> message) {
+        String logMessage = String.format("Copied Public Key with kid=%s - cxid=%s was deleted by TTL, start verify related publicKey to update status to DELETED",
+                message.getPayload().getKid(),
+                message.getPayload().getCxId());
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)
+                .build();
+
+        logEvent.log();
+        return logEvent;
     }
 
     private PublicKeyResponseDto toDtoResponse(PublicKeyModel publicKeyModel) {

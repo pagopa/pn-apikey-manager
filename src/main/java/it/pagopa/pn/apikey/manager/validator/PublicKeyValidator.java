@@ -5,6 +5,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
+import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.BLOCK_OPERATION;
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
+import static it.pagopa.pn.apikey.manager.model.PublicKeyEventAction.DELETE;
 
 @Component
 @Slf4j
@@ -60,6 +65,35 @@ public class PublicKeyValidator {
                     }
                     return Mono.empty();
                 });
+    }
+
+    public Mono<PublicKeyEvent.Payload> validatePayload(PublicKeyEvent.Payload payload) {
+        if (payload.getKid().isEmpty() || payload.getCxId().isEmpty()) {
+            return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_KID_CXID, HttpStatus.BAD_REQUEST));
+        }
+        if (payload.getAction().isEmpty() || !DELETE.name().equals(payload.getAction())) {
+            return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_ACTION, HttpStatus.BAD_REQUEST));
+        }
+
+        return Mono.just(payload);
+    }
+
+    public Mono<PublicKeyModel> checkItemExpiration(PublicKeyModel publicKeyModel) {
+        if (Instant.now().isBefore(publicKeyModel.getExpireAt())) {
+            log.warn(String.format(PUBLIC_KEY_NOT_EXPIRED,
+                    publicKeyModel.getKid(), publicKeyModel.getCxId()));
+            return Mono.empty();
+        }
+        return Mono.just(publicKeyModel);
+    }
+
+    public Mono<PublicKeyModel> checkIfItemIsNotAlreadyDeleted(PublicKeyModel publicKeyModel) {
+        if (PublicKeyStatusDto.DELETED.getValue().equals(publicKeyModel.getStatus())) {
+            log.debug(String.format(PUBLIC_KEY_ALREADY_DELETED,
+                    publicKeyModel.getKid(), publicKeyModel.getCxId()));
+            return Mono.empty();
+        }
+        return Mono.just(publicKeyModel);
     }
 
     public Mono<PublicKeyModel> validatePublicKeyRotation(PublicKeyModel model, String newPublicKey) {
