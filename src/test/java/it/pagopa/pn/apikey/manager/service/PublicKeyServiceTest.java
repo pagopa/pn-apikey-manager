@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_ACTION;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_KID_CXID;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -295,7 +297,7 @@ class PublicKeyServiceTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals("The key or cxid is empty."))
+                        throwable.getMessage().equals(TTL_PAYLOAD_INVALID_KID_CXID))
                 .verify();
     }
 
@@ -309,7 +311,7 @@ class PublicKeyServiceTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals("The status is empty or not valid."))
+                        throwable.getMessage().equals(TTL_PAYLOAD_INVALID_ACTION))
                 .verify();
     }
 }
