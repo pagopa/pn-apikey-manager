@@ -185,22 +185,12 @@ public class VirtualKeyService {
             log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
-        return validator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnUid, xPagopaPnCxType, role, groups)
-                .then(this.validateActiveVirtualKey(xPagopaPnUid, xPagopaPnCxId))
+        return virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnUid, xPagopaPnCxType, role, groups)
+                .then(Mono.defer(() -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue())))
                 .then(requestNewVirtualKeyDto)
                 .flatMap(dto -> createVirtualKeyModel(dto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId))
                 .flatMap(apiKeyRepository::save)
                 .flatMap(this::createVirtualKeyDto);
-    }
-
-    private Mono<Void> validateActiveVirtualKey(String xPagopaPnUid, String xPagopaPnCxId) {
-        return apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue(), String.valueOf(ApiKeyModel.Scope.CLIENTID))
-                .flatMap(apiKeyModelList -> {
-                    if (apiKeyModelList.items() != null && !apiKeyModelList.items().isEmpty()) {
-                        return Mono.error(new ApiKeyManagerException("Virtual key with status ENABLED already exists.", HttpStatus.CONFLICT));
-                    }
-                    return Mono.empty();
-                });
     }
 
     private Mono<ApiKeyModel> createVirtualKeyModel(RequestNewVirtualKeyDto dto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {

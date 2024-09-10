@@ -1,28 +1,18 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.PnDataVaultClient;
+import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
+import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.VirtualKeyValidator;
-import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PrivacyNoticeVersionResponseDto;
-import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentDto;
-import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
-import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestNewVirtualKeyDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
-import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
-import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,13 +32,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TOS_CONSENT_NOT_FOUND;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import java.util.List;
-
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TOS_CONSENT_NOT_FOUND;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.VALID_PUBLIC_KEY_NOT_FOUND;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -77,6 +63,12 @@ class VirtualKeyServiceTest {
 
     @MockBean
     private PnDataVaultClient pnDataVaultClient;
+
+    @MockBean
+    private PnExternalRegistriesClient pnExternalRegistriesClient;
+
+    @MockBean
+    private PnUserAttributesClient pnUserAttributesClient;
 
     @Test
     void rotateVirtualKey_withValidData_rotatesKeySuccessfully() {
@@ -430,14 +422,10 @@ class VirtualKeyServiceTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setStatus("ACTIVE");
 
-        PrivacyNoticeVersionResponseDto versionDto = new PrivacyNoticeVersionResponseDto();
-        versionDto.setVersion(1);
-
-        when(pnUserAttributesClient.getPgConsentByType(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(new ConsentDto().accepted(true)));
-        when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.empty());
         when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(Page.create(List.of(publicKeyModel))));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
-        when(pnExternalRegistriesClient.findPrivacyNoticeVersion(any(), any())).thenReturn(Mono.just(versionDto));
 
         StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
                 .expectNextMatches(response -> response.getId().equals("id") && response.getVirtualKey().equals("virtualKey"))
@@ -455,13 +443,8 @@ class VirtualKeyServiceTest {
     @Test
     void createVirtualKey_TosConsentNotFound() {
         RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
-        PrivacyNoticeVersionResponseDto versionDto = new PrivacyNoticeVersionResponseDto();
-        versionDto.setVersion(1);
 
-        when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(any(), any(), any(), any())).thenReturn(Mono.empty());
-        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(Page.create(List.of())));
-        when(pnUserAttributesClient.getPgConsentByType(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(new ConsentDto().accepted(false)));
-        when(pnExternalRegistriesClient.findPrivacyNoticeVersion(any(), any())).thenReturn(Mono.just(versionDto));
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException(TOS_CONSENT_NOT_FOUND, HttpStatus.FORBIDDEN)));
 
         StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
                 .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(TOS_CONSENT_NOT_FOUND));
@@ -470,17 +453,13 @@ class VirtualKeyServiceTest {
     @Test
     void createVirtualKey_InternalError() {
         RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
-        PrivacyNoticeVersionResponseDto versionDto = new PrivacyNoticeVersionResponseDto();
-        versionDto.setVersion(1);
 
-        when(pnUserAttributesClient.getPgConsentByType(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(new ConsentDto().accepted(true)));
-        when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
-        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(Page.create(List.of())));
-        when(pnExternalRegistriesClient.findPrivacyNoticeVersion(any(), any())).thenReturn(Mono.just(versionDto));
 
         StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
-                .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().equals(VALID_PUBLIC_KEY_NOT_FOUND));
+                .verifyErrorMatches(throwable -> throwable instanceof RuntimeException);
     }
 
     @Test
@@ -494,18 +473,10 @@ class VirtualKeyServiceTest {
         apiKeyModel.setScope(ApiKeyModel.Scope.CLIENTID);
         apiKeyModel.setStatus(VirtualKeyStatusDto.ENABLED.getValue());
 
-        Page<ApiKeyModel> page = Page.create(List.of(apiKeyModel));
-
-        PrivacyNoticeVersionResponseDto versionDto = new PrivacyNoticeVersionResponseDto();
-        versionDto.setVersion(1);
-
-        when(pnUserAttributesClient.getPgConsentByType(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(new ConsentDto().accepted(true)));
-        when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(any(), any(), any(), any())).thenReturn(Mono.just(page));
-        when(apiKeyRepository.save(any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
-        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(Page.create(List.of())));
-        when(pnExternalRegistriesClient.findPrivacyNoticeVersion(any(), any())).thenReturn(Mono.just(versionDto));
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException("Virtual key already exists", HttpStatus.CONFLICT)));
 
         StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
-                .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().equals(VALID_PUBLIC_KEY_NOT_FOUND));
+                .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT);
     }
 }
