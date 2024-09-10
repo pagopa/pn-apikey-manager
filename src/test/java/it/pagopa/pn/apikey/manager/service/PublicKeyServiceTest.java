@@ -5,6 +5,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
+import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
@@ -16,19 +17,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
-import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
-import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
-import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -39,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
@@ -225,7 +217,7 @@ class PublicKeyServiceTest {
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
         when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.updateItemStatus(any(), anyList())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
 
         Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 
@@ -263,7 +255,7 @@ class PublicKeyServiceTest {
         Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
 
         when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.updateItemStatus(any(), anyList())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
 
         Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
 

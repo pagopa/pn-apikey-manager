@@ -26,7 +26,6 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,16 +71,15 @@ public class PublicKeyService {
                 .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, decodeToEntityStatus(status))))
                 .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
                 .flatMap(publicKeyModel -> validator.validateChangeStatus(publicKeyModel, status))
-                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, status, xPagopaPnUid));
+                .flatMap(publicKeyModel -> updatePublicKeyStatus(publicKeyModel, decodeToEntityStatus(status), xPagopaPnUid))
+                .then();
     }
 
     @NotNull
-    private Mono<Void> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
-        String decodedStatus = decodeToEntityStatus(status);
-        publicKeyModel.setStatus(decodedStatus);
-        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, decodedStatus));
-        return publicKeyRepository.save(publicKeyModel)
-                .then();
+    private Mono<PublicKeyModel> updatePublicKeyStatus(PublicKeyModel publicKeyModel, String status, String xPagopaPnUid) {
+        publicKeyModel.setStatus(status);
+        publicKeyModel.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, status));
+        return publicKeyRepository.save(publicKeyModel);
     }
 
     private String decodeToEntityStatus(String status) {
@@ -135,37 +133,22 @@ public class PublicKeyService {
     }
 
     public Mono<PublicKeyModel> handlePublicKeyTtlEvent(Message<PublicKeyEvent.Payload> message) {
-
         PnAuditLogEvent logEvent = this.logMessage(message);
 
         PublicKeyEvent.Payload publicKeyEvent = message.getPayload();
         String kid = retrieveBaseKidFromPayload(publicKeyEvent.getKid());
 
         return validator.validatePayload(publicKeyEvent)
-                .flatMap(payload -> repository.findByKidAndCxId(kid, publicKeyEvent.getCxId()))
+                .flatMap(payload -> publicKeyRepository.findByKidAndCxId(kid, publicKeyEvent.getCxId()))
                 .flatMap(validator::checkItemExpiration)
                 .flatMap(validator::checkIfItemIsNotAlreadyDeleted)
-                .flatMap(publicKeyModel -> {
-                    publicKeyModel.setStatus("DELETED"); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
-                    publicKeyModel.getStatusHistory().add(createNewPublicKeyHistory("DELETED", AUTOMATIC_DELETE)); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
-                    return repository.updateItemStatus(publicKeyModel, Collections.singletonList("DELETED")); //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
-                })
+                .flatMap(publicKeyModel -> this.updatePublicKeyStatus(publicKeyModel, PublicKeyStatusDto.DELETED.name(), AUTOMATIC_DELETE))
                 .doOnNext(item -> logEvent.generateSuccess().log())
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
 
-
-
     private String retrieveBaseKidFromPayload(String kid) {
         return kid.replace("_COPY", "");
-    }
-
-    protected PublicKeyModel.StatusHistoryItem createNewPublicKeyHistory(String status, String changeByDenomination) {
-        PublicKeyModel.StatusHistoryItem historyItem = new PublicKeyModel.StatusHistoryItem();
-        historyItem.setDate(Instant.now());
-        historyItem.setStatus(status);
-        historyItem.setChangeByDenomination(changeByDenomination);
-        return historyItem;
     }
 
     public PnAuditLogEvent logMessage(Message<PublicKeyEvent.Payload> message) {

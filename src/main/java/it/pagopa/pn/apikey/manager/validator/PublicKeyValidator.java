@@ -17,6 +17,7 @@ import java.time.Instant;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.BLOCK_OPERATION;
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static it.pagopa.pn.apikey.manager.model.PublicKeyEventAction.DELETE;
 
 @Component
@@ -67,10 +68,10 @@ public class PublicKeyValidator {
 
     public Mono<PublicKeyEvent.Payload> validatePayload(PublicKeyEvent.Payload payload) {
         if (payload.getKid().isEmpty() || payload.getCxId().isEmpty()) {
-            return Mono.error(new ApiKeyManagerException("The key or cxid is empty.", HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_KID_CXID, HttpStatus.BAD_REQUEST));
         }
         if (payload.getAction().isEmpty() || !DELETE.name().equals(payload.getAction())) {
-            return Mono.error(new ApiKeyManagerException("The status is empty or not valid.", HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_ACTION, HttpStatus.BAD_REQUEST));
         }
 
         return Mono.just(payload);
@@ -78,7 +79,7 @@ public class PublicKeyValidator {
 
     public Mono<PublicKeyModel> checkItemExpiration(PublicKeyModel publicKeyModel) {
         if (Instant.now().isBefore(publicKeyModel.getExpireAt())) {
-            log.warn(String.format("PublicKey with kid [%s] and cxid [%s], is not expired. Event will ignore",
+            log.warn(String.format(PUBLIC_KEY_NOT_EXPIRED,
                     publicKeyModel.getKid(), publicKeyModel.getCxId()));
             return Mono.empty();
         }
@@ -86,8 +87,8 @@ public class PublicKeyValidator {
     }
 
     public Mono<PublicKeyModel> checkIfItemIsNotAlreadyDeleted(PublicKeyModel publicKeyModel) {
-        if ("DELETED".equals(publicKeyModel.getStatus())) { //TODO: CHANGE WITH ENUM AFTER OPENAPI GENERATION
-            log.debug(String.format("PublicKey with kid [%s] and cxid [%s], is already DELETED. Event will ignore",
+        if (PublicKeyStatusDto.DELETED.getValue().equals(publicKeyModel.getStatus())) {
+            log.debug(String.format(PUBLIC_KEY_ALREADY_DELETED,
                     publicKeyModel.getKid(), publicKeyModel.getCxId()));
             return Mono.empty();
         }
