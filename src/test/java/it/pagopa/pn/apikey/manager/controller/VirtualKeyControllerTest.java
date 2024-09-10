@@ -2,10 +2,7 @@ package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeysResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.VirtualKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -195,6 +192,47 @@ class VirtualKeyControllerTest {
         StepVerifier.create(virtualKeyController.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, "ADMIN", xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, exchange))
                 .expectNext(ResponseEntity.ok().body(virtualKeysResponseDto))
                 .verifyComplete();
+    }
+
+    @Test
+    void createVirtualKey_Success() {
+
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+        ResponseNewVirtualKeyDto responseDto = new ResponseNewVirtualKeyDto();
+        responseDto.setId("id");
+
+        when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(responseDto));
+
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+                .expectNext(ResponseEntity.status(HttpStatus.CREATED).body(responseDto))
+                .verifyComplete();
+    }
+
+    @Test
+    void createVirtualKey_BadRequest() {
+
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+
+        when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(new IllegalArgumentException("Bad request")));
+
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+                .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException && throwable.getMessage().equals("Bad request"))
+                .verify();
+    }
+
+    @Test
+    void createVirtualKey_InternalError() {
+
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+
+        when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
+
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Internal error"))
+                .verify();
     }
 }
 

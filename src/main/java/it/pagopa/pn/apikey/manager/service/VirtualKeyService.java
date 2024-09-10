@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
@@ -177,6 +178,48 @@ public class VirtualKeyService {
                 .lastEvaluatedKey(lastKey)
                 .lastEvaluatedLastUpdate(lastUpdate)
                 .build();
+    }
+
+    public Mono<ResponseNewVirtualKeyDto> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, String role, List<String> groups) {
+        if (!VirtualKeyConstant.ALLOWED_CX_TYPE_VIRTUAL_KEY.contains(xPagopaPnCxType)) {
+            log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
+            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
+        }
+        return virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnUid, xPagopaPnCxType, role, groups)
+                .then(Mono.defer(() -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue())))
+                .then(requestNewVirtualKeyDto)
+                .flatMap(dto -> createVirtualKeyModel(dto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId))
+                .flatMap(apiKeyRepository::save)
+                .flatMap(this::createVirtualKeyDto);
+    }
+
+    private Mono<ApiKeyModel> createVirtualKeyModel(RequestNewVirtualKeyDto dto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
+        ApiKeyModel model = new ApiKeyModel();
+        model.setId(UUID.randomUUID().toString());
+        model.setCorrelationId("");
+        model.setGroups(new ArrayList<>());
+        model.setLastUpdate(LocalDateTime.now());
+        model.setName(dto.getName());
+        model.setPdnd(false);
+        model.setStatus(VirtualKeyStatusDto.ENABLED.getValue());
+        ApiKeyHistoryModel historyModel = new ApiKeyHistoryModel();
+        historyModel.setChangeByDenomination(UUID.randomUUID().toString());
+        historyModel.setDate(LocalDateTime.now());
+        historyModel.setStatus(VirtualKeyStatusDto.CREATED.getValue());
+        model.setStatusHistory(List.of(historyModel));
+        model.setVirtualKey(UUID.randomUUID().toString());
+        model.setCxId(xPagopaPnCxId);
+        model.setCxType(xPagopaPnCxType.getValue());
+        model.setUid(xPagopaPnUid);
+        model.setScope(ApiKeyModel.Scope.CLIENTID);
+        return Mono.just(model);
+    }
+
+    private Mono<ResponseNewVirtualKeyDto> createVirtualKeyDto(ApiKeyModel apiKeyModel) {
+        ResponseNewVirtualKeyDto response = new ResponseNewVirtualKeyDto();
+        response.setId(apiKeyModel.getId());
+        response.setVirtualKey(apiKeyModel.getVirtualKey());
+        return Mono.just(response);
     }
 
 }

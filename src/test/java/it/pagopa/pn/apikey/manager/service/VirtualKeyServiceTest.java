@@ -1,9 +1,12 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.PnDataVaultClient;
+import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
+import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
+import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
@@ -29,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TOS_CONSENT_NOT_FOUND;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
@@ -59,6 +63,12 @@ class VirtualKeyServiceTest {
 
     @MockBean
     private PnDataVaultClient pnDataVaultClient;
+
+    @MockBean
+    private PnExternalRegistriesClient pnExternalRegistriesClient;
+
+    @MockBean
+    private PnUserAttributesClient pnUserAttributesClient;
 
     @Test
     void rotateVirtualKey_withValidData_rotatesKeySuccessfully() {
@@ -400,5 +410,73 @@ class VirtualKeyServiceTest {
         StepVerifier.create(result)
                 .expectNext(responseDto)
                 .verifyComplete();
+    }
+
+    @Test
+    void createVirtualKey_Success() {
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+        requestDto.setName("Test Key");
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+        apiKeyModel.setVirtualKey("virtualKey");
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus("ACTIVE");
+
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.empty());
+        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(Page.create(List.of(publicKeyModel))));
+        when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
+
+        StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
+                .expectNextMatches(response -> response.getId().equals("id") && response.getVirtualKey().equals("virtualKey"))
+                .verifyComplete();
+    }
+
+    @Test
+    void createVirtualKey_CxTypeNotAllowed() {
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+
+        StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PA, "cxId", Mono.just(requestDto), "ADMN", null))
+                .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("CxTypeAuthFleet PA not allowed"));
+    }
+
+    @Test
+    void createVirtualKey_TosConsentNotFound() {
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException(TOS_CONSENT_NOT_FOUND, HttpStatus.FORBIDDEN)));
+
+        StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
+                .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(TOS_CONSENT_NOT_FOUND));
+    }
+
+    @Test
+    void createVirtualKey_InternalError() {
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.empty());
+        when(apiKeyRepository.save(any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
+
+        StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
+                .verifyErrorMatches(throwable -> throwable instanceof RuntimeException);
+    }
+
+    @Test
+    void createVirtualKey_virtualKeyAlreadyExists() {
+        RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("id");
+        apiKeyModel.setUid("uid");
+        apiKeyModel.setCxId("cxId");
+        apiKeyModel.setScope(ApiKeyModel.Scope.CLIENTID);
+        apiKeyModel.setStatus(VirtualKeyStatusDto.ENABLED.getValue());
+
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException("Virtual key already exists", HttpStatus.CONFLICT)));
+
+        StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
+                .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT);
     }
 }

@@ -1,15 +1,14 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.VirtualKeysApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeysResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.VirtualKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -143,6 +142,40 @@ public class VirtualKeyController implements VirtualKeysApi {
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.ok().body(s);
+                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+    }
+
+    /**
+     * POST /virtual-keys : Censimento virtual key
+     * Servizio di creazione di una nuova virtual key.
+     *
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param requestNewVirtualKeyDto  (required)
+     * @return Created (status code 201)
+     *         or Bad request (status code 400)
+     *         or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<ResponseNewVirtualKeyDto>> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("Creazione di una Virtual Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s",
+                xPagopaPnUid,
+                xPagopaPnCxType.getValue(),
+                xPagopaPnCxId
+        );
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
+                .build();
+
+        logEvent.log();
+
+        return virtualKeyService.createVirtualKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, requestNewVirtualKeyDto, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .map(s -> {
+                    logEvent.generateSuccess(logMessage).log();
+                    return ResponseEntity.status(HttpStatus.CREATED).body(s);
                 })
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
