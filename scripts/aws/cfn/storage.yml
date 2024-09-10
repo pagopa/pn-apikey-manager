@@ -217,7 +217,7 @@ Resources:
           Value: pnStorage
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-paAggregations'
-
+      
   ApikeyManagerInternalQueue:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
@@ -230,7 +230,7 @@ Resources:
         VisibilityTimeout: 60
         MaxReceiveCount: 10
         DelaySeconds: 1
-      
+
   UsagePlanSmall:
     Type: 'AWS::ApiGateway::UsagePlan'
     UpdateReplacePolicy: Retain

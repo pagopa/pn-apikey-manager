@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
+import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.time.Instant;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -124,5 +127,123 @@ class PublicKeyValidatorTest {
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         throwable.getMessage().contains(String.format(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS, "ACTIVE")))
                 .verify();
+    }
+
+    @Test
+    void validateDeletePublicKey_withBlockedStatus_returnsPublicKeyModel() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
+
+        StepVerifier.create(validator.validateDeletePublicKey(publicKeyModel))
+                .expectNext(publicKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void validateDeletePublicKey_withNonBlockedStatus_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
+
+        StepVerifier.create(validator.validateDeletePublicKey(publicKeyModel))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_CAN_NOT_DELETE) &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
+                .verify();
+    }
+
+    @Test
+    void validatePayload_withValidPayload_returnsPayload() {
+        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder()
+                .kid("validKid")
+                .cxId("validCxId")
+                .action("DELETE")
+                .build();
+
+        StepVerifier.create(validator.validatePayload(payload))
+                .expectNext(payload)
+                .verifyComplete();
+    }
+
+    @Test
+    void validatePayload_withEmptyKid_throwsApiKeyManagerException() {
+        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder()
+                .kid("")
+                .cxId("validCxId")
+                .action("DELETE")
+                .build();
+
+        StepVerifier.create(validator.validatePayload(payload))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_KID_CXID) &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
+    @Test
+    void validatePayload_withEmptyCxId_throwsApiKeyManagerException() {
+        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder()
+                .kid("validKid")
+                .cxId("")
+                .action("DELETE")
+                .build();
+
+        StepVerifier.create(validator.validatePayload(payload))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_KID_CXID) &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
+    @Test
+    void validatePayload_withInvalidAction_throwsApiKeyManagerException() {
+        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder()
+                .action("INVALID")
+                .cxId("validCxId")
+                .kid("validKid")
+                .build();
+
+        StepVerifier.create(validator.validatePayload(payload))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_ACTION) &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
+    @Test
+    void checkItemExpiration_withExpiredItem_returnsPublicKeyModel() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setExpireAt(Instant.now().minusSeconds(60));
+
+        StepVerifier.create(validator.checkItemExpiration(publicKeyModel))
+                .expectNext(publicKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void checkItemExpiration_withNotExpiredItem_returnsEmpty() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setExpireAt(Instant.now().plusSeconds(60));
+
+        StepVerifier.create(validator.checkItemExpiration(publicKeyModel))
+                .verifyComplete();
+    }
+
+    @Test
+    void checkIfItemIsNotAlreadyDeleted_withDeletedItem_returnsEmpty() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.DELETED.getValue());
+
+        StepVerifier.create(validator.checkIfItemIsNotAlreadyDeleted(publicKeyModel))
+                .verifyComplete();
+    }
+
+    @Test
+    void checkIfItemIsNotAlreadyDeleted_withNotDeletedItem_returnsPublicKeyModel() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
+
+        StepVerifier.create(validator.checkIfItemIsNotAlreadyDeleted(publicKeyModel))
+                .expectNext(publicKeyModel)
+                .verifyComplete();
     }
 }
