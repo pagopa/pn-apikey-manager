@@ -68,10 +68,10 @@ public class PublicKeyValidator {
     }
 
     public Mono<PublicKeyEvent.Payload> validatePayload(PublicKeyEvent.Payload payload) {
-        if (payload.getKid().isEmpty() || payload.getCxId().isEmpty()) {
+        if (StringUtils.isEmpty(payload.getKid()) || StringUtils.isEmpty(payload.getCxId())) {
             return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_KID_CXID, HttpStatus.BAD_REQUEST));
         }
-        if (payload.getAction().isEmpty() || !DELETE.name().equals(payload.getAction())) {
+        if (StringUtils.isEmpty(payload.getAction()) || !DELETE.name().equals(payload.getAction())) {
             return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_ACTION, HttpStatus.BAD_REQUEST));
         }
 

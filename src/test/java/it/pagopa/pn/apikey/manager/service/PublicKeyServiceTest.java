@@ -5,6 +5,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
@@ -31,8 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_ACTION;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_KID_CXID;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -321,36 +321,45 @@ class PublicKeyServiceTest {
         requestDto.setName("Test Key");
         requestDto.setPublicKey("newPublicKey");
 
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setName("Test Key");
-        publicKeyModel.setCorrelationId("correlationId");
-        publicKeyModel.setPublicKey("publicKeyData");
-        publicKeyModel.setStatus("ACTIVE");
-        publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
-        publicKeyModel.setIssuer("issuer");
-        publicKeyModel.setCxId("cxId");
+        PublicKeyModel activePublicKey = new PublicKeyModel();
+        activePublicKey.setKid("kid");
+        activePublicKey.setName("Test Key");
+        activePublicKey.setPublicKey("publicKeyData");
+        activePublicKey.setStatus("ACTIVE");
+        activePublicKey.setIssuer("cxId");
 
-        PublicKeyModel publicKeyModelCopy = new PublicKeyModel();
-        publicKeyModelCopy.setKid("kid_COPY");
-        publicKeyModelCopy.setName("Test Key");
-        publicKeyModelCopy.setCorrelationId("correlationId");
-        publicKeyModelCopy.setPublicKey("publicKeyData");
-        publicKeyModelCopy.setStatus("ACTIVE");
-        publicKeyModelCopy.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
-        publicKeyModelCopy.setIssuer("issuer");
-        publicKeyModelCopy.setTtl(publicKeyModelCopy.getExpireAt());
-        publicKeyModelCopy.setCxId("cxId");
+        PublicKeyModel rotatedPublicKey = new PublicKeyModel(activePublicKey);
+        rotatedPublicKey.setStatus("ROTATED");
+
+        PublicKeyModel newActivePublicKey = new PublicKeyModel();
+        newActivePublicKey.setKid("new_kid");
+        newActivePublicKey.setName("Test Key");
+        newActivePublicKey.setCorrelationId("kid");
+        newActivePublicKey.setPublicKey("newPublicKey");
+        newActivePublicKey.setStatus("ACTIVE");
+        newActivePublicKey.setIssuer("cxId");
+
+        PublicKeyModel newActivePublicKeyCopy = new PublicKeyModel();
+        newActivePublicKeyCopy.setKid("new_kid_COPY");
 
 
         when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ROTATED"))).thenReturn(Flux.empty());
-        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(activePublicKey));
 
-        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModelCopy));
+        // Il flusso di rotazione prevede 3 interazioni con il metodo di save.
+        // Mock primo save = Update dello stato della chiave fornita in input e trovata su DB da ACTIVE a ROTATED
+        when(publicKeyRepository.save(argThat(model -> model != null && "kid".equals(model.getKid()))))
+                .thenReturn(Mono.just(rotatedPublicKey));
+        // Mock secondo save = Creazione di una nuova chiave ACTIVE (non avendo il KID che è generato randomicamente posso solo controllare che non contenga "COPY" nel kid)
+        when(publicKeyRepository.save(argThat(model -> model != null && !"COPY".contains(model.getKid()))))
+                .thenReturn(Mono.just(newActivePublicKey));
+        // Mock terzo save = Creazione della copia della nuova chiave ACTIVE
+        when(publicKeyRepository.save(argThat(model -> model != null && "new_kid_COPY".equals(model.getKid()))))
+                .thenReturn(Mono.just(newActivePublicKeyCopy));
 
         StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(requestDto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
-                .expectNextMatches(response -> response.getKid() != null && response.getIssuer() != null)
+                // Verifico che in risposta arrivino i dati della nuova chiave creata e non della copia
+                .expectNextMatches(response -> response.getKid().equalsIgnoreCase("new_kid") && response.getIssuer().equalsIgnoreCase("cxId"))
                 .verifyComplete();
     }
 
@@ -362,12 +371,13 @@ class PublicKeyServiceTest {
         publicKeyModel.setIssuer("issuer");
         publicKeyModel.setStatus("ROTATED");
         when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.just(publicKeyModel));
+
         PublicKeyRequestDto dto = new PublicKeyRequestDto();
         dto.setName("Test Key");
         dto.setPublicKey("publicKey");
 
         StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Public key with status ROTATED already exists."))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(String.format(PUBLIC_KEY_ALREADY_EXISTS, PublicKeyStatusDto.ROTATED.getValue())))
                 .verify();
     }
 
