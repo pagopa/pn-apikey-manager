@@ -33,8 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_ACTION;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_KID_CXID;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -314,6 +313,82 @@ class PublicKeyServiceTest {
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
                         throwable.getMessage().equals(TTL_PAYLOAD_INVALID_ACTION))
+                .verify();
+    }
+
+    @Test
+    void rotatePublicKey_withValidData_returnsPublicKeyResponseDto() {
+        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
+        requestDto.setName("Test Key");
+        requestDto.setPublicKey("newPublicKey");
+
+        PublicKeyModel activePublicKey = new PublicKeyModel();
+        activePublicKey.setKid("kid");
+        activePublicKey.setName("Test Key");
+        activePublicKey.setPublicKey("publicKeyData");
+        activePublicKey.setStatus("ACTIVE");
+        activePublicKey.setIssuer("cxId");
+
+        PublicKeyModel rotatedPublicKey = new PublicKeyModel(activePublicKey);
+        rotatedPublicKey.setStatus("ROTATED");
+
+        PublicKeyModel newActivePublicKey = new PublicKeyModel();
+        newActivePublicKey.setKid("new_kid");
+        newActivePublicKey.setName("Test Key");
+        newActivePublicKey.setCorrelationId("kid");
+        newActivePublicKey.setPublicKey("newPublicKey");
+        newActivePublicKey.setStatus("ACTIVE");
+        newActivePublicKey.setIssuer("cxId");
+
+        PublicKeyModel newActivePublicKeyCopy = new PublicKeyModel();
+        newActivePublicKeyCopy.setKid("new_kid_COPY");
+
+
+        when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ROTATED"))).thenReturn(Flux.empty());
+        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(activePublicKey));
+
+        // Il flusso di rotazione prevede 3 interazioni con il metodo di save.
+        // Mock primo save = Update dello stato della chiave fornita in input e trovata su DB da ACTIVE a ROTATED
+        when(publicKeyRepository.save(argThat(model -> model != null && "kid".equals(model.getKid()))))
+                .thenReturn(Mono.just(rotatedPublicKey));
+        // Mock secondo save = Creazione di una nuova chiave ACTIVE (non avendo il KID che è generato randomicamente posso solo controllare che non contenga "COPY" nel kid)
+        when(publicKeyRepository.save(argThat(model -> model != null && !"COPY".contains(model.getKid()))))
+                .thenReturn(Mono.just(newActivePublicKey));
+        // Mock terzo save = Creazione della copia della nuova chiave ACTIVE
+        when(publicKeyRepository.save(argThat(model -> model != null && "new_kid_COPY".equals(model.getKid()))))
+                .thenReturn(Mono.just(newActivePublicKeyCopy));
+
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(requestDto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
+                // Verifico che in risposta arrivino i dati della nuova chiave creata e non della copia
+                .expectNextMatches(response -> response.getKid().equalsIgnoreCase("new_kid") && response.getIssuer().equalsIgnoreCase("cxId"))
+                .verifyComplete();
+    }
+
+    @Test
+    void rotatePublicKey_withExistingRotatedKey_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
+        publicKeyModel.setIssuer("issuer");
+        publicKeyModel.setStatus("ROTATED");
+        when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.just(publicKeyModel));
+
+        PublicKeyRequestDto dto = new PublicKeyRequestDto();
+        dto.setName("Test Key");
+        dto.setPublicKey("publicKey");
+
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(String.format(PUBLIC_KEY_ALREADY_EXISTS, PublicKeyStatusDto.ROTATED.getValue())))
+                .verify();
+    }
+
+    @Test
+    void rotatePublicKey_withInvalidRole_throwsApiKeyManagerException() {
+        PublicKeyRequestDto dto = new PublicKeyRequestDto();
+        dto.setName("Test Key");
+        dto.setPublicKey("publicKey");
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "USER"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && (((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN))
                 .verify();
     }
 

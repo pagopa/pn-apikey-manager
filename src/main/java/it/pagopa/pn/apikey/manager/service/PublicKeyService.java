@@ -3,7 +3,6 @@ package it.pagopa.pn.apikey.manager.service;
 import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyPageable;
@@ -28,6 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
 
@@ -93,22 +93,24 @@ public class PublicKeyService {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
                 .then(cachedRequestDto)
                 .flatMap(validator::validatePublicKeyRequest)
-                .flatMap(item -> publicKeyRepository.findByCxIdAndStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()).hasElements())
-                .zipWith(cachedRequestDto)
-                .flatMap(response -> Boolean.TRUE.equals(response.getT1()) ? Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS_ACTIVE, HttpStatus.CONFLICT))
-                        : createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, response.getT2()))
+                .flatMap(req -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, PublicKeyStatusDto.ACTIVE.getValue()))
+                .onErrorMap(isPublicKeyAlreadyExistsError(), e -> new ApiKeyManagerException("Public key with status ACTIVE already exists, to create a new public key use the rotate operation.", HttpStatus.CONFLICT))
+                .then(cachedRequestDto)
+                .flatMap(publicKeyRequestDto1 -> createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, publicKeyRequestDto1, null))
                 .flatMap(publicKeyRepository::save)
                 .zipWhen(this::savePublicKeyCopyItem)
                 .map(tuple -> {
                     PublicKeyModel originalPublicKey = tuple.getT1();
-                    PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
-                    publicKeyResponseDto.setKid(originalPublicKey.getKid());
-                    publicKeyResponseDto.setIssuer(originalPublicKey.getIssuer());
-                    return publicKeyResponseDto;
+                    return toDtoResponse(originalPublicKey);
                 });
     }
 
-    private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, PublicKeyRequestDto publicKeyRequestDto) {
+    @NotNull
+    private static Predicate<Throwable> isPublicKeyAlreadyExistsError() {
+        return t -> t instanceof ApiKeyManagerException && ((ApiKeyManagerException) t).getStatus() == HttpStatus.CONFLICT;
+    }
+
+    private Mono<PublicKeyModel> createNewPublicKey(String xPagopaPnUid, String xPagopaPnCxId, PublicKeyRequestDto publicKeyRequestDto, String correlationId) {
         PublicKeyModel model = new PublicKeyModel();
         model.setKid(UUID.randomUUID().toString());
         model.setName(publicKeyRequestDto.getName());
@@ -121,6 +123,7 @@ public class PublicKeyService {
         model.setCxId(xPagopaPnCxId);
         model.setStatusHistory(List.of(createNewHistoryItem(xPagopaPnUid, PublicKeyStatusDto.CREATED.getValue())));
         model.setIssuer(xPagopaPnCxId);
+        model.setCorrelationId(correlationId);
         return Mono.just(model);
     }
 
@@ -163,6 +166,42 @@ public class PublicKeyService {
 
         logEvent.log();
         return logEvent;
+    }
+
+    private PublicKeyResponseDto toDtoResponse(PublicKeyModel publicKeyModel) {
+        PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
+        publicKeyResponseDto.setKid(publicKeyModel.getKid());
+        publicKeyResponseDto.setIssuer(publicKeyModel.getIssuer());
+        return publicKeyResponseDto;
+    }
+
+    public Mono<PublicKeyResponseDto> rotatePublicKey(Mono<PublicKeyRequestDto> publicKeyRequestDto, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
+        Mono<PublicKeyRequestDto> cachedPublicKeyRequestDto = publicKeyRequestDto.cache();
+
+        return cachedPublicKeyRequestDto
+                .flatMap(validator::validatePublicKeyRequest)
+                .flatMap(model -> PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups))
+                .then(Mono.defer(() -> validator.checkPublicKeyAlreadyExistsWithStatus(xPagopaPnCxId, PublicKeyStatusDto.ROTATED.getValue())))
+                .then(Mono.defer(() -> publicKeyRepository.findByKidAndCxId(kid, xPagopaPnCxId)))
+                .zipWith(cachedPublicKeyRequestDto)
+                .flatMap(tuple -> {
+                    PublicKeyModel publicKeyModel = tuple.getT1();
+                    PublicKeyRequestDto requestDto = tuple.getT2();
+                    return validator.validatePublicKeyRotation(publicKeyModel, requestDto.getPublicKey());
+                })
+                .flatMap(model -> updatePublicKeyStatus(model, PublicKeyStatusDto.ROTATED.getValue(), xPagopaPnUid))
+                .zipWith(cachedPublicKeyRequestDto)
+                .flatMap(tuple -> {
+                    PublicKeyModel rotatedKey = tuple.getT1();
+                    PublicKeyRequestDto requestDto = tuple.getT2();
+                    return createNewPublicKey(xPagopaPnUid, xPagopaPnCxId, requestDto, rotatedKey.getKid());
+                })
+                .flatMap(publicKeyRepository::save)
+                .zipWhen(this::savePublicKeyCopyItem)
+                .map(tuple -> {
+                    PublicKeyModel originalPublicKeyModel = tuple.getT1();
+                    return toDtoResponse(originalPublicKeyModel);
+                });
     }
 
     public Mono<PublicKeysResponseDto> getPublicKeys(CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole,

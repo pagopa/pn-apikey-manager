@@ -26,5 +26,6 @@ public class ApiKeyManagerExceptionError {
     public static final String TTL_PAYLOAD_INVALID_ACTION = "The action is empty or not valid.";
     public static final String PUBLIC_KEY_NOT_EXPIRED = "PublicKey with kid [%s] and cxid [%s], is not expired. Event will ignore";
     public static final String PUBLIC_KEY_ALREADY_DELETED = "PublicKey with kid [%s] and cxid [%s], is already DELETED. Event will ignore";
+    public static final String PUBLIC_KEY_ALREADY_USED = "Public key already used.";
 
 }

@@ -179,6 +179,23 @@ class PublicKeysControllerTest {
     }
 
     @Test
+    void testRotatePublicKey() {
+        ServerHttpRequestDecorator serverHttpRequestDecorator = mock(ServerHttpRequestDecorator.class);
+        when(serverHttpRequestDecorator.getHeaders()).thenReturn(new HttpHeaders());
+        when(serverHttpRequestDecorator.getId()).thenReturn("https://example.org/example");
+        WebSessionManager webSessionManager = mock(WebSessionManager.class);
+        WebSession webSession = mock(WebSession.class);
+        when(webSessionManager.getSession(any())).thenReturn(Mono.just(webSession));
+
+        PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
+        when(publicKeyService.rotatePublicKey(any(), any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(publicKeyResponseDto));
+
+        StepVerifier.create(publicKeysController.rotatePublicKey("xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", "ADMIN", "kid", Mono.just(new PublicKeyRequestDto()), List.of("group"), null))
+                .expectNext(ResponseEntity.ok().body(publicKeyResponseDto))
+                .verifyComplete();
+    }
+
+    @Test
     void testGetPublicKeys() {
         String xPagopaPnUid = "uidTest";
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
