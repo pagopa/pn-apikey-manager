@@ -6,6 +6,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFle
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeysResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeysIssuerResponseDto;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
@@ -48,7 +49,7 @@ public class PublicKeysController implements PublicKeysApi {
      *         or Internal error (status code 500)
      */
     @Override
-    public Mono<ResponseEntity<Void>> deletePublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, List<String> xPagopaPnCxGroups,  final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> deletePublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
         String logMessage = String.format("Cancellazione di una Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s - kid=%s",
                 xPagopaPnUid,
                 xPagopaPnCxType.getValue(),
@@ -74,20 +75,20 @@ public class PublicKeysController implements PublicKeysApi {
      * PUT /pg-self/public-key/{kid}/status : Blocco/Riattivazione public key
      * servizio di blocco/riattivazione della public key identificata tramite Kid
      *
-     * @param xPagopaPnUid      User Identifier (required)
-     * @param xPagopaPnCxType   Customer/Receiver Type (required)
-     * @param xPagopaPnCxId     Customer/Receiver Identifier (required)
-     * @param kid               Identificativo univoco della public key (required)
-     * @param status            Action per il cambio stato di una public key (required)
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param kid Identificativo univoco della public key (required)
+     * @param status Action per il cambio stato di una public key (required)
      * @param xPagopaPnCxGroups Customer Groups (optional)
-     * @param xPagopaPnCxRole   User role (optional)
      * @return No content (status code 204)
-     * or Bad request (status code 400)
-     * or Wrong state transition (i.e. enable an enabled key) (status code 409)
-     * or Not found (status code 404)
-     * or Internal error (status code 500)
+     *         or Bad request (status code 400)
+     *         or Forbidden (status code 403)
+     *         or Wrong state transition (i.e. enable an enabled key) (status code 409)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
      */
-
     @Override
     public Mono<ResponseEntity<Void>> changeStatusPublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, String status, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
 
@@ -163,18 +164,19 @@ public class PublicKeysController implements PublicKeysApi {
      * POST /pg-self/public-key/{kid}/rotate : Rotazione public key
      * servizio di rotazione della public key identificata tramite Kid
      *
-     * @param xPagopaPnUid        User Identifier (required)
-     * @param xPagopaPnCxType     Customer/Receiver Type (required)
-     * @param xPagopaPnCxId       Customer/Receiver Identifier (required)
-     * @param kid                 Identificativo univoco della public key (required)
-     * @param publicKeyRequestDto (required)
-     * @param xPagopaPnCxGroups   Customer Groups (optional)
-     * @param xPagopaPnCxRole     User role (optional)
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param kid Identificativo univoco della public key (required)
+     * @param publicKeyRequestDto  (required)
+     * @param xPagopaPnCxGroups Customer Groups (optional)
      * @return OK (status code 200)
-     * or Bad request (status code 400)
-     * or Wrong state transition (i.e. enable an enabled key) (status code 409)
-     * or Not found (status code 404)
-     * or Internal error (status code 500)
+     *         or Bad request (status code 400)
+     *         or Forbidden (status code 403)
+     *         or Wrong state transition (i.e. enable an enabled key) (status code 409)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
      */
     @Override
     public Mono<ResponseEntity<PublicKeyResponseDto>> rotatePublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
@@ -199,6 +201,24 @@ public class PublicKeysController implements PublicKeysApi {
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
 
+    /**
+     * GET /pg-self/public-keys : Ricerca public keys
+     * servizio di consultazione della lista delle public keys
+     *
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @param limit  (optional, default to 10)
+     * @param lastKey  (optional)
+     * @param createdAt  (optional)
+     * @param showPublicKey  (optional, default to false)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Forbidden (status code 403)
+     *         or Internal error (status code 500)
+     */
     @Override
     public Mono<ResponseEntity<PublicKeysResponseDto>> getPublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String createdAt, Boolean showPublicKey, final ServerWebExchange exchange) {
         String logMessage = String.format("Recupero delle Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s - xPagopaPnCxRole=%s",
@@ -220,5 +240,26 @@ public class PublicKeysController implements PublicKeysApi {
                     return ResponseEntity.ok().body(s);
                 })
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+    }
+
+    /**
+     * GET /pg-self/public-keys/issuer/status : Verifica esistenza issuer
+     * servizio di verifica esistenza issuer
+     *
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Forbidden (status code 403)
+     *         or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<PublicKeysIssuerResponseDto>> getIssuerStatus(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, final ServerWebExchange exchange) {
+        log.info("getIssuerStatus - xPagopaPnUid={}, xPagopaPnCxType={}, xPagopaPnCxId={}", xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
+
+        return publicKeyService.getIssuer(xPagopaPnCxId, xPagopaPnCxType)
+                .doOnError(throwable -> log.error("Error in getIssuerStatus", throwable))
+                .map(responseDto -> ResponseEntity.ok().body(responseDto));
     }
 }

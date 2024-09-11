@@ -19,4 +19,6 @@ public interface PublicKeyRepository {
     Mono<Page<PublicKeyModel>> getAllWithFilterPaginated(String xPagopaPnCxId, PublicKeyPageable pageable, List<PublicKeyModel> cumulativeQueryResult);
 
     Mono<Integer> countWithFilters(String xPagopaPnCxId);
+
+    Mono<Page<PublicKeyModel>> getIssuer(String xPagopaPnCxId);
 }

@@ -283,6 +283,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  "/pg-self/public-keys/issuer/status":
+    get:
+      summary: Verifica esistenza issuer
+      description: >-
+        servizio di verifica esistenza issuer
+      tags:
+        - PublicKeys
+      operationId: getIssuerStatus
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet'      # NO EXTERNAL
+        - $ref: '#/components/parameters/cxTypeAuthFleet'   # NO EXTERNAL
+        - $ref: '#/components/parameters/cxIdAuthFleet'     # NO EXTERNAL
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKeysIssuerResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
 components:
   parameters:
     ############################################################################################
@@ -341,6 +379,19 @@ components:
           type: string
         total:
           type: integer
+    PublicKeysIssuerResponse:
+      title: Verifica esistenza issuer
+      description: >-
+        Dto contenente la verifica dell'esistenza di un issuer
+      type: object
+      properties:
+        isPresent:
+          type: boolean
+        issuerStatus:
+          description: Stato dell'issuer
+          type: string
+          enum: [ 'ACTIVE', 'INACTIVE' ]
+
     PublicKeyRow:
       type: object
       properties:

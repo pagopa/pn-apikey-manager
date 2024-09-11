@@ -99,6 +99,26 @@ class PublicKeysControllerTest {
                 .verify();
     }
 
+    @Test
+    void getIssuerStatusSuccessfully() {
+        String xPagopaPnUid = "user123";
+        String xPagopaPnCxId = "cxId123";
+        ServerWebExchange exchange = mock(ServerWebExchange.class);
+
+        PublicKeysIssuerResponseDto responseDto = new PublicKeysIssuerResponseDto();
+        responseDto.setIsPresent(true);
+        responseDto.setIssuerStatus(PublicKeysIssuerResponseDto.IssuerStatusEnum.ACTIVE);
+
+        when(publicKeyService.getIssuer(xPagopaPnCxId, CxTypeAuthFleetDto.PG))
+                .thenReturn(Mono.just(responseDto));
+
+        Mono<ResponseEntity<PublicKeysIssuerResponseDto>> response = publicKeysController.getIssuerStatus(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, exchange);
+
+        StepVerifier.create(response)
+                .expectNext(ResponseEntity.ok().body(responseDto))
+                .verifyComplete();
+    }
+
     @ParameterizedTest
     @CsvSource({
             "BLOCK",

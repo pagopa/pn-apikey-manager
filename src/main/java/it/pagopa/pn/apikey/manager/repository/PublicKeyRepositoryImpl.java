@@ -14,11 +14,8 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +60,7 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
         StringBuilder expressionBuilder = new StringBuilder();
         IntStream.range(0, invalidStartedStatus.size()).forEach(idx -> {
             expressionValues.put(":" + invalidStartedStatus.get(idx), AttributeValue.builder().s(invalidStartedStatus.get(idx)).build());
-            if(idx == invalidStartedStatus.size() - 1) {
+            if (idx == invalidStartedStatus.size() - 1) {
                 expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx));
             } else {
                 expressionBuilder.append("#status <> :").append(invalidStartedStatus.get(idx)).append(" AND ");
@@ -92,9 +89,9 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
 
     @Override
     public Mono<PublicKeyModel> save(PublicKeyModel publicKeyModel) {
-        log.debug("Inserting data {} in DynamoDB table {}",publicKeyModel,table);
+        log.debug("Inserting data {} in DynamoDB table {}", publicKeyModel, table);
         return Mono.fromFuture(table.putItem(publicKeyModel))
-                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}",table))
+                .doOnNext(unused -> log.info("Inserted data in DynamoDB table {}", table))
                 .thenReturn(publicKeyModel);
     }
 
@@ -176,4 +173,24 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
                 .expressionValues(values)
                 .build();
     }
+    @Override
+    public Mono<Page<PublicKeyModel>> getIssuer(String xPagopaPnCxId) {
+
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
+                        .build());
+
+        Map<String, String> expressionNames = new HashMap<>();
+        expressionNames.put("#ttl", "ttl");
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(Expression.builder().expression("attribute_not_exists(#ttl)").expressionNames(expressionNames).build())
+                .scanIndexForward(false)
+                .build();
+
+        return Mono.from(table.index(PublicKeyModel.GSI_CXID_STATUS)
+                .query(queryEnhancedRequest));
+    }
+
 }

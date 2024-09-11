@@ -21,6 +21,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -30,6 +31,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.ACCESS_DENIED;
 
 @Slf4j
 @Service
@@ -221,5 +223,34 @@ public class PublicKeyService {
                 .lastEvaluatedKey(lastKey)
                 .createdAt(createdAt)
                 .build();
+    }
+
+    public Mono<PublicKeysIssuerResponseDto> getIssuer(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType) {
+        if (!CxTypeAuthFleetDto.PG.name().equals(xPagopaPnCxType.getValue())) {
+            return Mono.error(new ApiKeyManagerException(ACCESS_DENIED, HttpStatus.FORBIDDEN));
+        }
+
+        return publicKeyRepository.getIssuer(xPagopaPnCxId)
+                .map(Page::items)
+                .flatMap(publicKeyModels -> {
+                    log.debug("publicKeyModels.size: {}", publicKeyModels.size());
+                    if (publicKeyModels.isEmpty()) {
+                        return Mono.just(setPublicKeysIssuerResponseDto(false, null));
+                    }
+                    boolean hasActiveOrRotated = publicKeyModels.stream()
+                            .anyMatch(model -> PublicKeyStatusDto.ACTIVE.name().equals(model.getStatus())
+                                    || PublicKeyStatusDto.ROTATED.name().equals(model.getStatus()));
+                    PublicKeysIssuerResponseDto.IssuerStatusEnum status = hasActiveOrRotated
+                            ? PublicKeysIssuerResponseDto.IssuerStatusEnum.ACTIVE
+                            : PublicKeysIssuerResponseDto.IssuerStatusEnum.INACTIVE;
+                    return Mono.just(setPublicKeysIssuerResponseDto(true, status));
+                });
+    }
+
+    private PublicKeysIssuerResponseDto setPublicKeysIssuerResponseDto(boolean isPresent, PublicKeysIssuerResponseDto.IssuerStatusEnum status) {
+        PublicKeysIssuerResponseDto publicKeysIssuerResponseDto = new PublicKeysIssuerResponseDto();
+        publicKeysIssuerResponseDto.setIsPresent(isPresent);
+        publicKeysIssuerResponseDto.setIssuerStatus(status);
+        return publicKeysIssuerResponseDto;
     }
 }

@@ -12,6 +12,10 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.core.async.SdkPublisher;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.ArrayList;
@@ -96,7 +100,6 @@ class PublicKeyRepositoryImplTest {
 
     @Test
     void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
-
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
 
@@ -135,5 +138,17 @@ class PublicKeyRepositoryImplTest {
 
         StepVerifier.create(repository.countWithFilters("cxId"))
                 .expectNext(0);
+    }
+
+    @Test
+    void getIssuerSuccessfully() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        Mono<Page<PublicKeyModel>> result = repository.getIssuer("cxId");
+
+        StepVerifier.create(result)
+                .expectNext(Page.create(new ArrayList<>()));
     }
 }
