@@ -1,16 +1,16 @@
 package it.pagopa.pn.apikey.manager.repository;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.constant.PublicKeyConstant;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.utils.QueryUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
@@ -23,6 +23,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.PUBLIC_KEY_DOES_NOT_EXISTS;
@@ -98,4 +99,81 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
     }
 
 
+    @Override
+    public Mono<Page<PublicKeyModel>> getAllWithFilterPaginated(String xPagopaPnCxId,
+                                                                PublicKeyPageable pageable,
+                                                                List<PublicKeyModel> cumulativeQueryResult) {
+        Map<String, AttributeValue> startKey = null;
+        if (pageable.isPage()) {
+            startKey = new HashMap<>();
+            startKey.put(PublicKeyConstant.KID, AttributeValue.builder().s(pageable.getLastEvaluatedKey()).build());
+            startKey.put(PublicKeyConstant.CREATED_AT, AttributeValue.builder().s(pageable.getCreatedAt()).build());
+            startKey.put(PublicKeyConstant.CXID, AttributeValue.builder().s(xPagopaPnCxId).build());
+        }
+
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
+                        .build());
+
+        log.debug("limit from pageable {}", pageable.getLimit());
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .exclusiveStartKey(startKey)
+                .filterExpression(getFilterExpressionForGetAllQuery())
+                .scanIndexForward(false)
+                .limit(pageable.getLimit())
+                .build();
+
+        return Mono.from(table.index(PublicKeyModel.GSI_CXID_CREATEDAT).query(queryEnhancedRequest))
+                .flatMap(page -> {
+                    cumulativeQueryResult.addAll(page.items());
+                    Map<String, AttributeValue> lastEvaluatedKey = new HashMap<>();
+                    if (page.lastEvaluatedKey() != null) {
+                        lastEvaluatedKey = new HashMap<>(page.lastEvaluatedKey());
+                    }
+                    if (cumulativeQueryResult.size() <= pageable.getLimit() && page.lastEvaluatedKey() != null) {
+                        PublicKeyPageable newPageable = QueryUtils.getNewPageable(page, pageable);
+                        log.trace("get new page with pageable {}", newPageable);
+                        return getAllWithFilterPaginated(xPagopaPnCxId, newPageable, cumulativeQueryResult);
+                    }
+                    List<PublicKeyModel> result = QueryUtils.adjustPageResult(cumulativeQueryResult, pageable, lastEvaluatedKey);
+                    lastEvaluatedKey = lastEvaluatedKey.isEmpty() ? null : lastEvaluatedKey;
+                    return Mono.just(Page.create(result, lastEvaluatedKey));
+                });
+
+    }
+
+    @Override
+    public Mono<Integer> countWithFilters(String xPagopaPnCxId) {
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
+                        .build());
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(getFilterExpressionForGetAllQuery())
+                .build();
+
+        AtomicInteger counter = new AtomicInteger(0);
+        return Flux.from(table.index(PublicKeyModel.GSI_CXID_CREATEDAT).query(queryEnhancedRequest))
+                .doOnNext(page -> counter.getAndAdd(page.items().size()))
+                .then(Mono.defer(() -> Mono.just(counter.get())));
+    }
+
+    @NotNull
+    private static Expression getFilterExpressionForGetAllQuery() {
+        Map<String, String> names = new HashMap<>();
+        names.put("#ttl", PublicKeyModel.COL_TTL);
+        names.put("#status", PublicKeyModel.COL_STATUS);
+
+        Map<String, AttributeValue> values = new HashMap<>();
+        values.put(":ACTIVE", AttributeValue.builder().s("ACTIVE").build());
+        values.put(":ROTATED", AttributeValue.builder().s("ROTATED").build());
+
+        return Expression.builder()
+                .expression("attribute_not_exists(#ttl) AND (#status = :ACTIVE OR #status = :ROTATED)")
+                .expressionNames(names)
+                .expressionValues(values)
+                .build();
+    }
 }

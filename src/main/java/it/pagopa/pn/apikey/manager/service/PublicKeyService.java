@@ -1,12 +1,11 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
+import it.pagopa.pn.apikey.manager.repository.PublicKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
@@ -21,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -40,6 +40,7 @@ public class PublicKeyService {
     private final PublicKeyRepository publicKeyRepository;
     private final PnAuditLogBuilder auditLogBuilder;
     private final PublicKeyValidator validator;
+    private final PublicKeyConverter publicKeyConverter;
 
     private static final String AUTOMATIC_DELETE = "AUTOMATIC_DELETE";
 
@@ -201,5 +202,24 @@ public class PublicKeyService {
                     PublicKeyModel originalPublicKeyModel = tuple.getT1();
                     return toDtoResponse(originalPublicKeyModel);
                 });
+    }
+
+    public Mono<PublicKeysResponseDto> getPublicKeys(CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole,
+                                                     Integer limit, String lastKey, String createdAt, Boolean showPublicKey) {
+        PublicKeyPageable pageable = toPublicKeyPageable(limit, lastKey, createdAt);
+        return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(Mono.defer(() -> publicKeyRepository.getAllWithFilterPaginated(xPagopaPnCxId, pageable, new ArrayList<>())))
+                .map(page -> publicKeyConverter.convertResponseToDto(page, showPublicKey))
+                .zipWhen(page -> publicKeyRepository.countWithFilters(xPagopaPnCxId))
+                .doOnNext(tuple -> tuple.getT1().setTotal(tuple.getT2()))
+                .map(Tuple2::getT1);
+    }
+
+    private PublicKeyPageable toPublicKeyPageable(Integer limit, String lastKey, String createdAt) {
+        return PublicKeyPageable.builder()
+                .limit(limit)
+                .lastEvaluatedKey(lastKey)
+                .createdAt(createdAt)
+                .build();
     }
 }

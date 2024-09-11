@@ -1,9 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import org.junit.jupiter.api.Assertions;
@@ -27,6 +25,7 @@ import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -193,6 +192,31 @@ class PublicKeysControllerTest {
 
         StepVerifier.create(publicKeysController.rotatePublicKey("xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", "ADMIN", "kid", Mono.just(new PublicKeyRequestDto()), List.of("group"), null))
                 .expectNext(ResponseEntity.ok().body(publicKeyResponseDto))
+                .verifyComplete();
+    }
+
+    @Test
+    void testGetPublicKeys() {
+        String xPagopaPnUid = "uidTest";
+        CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
+        String xPagopaPnCxId = "user1";
+        List<String> xPagopaPnCxGroups = new ArrayList<>();
+        xPagopaPnCxGroups.add("RECLAMI");
+        String xPagopaPnCxRole = "ADMIN";
+        Boolean showPublicKey = true;
+        String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
+        String createdAt = "2024-10-25T16:25:58.334862500";
+
+        PublicKeysResponseDto publicKeysResponseDto = new PublicKeysResponseDto();
+        List<PublicKeyRowDto> publicKeyRowDtos = new ArrayList<>();
+        publicKeysResponseDto.setItems(publicKeyRowDtos);
+        publicKeysResponseDto.setLastKey(lastKey);
+        publicKeysResponseDto.setCreatedAt(createdAt);
+
+        when(publicKeyService.getPublicKeys(any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(Mono.just(publicKeysResponseDto));
+        StepVerifier.create(publicKeysController.getPublicKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, 10, lastKey, createdAt, showPublicKey, null))
+                .expectNext(ResponseEntity.ok().body(publicKeysResponseDto))
                 .verifyComplete();
     }
 }

@@ -1,11 +1,10 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.validator.PublicKeyValidator;
@@ -25,10 +24,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,7 +49,7 @@ class PublicKeyServiceTest {
     void setUp() {
         publicKeyRepository = Mockito.mock(PublicKeyRepository.class);
         validator = new PublicKeyValidator(publicKeyRepository);
-        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
+        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator, new PublicKeyConverter());
     }
 
     @Test
@@ -388,6 +389,70 @@ class PublicKeyServiceTest {
         dto.setPublicKey("publicKey");
         StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "USER"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && (((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN))
+                .verify();
+    }
+
+    @Test
+    void getPublicKeys_whenValidInput_shouldReturnPublicKeys() {
+        CxTypeAuthFleetDto cxType = CxTypeAuthFleetDto.PG;
+        String xPagopaPnCxId = "cxId";
+        List<String> xPagopaPnCxGroups = List.of();
+        String xPagopaPnCxRole = "admin";
+        Integer limit = 10;
+        String lastKey = "lastKey";
+        String createdAt = "2024-08-25T10:15:30.00Z";
+        Boolean showPublicKey = true;
+
+        List<PublicKeyModel> publicKeyModels = new ArrayList<>();
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+        publicKeyModel.setPublicKey("publicKey");
+        publicKeyModel.setCreatedAt(Instant.parse(createdAt));
+        publicKeyModel.setCxId("cxId");
+        publicKeyModel.setName("name");
+        publicKeyModel.setStatus("ACTIVE");
+        publicKeyModel.setStatusHistory(new ArrayList<>());
+        publicKeyModels.add(publicKeyModel);
+        Page<PublicKeyModel> page = Page.create(publicKeyModels);
+
+        PublicKeysResponseDto responseDto = new PublicKeysResponseDto();
+        PublicKeyRowDto publicKeyRowDto = new PublicKeyRowDto();
+        publicKeyRowDto.setValue("publicKey");
+        publicKeyRowDto.setStatus(PublicKeyStatusDto.ACTIVE);
+        publicKeyRowDto.setKid("kid");
+        publicKeyRowDto.setName("name");
+        publicKeyRowDto.setStatusHistory(null);
+        publicKeyRowDto.setCreatedAt(Date.from(Instant.parse(createdAt)));
+        responseDto.setItems(List.of(publicKeyRowDto));
+        responseDto.setLastKey(null);
+        responseDto.setCreatedAt(null);
+        responseDto.setTotal(1);
+
+        when(publicKeyRepository.getAllWithFilterPaginated(any(), any(), any())).thenReturn(Mono.just(page));
+        when(publicKeyRepository.countWithFilters(any())).thenReturn(Mono.just(1));
+
+        Mono<PublicKeysResponseDto> result = publicKeyService.getPublicKeys(cxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, createdAt, showPublicKey);
+
+        StepVerifier.create(result)
+                .expectNext(responseDto)
+                .verifyComplete();
+    }
+
+    @Test
+    void getPublicKeys_whenInvalidRole_shouldReturnError() {
+        CxTypeAuthFleetDto cxType = CxTypeAuthFleetDto.PG;
+        String xPagopaPnCxId = "cxId";
+        List<String> xPagopaPnCxGroups = List.of();
+        String xPagopaPnCxRole = "operator";
+        Integer limit = 10;
+        String lastKey = "lastKey";
+        String createdAt = "createdAt";
+        Boolean showPublicKey = true;
+
+        Mono<PublicKeysResponseDto> result = publicKeyService.getPublicKeys(cxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, createdAt, showPublicKey);
+
+        StepVerifier.create(result)
+                .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 }
