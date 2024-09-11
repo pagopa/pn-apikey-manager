@@ -12,6 +12,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFle
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -275,6 +276,59 @@ class VirtualKeyValidatorTest {
                 .thenReturn(Mono.just(Page.create(List.of(activeKey))));
 
         Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", "testUid", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
+
+        StepVerifier.create(result)
+                .verifyComplete();
+    }
+
+    @Test
+    void checkCxId_shouldReturnError_whenCxIdDoesNotMatch() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setCxId("differentCxId");
+
+        Mono<ApiKeyModel> result = validator.checkCxId("testCxId", apiKeyModel);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .verify();
+    }
+
+    @Test
+    void checkCxId_shouldReturnApiKey_whenCxIdMatches() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setCxId("testCxId");
+
+        Mono<ApiKeyModel> result = validator.checkCxId("testCxId", apiKeyModel);
+
+        StepVerifier.create(result)
+                .expectNext(apiKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void validateStateTransition_shouldReturnError_whenInvalidTransition() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setStatus(ApiKeyStatusDto.BLOCKED.toString());
+        RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
+        requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ROTATE);
+
+        Mono<Void> result = validator.validateStateTransition(apiKeyModel, requestDto);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
+                .verify();
+    }
+
+    @Test
+    void validateStateTransition_shouldComplete_whenValidTransition() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setStatus(ApiKeyStatusDto.BLOCKED.toString());
+        RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
+        requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
+
+        Mono<Void> result = validator.validateStateTransition(apiKeyModel, requestDto);
 
         StepVerifier.create(result)
                 .verifyComplete();

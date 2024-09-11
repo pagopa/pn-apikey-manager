@@ -33,9 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TOS_CONSENT_NOT_FOUND;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -205,6 +205,66 @@ class VirtualKeyServiceTest {
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
                 .expectError(ApiKeyManagerException.class)
                 .verify();
+    }
+
+    @Test
+    void testChangeStatusVirtualKeys_Enable() {
+
+        String id = "keyId";
+        String xPagopaPnUid = "userUid";
+        String xPagopaPnCxId = "cxId";
+        String xPagopaPnCxRole = "admin";
+        List<String> xPagopaPnCxGroups = List.of("group1", "group2");
+
+        RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
+        requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
+
+        when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
+        when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
+        when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
+        when(apiKeyRepository.save(any(ApiKeyModel.class))).thenReturn(Mono.just(new ApiKeyModel()));
+
+        Mono<Void> result = virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, requestDto);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(apiKeyRepository, times(1)).findById(id);
+        verify(apiKeyRepository, times(1)).save(any(ApiKeyModel.class));
+        verify(virtualKeyValidator, times(1)).checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void testChangeStatusVirtualKeys_Block() {
+
+        String id = "keyId";
+        String xPagopaPnUid = "userUid";
+        String xPagopaPnCxId = "cxId";
+        String xPagopaPnCxRole = "admin";
+        List<String> xPagopaPnCxGroups = List.of("group1", "group2");
+
+        RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
+        requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.BLOCK);
+
+        when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
+        when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
+        when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
+        when(apiKeyRepository.save(any(ApiKeyModel.class))).thenReturn(Mono.just(new ApiKeyModel()));
+
+        Mono<Void> result = virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, requestDto);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(apiKeyRepository, times(1)).findById(id);
+        verify(apiKeyRepository, times(1)).save(any(ApiKeyModel.class));
+        verify(virtualKeyValidator, times(1)).checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString());
     }
 
     @Test

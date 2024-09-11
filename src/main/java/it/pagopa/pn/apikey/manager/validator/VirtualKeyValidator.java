@@ -8,6 +8,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils;
@@ -109,5 +110,21 @@ public class VirtualKeyValidator {
                         return Mono.error(new ApiKeyManagerException(TOS_CONSENT_NOT_FOUND, HttpStatus.FORBIDDEN));
                     }
                 });
+    }
+
+    public Mono<ApiKeyModel> checkCxId(String xPagopaPnCxId, ApiKeyModel apiKey) {
+        if (!Objects.equals(xPagopaPnCxId, apiKey.getCxId())) {
+            return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_OPERATION, HttpStatus.FORBIDDEN));
+        }
+        return Mono.just(apiKey);
+    }
+
+    public Mono<Void> validateStateTransition(ApiKeyModel apiKeyModel, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto) {
+        if (requestVirtualKeyStatusDto.getStatus().equals(RequestVirtualKeyStatusDto.StatusEnum.ENABLE) && apiKeyModel.getStatus().equals(ApiKeyStatusDto.BLOCKED.toString()) ||
+                (requestVirtualKeyStatusDto.getStatus().equals(RequestVirtualKeyStatusDto.StatusEnum.BLOCK) && apiKeyModel.getStatus().equals(ApiKeyStatusDto.ENABLED.toString())))
+        {
+            return Mono.empty();
+        }
+        return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.CONFLICT));
     }
 }
