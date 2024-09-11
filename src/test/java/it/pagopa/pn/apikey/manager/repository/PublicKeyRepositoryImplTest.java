@@ -9,6 +9,9 @@ import org.reactivestreams.Subscriber;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
@@ -82,6 +85,20 @@ class PublicKeyRepositoryImplTest {
     }
 
     @Test
+    void findByCxIdAndStatus_withValidCxIdAndStatus_returnsFluxOfPublicKeyModels() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        List<PublicKeyModel> publicKeyModelList = new ArrayList<>();
+        publicKeyModelList.add(publicKeyModel);
+
+        StepVerifier.create(repository.findByCxIdAndStatus("cxId", "ACTIVE"))
+                .expectNextCount(0);
+    }
+
+    @Test
     void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");
@@ -92,6 +109,35 @@ class PublicKeyRepositoryImplTest {
 
         StepVerifier.create(repository.save(publicKeyModel))
                 .expectNext(publicKeyModel).verifyComplete();
+    }
+
+    @Test
+    void getAllWithFilterPaginated_withValidCxIdAndPageable_returnsMonoOfPage() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        PublicKeyPageable pageable = PublicKeyPageable.builder()
+                .lastEvaluatedKey("lastEvaluatedKey")
+                .createdAt("createdAt")
+                .limit(10)
+                .build();
+
+        StepVerifier.create(repository.getAllWithFilterPaginated("cxId", pageable, any()))
+                .expectNext(Page.create(new ArrayList<>()));
+    }
+
+    @Test
+    void countWithFilters_withValidCxIdAndPageable_returnsMonoOfInt() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+
+        StepVerifier.create(repository.countWithFilters("cxId"))
+                .expectNext(0);
     }
 
     @Test

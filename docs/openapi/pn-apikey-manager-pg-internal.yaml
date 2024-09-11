@@ -75,6 +75,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '500':
           description: Internal error
           content:
@@ -144,6 +150,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Wrong state transition (i.e. delete an enabled key)
           content:
@@ -184,6 +196,12 @@ paths:
           description: No content
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -236,6 +254,12 @@ paths:
                 $ref: '#/components/schemas/PublicKeyResponse'
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -426,7 +450,16 @@ components:
           description: nome della public key
         publicKey:
           type: string
-          description: Valore della public key
+          description: Valore della public key (esclusi header e footer)
+        exponent:
+          type: string
+          description: Esponente della public key
+          default: 'AQAB'
+        algorithm:
+          description: Algoritmo di crittografia usato per la public key
+          type: string
+          enum: ['RSA-2048']
+          default: 'RSA-2048'
     PublicKeyResponse:
       title: Response censimento public key
       description: >-
