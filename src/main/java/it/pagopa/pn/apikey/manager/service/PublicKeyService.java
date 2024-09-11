@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
@@ -39,6 +40,7 @@ public class PublicKeyService {
     private final PublicKeyRepository publicKeyRepository;
     private final PnAuditLogBuilder auditLogBuilder;
     private final PublicKeyValidator validator;
+    private final PublicKeyConverter publicKeyConverter;
 
     private static final String AUTOMATIC_DELETE = "AUTOMATIC_DELETE";
 

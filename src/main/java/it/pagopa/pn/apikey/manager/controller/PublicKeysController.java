@@ -5,8 +5,6 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.PublicKeysApi
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.PublicKeysApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeysResponseDto;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
@@ -162,7 +160,7 @@ public class PublicKeysController implements PublicKeysApi {
     }
 
     @Override
-    public Mono<ResponseEntity<PublicKeysResponseDto>> getPublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole, Integer limit, String lastKey, String createdAt, Boolean showPublicKey, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<PublicKeysResponseDto>> getPublicKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, List<String> xPagopaPnCxGroups, Integer limit, String lastKey, String createdAt, Boolean showPublicKey, final ServerWebExchange exchange) {
         String logMessage = String.format("Recupero delle Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s - xPagopaPnCxRole=%s",
                 xPagopaPnUid,
                 xPagopaPnCxType.getValue(),

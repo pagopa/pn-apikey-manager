@@ -198,7 +198,7 @@ class PublicKeysControllerTest {
 
         when(publicKeyService.getPublicKeys(any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(publicKeysResponseDto));
-        StepVerifier.create(publicKeysController.getPublicKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, 10, lastKey, createdAt, showPublicKey, null))
+        StepVerifier.create(publicKeysController.getPublicKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, 10, lastKey, createdAt, showPublicKey, null))
                 .expectNext(ResponseEntity.ok().body(publicKeysResponseDto))
                 .verifyComplete();
     }

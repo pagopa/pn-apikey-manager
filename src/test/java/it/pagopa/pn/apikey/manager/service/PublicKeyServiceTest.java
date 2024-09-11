@@ -1,9 +1,9 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
-import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -50,7 +50,7 @@ class PublicKeyServiceTest {
     void setUp() {
         publicKeyRepository = Mockito.mock(PublicKeyRepository.class);
         validator = new PublicKeyValidator(publicKeyRepository);
-        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator);
+        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator, new PublicKeyConverter());
     }
 
     @Test
@@ -377,7 +377,7 @@ class PublicKeyServiceTest {
         Mono<PublicKeysResponseDto> result = publicKeyService.getPublicKeys(cxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, createdAt, showPublicKey);
 
         StepVerifier.create(result)
-                .expectError(PnForbiddenException.class)
+                .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 }

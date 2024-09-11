@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.utils;
 
-import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -25,7 +25,7 @@ class PublicKeyUtilsTest {
         Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, "OPERATOR", List.of());
 
         StepVerifier.create(result)
-                .expectError(PnForbiddenException.class)
+                .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 
@@ -35,7 +35,7 @@ class PublicKeyUtilsTest {
         Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PF, "ADMIN", List.of());
 
         StepVerifier.create(result)
-                .expectError(PnForbiddenException.class)
+                .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 
@@ -44,7 +44,7 @@ class PublicKeyUtilsTest {
         Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, "ADMIN", List.of("group1"));
 
         StepVerifier.create(result)
-                .expectError(PnForbiddenException.class)
+                .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 
@@ -54,7 +54,7 @@ class PublicKeyUtilsTest {
         Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, null, List.of());
 
         StepVerifier.create(result)
-                .expectError(PnForbiddenException.class)
+                .expectError(ApiKeyManagerException.class)
                 .verify();
     }
 }

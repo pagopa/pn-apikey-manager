@@ -7,9 +7,6 @@ import lombok.AccessLevel;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
-import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import lombok.CustomLog;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Mono;
 
