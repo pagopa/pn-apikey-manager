@@ -10,12 +10,15 @@ import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -77,6 +80,34 @@ class PublicKeyRepositoryImplTest {
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.NOT_FOUND)
                 .verify();
+    }
+
+    @Test
+    void findByCxIdAndStatus_withValidCxIdAndStatus_returnsFluxOfPublicKeyModels() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        List<PublicKeyModel> publicKeyModelList = new ArrayList<>();
+        publicKeyModelList.add(publicKeyModel);
+
+        StepVerifier.create(repository.findByCxIdAndStatus("cxId", "ACTIVE"))
+                .expectNextCount(0);
+    }
+
+    @Test
+    void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setKid("kid");
+
+        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+        completableFuture.completeAsync(() -> null);
+        when(table.putItem(publicKeyModel)).thenReturn(completableFuture);
+
+        StepVerifier.create(repository.save(publicKeyModel))
+                .expectNext(publicKeyModel).verifyComplete();
     }
 
     @Test

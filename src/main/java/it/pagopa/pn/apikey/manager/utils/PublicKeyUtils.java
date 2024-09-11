@@ -1,5 +1,12 @@
 package it.pagopa.pn.apikey.manager.utils;
 
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import lombok.AccessLevel;
+import lombok.CustomLog;
+import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
 import it.pagopa.pn.apikey.manager.exception.PnForbiddenException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import lombok.CustomLog;
@@ -10,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CustomLog
+@NoArgsConstructor(access = AccessLevel.NONE)
 public class PublicKeyUtils {
 
     public static final Set<String> ALLOWED_ROLES = Set.of("ADMIN");
@@ -28,7 +36,7 @@ public class PublicKeyUtils {
                 || (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
 
             log.logCheckingOutcome(process, false, "only a PG admin can access this resource");
-            return Mono.error(new PnForbiddenException());
+            return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.ACCESS_DENIED , HttpStatus.FORBIDDEN));
         }
         log.debug("access granted for {}, role: {}, groups: {}", pnCxType, pnCxRole, pnCxGroups);
         log.logCheckingOutcome(process, true);

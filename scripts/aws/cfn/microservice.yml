@@ -135,6 +135,11 @@ Parameters:
     Type: String
     Description: 'ARN for ApikeyManagerInternalQueue DLQ'
 
+  ApiKeyManagerPipeBatchSize:
+    Type: Number
+    Default: 30
+    Description: records batch size of apikey manager pipe (DynamoDB to SQS)
+
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
@@ -284,6 +289,7 @@ Resources:
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
         ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
 
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
@@ -296,6 +302,81 @@ Resources:
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
+
+  PgPublicKeyTtlPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
+      Name: !Sub ${ProjectName}-apikey-manager-publickey-ttl-pipe
+      Source: !Ref PublicKeyTableStreamArn
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: TRIM_HORIZON
+          BatchSize: !Ref ApiKeyManagerPipeBatchSize
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["DELETE"] }'
+      Target: !Ref ApikeyManagerInternalQueueARN
+      TargetParameters:
+        InputTemplate: |
+          {
+            "cxId": <$.dynamodb.Keys.cxId.S>,
+            "kid": <$.dynamodb.Keys.kid.S>,
+            "action": "DELETE"
+          }
+
+  PgPublicKeyPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
+      Name: !Sub ${ProjectName}-apikey-manager-publickey-pipe
+      Source: !Ref PublicKeyTableStreamArn
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: TRIM_HORIZON
+          BatchSize: !Ref ApiKeyManagerPipeBatchSize
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["INSERT", "MODIFY"] }'
+      Target: !Ref ApikeyManagerInternalQueueARN
+      TargetParameters:
+        InputTemplate: |
+          {
+            "cxId": <$.dynamodb.Keys.cxId.S>,
+            "action": "JWKS"
+          }
+
+  PnApiKeyManagerPipeExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - pipes.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-source-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: !Ref PublicKeyTableArn
+        - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-target-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource: !Ref ApikeyManagerInternalQueueARN
 
   ApikeyManagerMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
