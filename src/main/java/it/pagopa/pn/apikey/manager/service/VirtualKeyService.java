@@ -43,6 +43,7 @@ public class VirtualKeyService {
         log.info("Starting changeStatusVirtualKeys - id={}, xPagopaPnUid={}, xPagopaPnCxType={}, xPagopaPnCxId={}, xPagopaPnCxRole={}, status={}",
                 id, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, requestVirtualKeyStatusDto.getStatus());
         return virtualKeyValidator.validateCxType(xPagopaPnCxType)
+                .then(virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups))
                 .then(Mono.defer(() -> switch (requestVirtualKeyStatusDto.getStatus()) {
                     case ENABLE, BLOCK -> {
                         log.info("Processing ENABLE or BLOCK status for id={}", id);
@@ -129,7 +130,8 @@ public class VirtualKeyService {
             return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
         }
 
-        return apiKeyRepository.findById(id)
+        return virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .then(apiKeyRepository.findById(id))
                 .flatMap(virtualKeyModel -> virtualKeyValidator.validateRoleForDeletion(virtualKeyModel, xPagopaPnUid, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups))
                 .flatMap(virtualKeyValidator::isDeleteOperationAllowed)
                 .flatMap(virtualKeyModel -> this.updateApiKeyStatus(virtualKeyModel, xPagopaPnUid, VirtualKeyStatusDto.DELETED.getValue()))
