@@ -135,6 +135,11 @@
             <artifactId>dynamodb-enhanced</artifactId>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+            <version>2.20.0</version> <!-- Make sure to check for the latest version -->
+        </dependency>
+        <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
         </dependency>

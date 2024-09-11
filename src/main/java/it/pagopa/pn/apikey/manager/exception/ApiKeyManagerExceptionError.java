@@ -16,5 +16,16 @@ public class ApiKeyManagerExceptionError {
     public static final String ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED = "ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED";
 
     public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
-
+    public static final String PUBLIC_KEY_NAME_MANDATORY = "Name is mandatory";
+    public static final String PUBLIC_KEY_CAN_NOT_DELETE = "Public key can not be deleted";
+    public static final String PUBLIC_KEY_INVALID_STATE_TRANSITION = "Invalid state transition";
+    public static final String PUBLIC_KEY_ALREADY_EXISTS = "Public key with status %s already exists.";
+    public static final String PUBLIC_KEY_ALREADY_EXISTS_ACTIVE = "Public key with status ACTIVE already exists, to create a new public key use the rotate operation.";
+    public static final String ACCESS_DENIED = "Access denied.";
+    public static final String TTL_PAYLOAD_INVALID_KID_CXID = "The key or cxid is empty.";
+    public static final String TTL_PAYLOAD_INVALID_ACTION = "The action is empty or not valid.";
+    public static final String PUBLIC_KEY_NOT_EXPIRED = "PublicKey with kid [%s] and cxid [%s], is not expired. Event will ignore";
+    public static final String PUBLIC_KEY_ALREADY_DELETED = "PublicKey with kid [%s] and cxid [%s], is already DELETED. Event will ignore";
+    public static final String FAILED_TO_CREATEJWKS_JSON = "Failed to create JWKS JSON";
+    public static final String FAILED_TO_INVOKE_LAMBDA_FUNCTION = "Failed to invoke Lambda function";
 }
