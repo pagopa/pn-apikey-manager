@@ -1,34 +1,27 @@
 package it.pagopa.pn.apikey.manager.controller;
 
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api.VirtualKeysApi;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.VirtualKeyService;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @lombok.CustomLog
 public class VirtualKeyController implements VirtualKeysApi {
-
     private final VirtualKeyService virtualKeyService;
     private final PnAuditLogBuilder auditLogBuilder;
-
-    public VirtualKeyController(VirtualKeyService virtualKeyService, PnAuditLogBuilder auditLogBuilder) {
-        this.virtualKeyService = virtualKeyService;
-        this.auditLogBuilder = auditLogBuilder;
-    }
 
     /**
      * PUT /virtual-keys/{id}/status : Cambia lo stato della virtualKey
@@ -46,16 +39,16 @@ public class VirtualKeyController implements VirtualKeysApi {
      * or Not found (status code 404)
      * or Internal error (status code 500)
      */
-
     @Override
     public Mono<ResponseEntity<Void>> changeStatusVirtualKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String id, Mono<RequestVirtualKeyStatusDto> requestVirtualKeyStatusDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
         return requestVirtualKeyStatusDto
                 .flatMap(dto -> {
-                    String logMessage = String.format("Start cambio stato virtualKey - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxRole=%s, id=%s, status=%s",
+                    String logMessage = String.format("Start cambio stato virtualKey - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxRole=%s - xPagopaPnGroups=%s, id=%s, status=%s",
                             xPagopaPnUid,
                             xPagopaPnCxType.getValue(),
                             xPagopaPnCxId,
                             xPagopaPnCxRole,
+                            xPagopaPnCxGroups,
                             id,
                             dto.getStatus());
 
@@ -64,25 +57,10 @@ public class VirtualKeyController implements VirtualKeysApi {
                             .build();
 
                     logEvent.log();
-                    return virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, id, dto, xPagopaPnCxGroups)
-                            .doOnError(throwable -> {
-                                CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent);
-                                if (throwable instanceof ApiKeyManagerException ex) {
-                                    if (ex.getStatus() == HttpStatus.BAD_REQUEST) {
-                                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
-                                    } else if (ex.getStatus() == HttpStatus.CONFLICT) {
-                                        throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
-                                    } else if (ex.getStatus() == HttpStatus.NOT_FOUND) {
-                                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
-                                    } else if (ex.getStatus() == HttpStatus.FORBIDDEN) {
-                                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
-                                    }
-                                }
-                                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
-                            })
+                    return virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, dto)
+                            .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                             .then(Mono.defer(() -> {
-                                logEvent.generateSuccess(logMessage)
-                                        .log();
+                                logEvent.generateSuccess(logMessage).log();
                                 return Mono.just(ResponseEntity.ok().build());
                             }));
                 });
@@ -97,5 +75,108 @@ public class VirtualKeyController implements VirtualKeysApi {
             return PnAuditLogEventType.AUD_AK_REACTIVATE;
         }
     }
-}
 
+    /**
+     * DELETE /virtual-keys/{id} : Eliminazione virtual key
+     * Servizio di eliminazione di una virtual key.
+     *
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param id Identificativo univoco della virtual key. (required)
+     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @return OK (status code 200)
+     *         or Bad request (status code 400)
+     *         or Wrong state transition (status code 409)
+     *         or Not found (status code 404)
+     *         or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> deleteVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType,
+                                                       String xPagopaPnCxId, String xPagopaPnCxRole,
+                                                       String id, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("Cancellazione Virtual Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxRole=%s - id=%s",
+                xPagopaPnUid,
+                xPagopaPnCxType,
+                xPagopaPnCxId,
+                xPagopaPnCxRole,
+                id);
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_DELETE, logMessage)
+                .build();
+
+        logEvent.log();
+
+        return virtualKeyService.deleteVirtualKey(id,xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole)
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
+                .map(s -> {
+                    logEvent.generateSuccess(logMessage).log();
+                    return ResponseEntity.ok().build();
+                });
+    }
+
+    @Override
+    public Mono<ResponseEntity<VirtualKeysResponseDto>> getVirtualKeys(
+            String xPagopaPnUid,
+            CxTypeAuthFleetDto xPagopaPnCxType,
+            String xPagopaPnCxId,
+            String xPagopaPnCxRole,
+            List<String> xPagopaPnCxGroups,
+            Integer limit,
+            String lastKey,
+            String lastUpdate,
+            Boolean showVirtualKey,
+            ServerWebExchange exchange) {
+        String logMessage = String.format("getVirtualKeys - xPagopaPnUid: %s, xPagopaPnCxType: %s, xPagopaPnCxId: %s, xPagopaPnCxRole: %s, xPagopaPnCxGroups: %s, limit: %s, lastKey: %s, lastUpdate: %s, showVirtualKey: %s",
+                xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, limit, lastKey, lastUpdate, showVirtualKey);
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_VIEW, logMessage)
+                .build();
+
+        logEvent.log();
+
+        return virtualKeyService.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, lastUpdate, showVirtualKey)
+                .map(s -> {
+                    logEvent.generateSuccess(logMessage).log();
+                    return ResponseEntity.ok().body(s);
+                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+    }
+
+    /**
+     * POST /virtual-keys : Censimento virtual key
+     * Servizio di creazione di una nuova virtual key.
+     *
+     * @param xPagopaPnUid User Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param requestNewVirtualKeyDto  (required)
+     * @return Created (status code 201)
+     *         or Bad request (status code 400)
+     *         or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<ResponseNewVirtualKeyDto>> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("Creazione di una Virtual Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s",
+                xPagopaPnUid,
+                xPagopaPnCxType.getValue(),
+                xPagopaPnCxId
+        );
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_CREATE, logMessage)
+                .build();
+
+        logEvent.log();
+
+        return virtualKeyService.createVirtualKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, requestNewVirtualKeyDto, xPagopaPnCxRole, xPagopaPnCxGroups)
+                .map(s -> {
+                    logEvent.generateSuccess(logMessage).log();
+                    return ResponseEntity.status(HttpStatus.CREATED).body(s);
+                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+    }
+}
