@@ -8,6 +8,7 @@ import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils;
@@ -20,7 +21,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Objects;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 
 @Component
 @Slf4j
@@ -113,7 +114,7 @@ public class VirtualKeyValidator {
 
     public Mono<ApiKeyModel> checkCxId(String xPagopaPnCxId, ApiKeyModel apiKey) {
         if (!Objects.equals(xPagopaPnCxId, apiKey.getCxId())) {
-            return Mono.error(new ApiKeyManagerException(FORBIDDEN_MESSAGE, HttpStatus.FORBIDDEN));
+            return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_OPERATION, HttpStatus.FORBIDDEN));
         }
         return Mono.just(apiKey);
     }

@@ -219,20 +219,22 @@ class VirtualKeyServiceTest {
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
 
+        when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
-        when(virtualKeyValidator.validateNoOtherKeyWithSameStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any(ApiKeyModel.class))).thenReturn(Mono.just(new ApiKeyModel()));
 
-        Mono<Void> result = virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, id, requestDto, xPagopaPnCxGroups);
+        Mono<Void> result = virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, requestDto);
 
         StepVerifier.create(result)
                 .verifyComplete();
 
         verify(apiKeyRepository, times(1)).findById(id);
         verify(apiKeyRepository, times(1)).save(any(ApiKeyModel.class));
-        verify(virtualKeyValidator, times(1)).validateNoOtherKeyWithSameStatus(anyString(), anyString(), anyString());
+        verify(virtualKeyValidator, times(1)).checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -247,20 +249,22 @@ class VirtualKeyServiceTest {
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.BLOCK);
 
+        when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
-        when(virtualKeyValidator.validateNoOtherKeyWithSameStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any(ApiKeyModel.class))).thenReturn(Mono.just(new ApiKeyModel()));
 
-        Mono<Void> result = virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, id, requestDto, xPagopaPnCxGroups);
+        Mono<Void> result = virtualKeyService.changeStatusVirtualKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups, id, requestDto);
 
         StepVerifier.create(result)
                 .verifyComplete();
 
         verify(apiKeyRepository, times(1)).findById(id);
         verify(apiKeyRepository, times(1)).save(any(ApiKeyModel.class));
-        verify(virtualKeyValidator, times(1)).validateNoOtherKeyWithSameStatus(anyString(), anyString(), anyString());
+        verify(virtualKeyValidator, times(1)).checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString());
     }
 
     @Test

@@ -47,13 +47,42 @@ public class VirtualKeyService {
                 .then(Mono.defer(() -> switch (requestVirtualKeyStatusDto.getStatus()) {
                     case ENABLE, BLOCK -> {
                         log.info("Processing ENABLE or BLOCK status for id={}", id);
-                        yield reactivateOrBlockVirtualKey(id, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxRole, requestVirtualKeyStatusDto);
+                        yield reactivateOrBlockVirtualKey(id, xPagopaPnUid, xPagopaPnCxId, xPagopaPnCxRole, requestVirtualKeyStatusDto, xPagopaPnCxGroups);
                     }
                     case ROTATE -> {
                         log.info("Processing ROTATE status for id={}", id);
                         yield rotateVirtualKey(id, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId);
                     }
                 }));
+    }
+
+    private Mono<Void> reactivateOrBlockVirtualKey(String id, String xPagopaPnUid, String xPagopaPnCxId, String xPagopaPnCxRole, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto, List<String> xPagopaPnCxGroups) {
+        return apiKeyRepository.findById(id)
+                .flatMap(apiKeyModel -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))
+                        .then(VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
+                                .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin))
+                                .flatMap(apiKey -> virtualKeyValidator.validateStateTransition(apiKey, requestVirtualKeyStatusDto)
+                                        .then(Mono.defer(() -> updateApiKeyStatus(apiKey, xPagopaPnUid, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))))
+                                )
+                        )
+                ).then();
+    }
+
+    private Mono<ApiKeyModel> checkUserPermission(String xPagopaPnUid, String xPagopaPnCxId, ApiKeyModel apiKeyModel, Boolean isAdmin) {
+        if (isAdmin) {
+            return virtualKeyValidator.checkCxId(xPagopaPnCxId, apiKeyModel);
+        } else {
+            return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKeyModel);
+        }
+    }
+
+    private String decodeToEntityStatus(RequestVirtualKeyStatusDto.StatusEnum status) {
+        log.debug("Requested operation: {}", status);
+        return switch (status) {
+            case BLOCK -> ApiKeyStatusDto.BLOCKED.name();
+            case ENABLE -> ApiKeyStatusDto.ENABLED.name();
+            default -> throw new IllegalStateException("Unexpected value: " + status);
+        };
     }
 
     private Mono<Void> rotateVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
@@ -74,7 +103,6 @@ public class VirtualKeyService {
                 .doOnError(throwable -> log.error("Error changing status of virtualKey - id={}, error={}", id, throwable.getMessage()))
                 .then();
     }
-
 
     private Mono<ApiKeyModel> updateApiKeyStatus(ApiKeyModel apiKey, String xPagopaPnUid, String status) {
         log.info("updateApiKeyStatus - id={} xPagoPaPnUid={} status={}", apiKey.getId(), xPagopaPnUid, status);
@@ -117,50 +145,6 @@ public class VirtualKeyService {
         history.setDate(LocalDateTime.now());
         history.setChangeByDenomination(xPagopaPnUid);
         return history;
-    }
-
-    private Mono<Void> reactivateOrBlockVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto) {
-        return apiKeyRepository.findById(id)
-                .flatMap(apiKeyModel -> virtualKeyValidator.validateNoOtherKeyWithSameStatus(xPagopaPnUid, xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus().getValue()))
-                        .then(VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
-                                .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin))
-                                .flatMap(apiKey -> virtualKeyValidator.validateStateTransition(apiKey, requestVirtualKeyStatusDto)
-                                        .then(Mono.defer(() -> updateApikeyAndHistory(xPagopaPnUid, requestVirtualKeyStatusDto, apiKey)))
-                                )
-                        )
-                ).then();
-    }
-
-    private Mono<ApiKeyModel> checkUserPermission(String xPagopaPnUid, String xPagopaPnCxId, ApiKeyModel apiKeyModel, Boolean isAdmin) {
-        if (isAdmin) {
-            return virtualKeyValidator.checkCxId(xPagopaPnCxId, apiKeyModel);
-        } else {
-            return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKeyModel);
-        }
-    }
-
-    private Mono<ApiKeyModel> updateApikeyAndHistory(String xPagopaPnUid, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto, ApiKeyModel apiKey) {
-        apiKey.setStatus(decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus().getValue()));
-        apiKey.getStatusHistory().add(createNewHistoryItem(xPagopaPnUid, apiKey.getStatus()));
-        return apiKeyRepository.save(apiKey);
-    }
-
-
-    private ApiKeyHistoryModel createNewHistoryItem(String xPagopaPnUid, String status) {
-        ApiKeyHistoryModel statusHistoryItem = new ApiKeyHistoryModel();
-        statusHistoryItem.setChangeByDenomination(xPagopaPnUid);
-        statusHistoryItem.setStatus(status);
-        statusHistoryItem.setDate(LocalDateTime.now());
-        return statusHistoryItem;
-    }
-
-    private String decodeToEntityStatus(String status) {
-        log.debug("Requested operation: {}", status);
-        return switch (status) {
-            case BLOCK -> ApiKeyStatusDto.BLOCKED.name();
-            case ENABLE -> ApiKeyStatusDto.ENABLED.name();
-            default -> throw new IllegalStateException("Unexpected value: " + status);
-        };
     }
 
     public Mono<String> deleteVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {

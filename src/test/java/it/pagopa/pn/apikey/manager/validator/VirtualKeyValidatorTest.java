@@ -12,12 +12,7 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFle
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
-import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
-import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -334,30 +329,6 @@ class VirtualKeyValidatorTest {
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
 
         Mono<Void> result = validator.validateStateTransition(apiKeyModel, requestDto);
-
-        StepVerifier.create(result)
-                .verifyComplete();
-    }
-
-    @Test
-    void validateNoOtherKeyWithSameStatus_shouldReturnError_whenKeyWithSameStatusExists() {
-        when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(any(), any(), any(), any()))
-                .thenReturn(Mono.just(Page.create(List.of(new ApiKeyModel()), null)));
-
-        Mono<Void> result = validator.validateNoOtherKeyWithSameStatus("uid", "cxId", "status");
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
-                .verify();
-    }
-
-    @Test
-    void validateNoOtherKeyWithSameStatus_shouldComplete_whenNoKeyWithSameStatusExists() {
-        when(apiKeyRepository.findByUidAndCxIdAndStatusAndScope(any(), any(), any(), any()))
-                .thenReturn(Mono.just(Page.create(List.of(), null)));
-
-        Mono<Void> result = validator.validateNoOtherKeyWithSameStatus("uid", "cxId", "status");
 
         StepVerifier.create(result)
                 .verifyComplete();
