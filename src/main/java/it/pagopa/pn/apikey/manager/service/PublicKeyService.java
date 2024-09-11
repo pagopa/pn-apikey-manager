@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.ACCESS_DENIED;
 
 @Slf4j
 @Service
@@ -224,7 +225,11 @@ public class PublicKeyService {
                 .build();
     }
 
-    public Mono<PublicKeysIssuerResponseDto> getIssuer(String xPagopaPnCxId) {
+    public Mono<PublicKeysIssuerResponseDto> getIssuer(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType) {
+        if (!CxTypeAuthFleetDto.PG.name().equals(xPagopaPnCxType.getValue())) {
+            return Mono.error(new ApiKeyManagerException(ACCESS_DENIED, HttpStatus.FORBIDDEN));
+        }
+
         return publicKeyRepository.getIssuer(xPagopaPnCxId)
                 .map(Page::items)
                 .flatMap(publicKeyModels -> {

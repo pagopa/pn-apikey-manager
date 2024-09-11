@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -471,7 +472,7 @@ class PublicKeyServiceTest {
         Page<PublicKeyModel> page = Page.create(publicKeyModels);
 
         when(publicKeyRepository.getIssuer(any())).thenReturn(Mono.just(page));
-        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId");
+        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PG);
 
         StepVerifier.create(result)
                 .expectNextMatches(dto -> dto.getIsPresent() && dto.getIssuerStatus() == PublicKeysIssuerResponseDto.IssuerStatusEnum.ACTIVE)
@@ -494,7 +495,7 @@ class PublicKeyServiceTest {
         Page<PublicKeyModel> page = Page.create(publicKeyModels);
 
         when(publicKeyRepository.getIssuer(any())).thenReturn(Mono.just(page));
-        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId");
+        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PG);
 
         StepVerifier.create(result)
                 .expectNextMatches(dto -> dto.getIsPresent() && dto.getIssuerStatus() == PublicKeysIssuerResponseDto.IssuerStatusEnum.INACTIVE)
@@ -507,10 +508,19 @@ class PublicKeyServiceTest {
         Page<PublicKeyModel> page = Page.create(publicKeyModels);
 
         when(publicKeyRepository.getIssuer(any())).thenReturn(Mono.just(page));
-        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId");
+        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PG);
 
         StepVerifier.create(result)
                 .expectNextMatches(dto -> !dto.getIsPresent() && dto.getIssuerStatus() == null)
                 .verifyComplete();
+    }
+
+    @Test
+    void getIssuer_Forbidden() {
+        Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PF);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .verify();
     }
 }

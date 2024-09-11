@@ -109,7 +109,7 @@ class PublicKeysControllerTest {
         responseDto.setIsPresent(true);
         responseDto.setIssuerStatus(PublicKeysIssuerResponseDto.IssuerStatusEnum.ACTIVE);
 
-        when(publicKeyService.getIssuer(xPagopaPnCxId))
+        when(publicKeyService.getIssuer(xPagopaPnCxId, CxTypeAuthFleetDto.PG))
                 .thenReturn(Mono.just(responseDto));
 
         Mono<ResponseEntity<PublicKeysIssuerResponseDto>> response = publicKeysController.getIssuerStatus(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, exchange);
@@ -117,22 +117,6 @@ class PublicKeysControllerTest {
         StepVerifier.create(response)
                 .expectNext(ResponseEntity.ok().body(responseDto))
                 .verifyComplete();
-    }
-
-    @Test
-    void getIssuerStatusForbidden() {
-        String xPagopaPnUid = "user123";
-        String xPagopaPnCxId = "cxId123";
-        ServerWebExchange exchange = mock(ServerWebExchange.class);
-
-        when(publicKeyService.getIssuer(xPagopaPnCxId))
-                .thenReturn(Mono.error(new RuntimeException("Forbidden")));
-
-        Mono<ResponseEntity<PublicKeysIssuerResponseDto>> response = publicKeysController.getIssuerStatus(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, exchange);
-
-        StepVerifier.create(response)
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Forbidden"))
-                .verify();
     }
 
     @ParameterizedTest
