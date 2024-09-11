@@ -9,6 +9,7 @@ import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEven
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -28,8 +29,8 @@ public class PublicKeyValidator {
     private final PublicKeyRepository publicKeyRepository;
 
     public Mono<PublicKeyRequestDto> validatePublicKeyRequest(PublicKeyRequestDto publicKeyRequestDto) {
-        if (publicKeyRequestDto.getName() == null || publicKeyRequestDto.getName().isEmpty()) {
-            return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_NAME_MANDATORY, HttpStatus.BAD_REQUEST));
+        if (StringUtils.isEmpty(publicKeyRequestDto.getName())) {
+            return Mono.error(new ApiKeyManagerException("Name is mandatory", HttpStatus.BAD_REQUEST));
         }
         return Mono.just(publicKeyRequestDto);
     }
@@ -67,10 +68,10 @@ public class PublicKeyValidator {
     }
 
     public Mono<PublicKeyEvent.Payload> validatePayload(PublicKeyEvent.Payload payload) {
-        if (payload.getKid().isEmpty() || payload.getCxId().isEmpty()) {
+        if (StringUtils.isEmpty(payload.getKid()) || StringUtils.isEmpty(payload.getCxId())) {
             return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_KID_CXID, HttpStatus.BAD_REQUEST));
         }
-        if (payload.getAction().isEmpty() || !DELETE.name().equals(payload.getAction())) {
+        if (StringUtils.isEmpty(payload.getAction()) || !DELETE.name().equals(payload.getAction())) {
             return Mono.error(new ApiKeyManagerException(TTL_PAYLOAD_INVALID_ACTION, HttpStatus.BAD_REQUEST));
         }
 
@@ -93,5 +94,16 @@ public class PublicKeyValidator {
             return Mono.empty();
         }
         return Mono.just(publicKeyModel);
+    }
+
+    public Mono<PublicKeyModel> validatePublicKeyRotation(PublicKeyModel model, String newPublicKey) {
+        if (!PublicKeyStatusDto.ACTIVE.getValue().equals(model.getStatus())) {
+            return Mono.error(new ApiKeyManagerException(String.format(ApiKeyManagerExceptionError.APIKEY_INVALID_STATUS, model.getStatus(), PublicKeyStatusDto.ROTATED.getValue()), HttpStatus.CONFLICT));
+        }
+
+        if(model.getPublicKey().equalsIgnoreCase(newPublicKey)) {
+            return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_USED, HttpStatus.CONFLICT));
+        }
+        return Mono.just(model);
     }
 }

@@ -157,4 +157,44 @@ public class PublicKeysController implements PublicKeysApi {
                 })
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
+
+    /**
+     * POST /pg-self/public-key/{kid}/rotate : Rotazione public key
+     * servizio di rotazione della public key identificata tramite Kid
+     *
+     * @param xPagopaPnUid        User Identifier (required)
+     * @param xPagopaPnCxType     Customer/Receiver Type (required)
+     * @param xPagopaPnCxId       Customer/Receiver Identifier (required)
+     * @param kid                 Identificativo univoco della public key (required)
+     * @param publicKeyRequestDto (required)
+     * @param xPagopaPnCxGroups   Customer Groups (optional)
+     * @param xPagopaPnCxRole     User role (optional)
+     * @return OK (status code 200)
+     * or Bad request (status code 400)
+     * or Wrong state transition (i.e. enable an enabled key) (status code 409)
+     * or Not found (status code 404)
+     * or Internal error (status code 500)
+     */
+    @Override
+    public Mono<ResponseEntity<PublicKeyResponseDto>> rotatePublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, String kid, Mono<PublicKeyRequestDto> publicKeyRequestDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("Rotazione di una Public Key - xPagopaPnUid=%s - xPagopaPnCxType=%s - xPagopaPnCxId=%s - xPagopaPnCxGroups=%s - kid=%s",
+                xPagopaPnUid,
+                xPagopaPnCxType.getValue(),
+                xPagopaPnCxId,
+                xPagopaPnCxGroups,
+                kid);
+
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AK_ROTATE, logMessage)
+                .build();
+
+        logEvent.log();
+
+        return publicKeyService.rotatePublicKey(publicKeyRequestDto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, kid, xPagopaPnCxGroups, xPagopaPnCxRole)
+                .map(s -> {
+                    logEvent.generateSuccess(logMessage).log();
+                    return ResponseEntity.ok().body(s);
+                })
+                .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
+    }
 }
