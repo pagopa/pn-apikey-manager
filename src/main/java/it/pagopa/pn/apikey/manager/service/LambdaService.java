@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.config.LambdaAsyncConfig;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
