@@ -33,7 +33,7 @@ public class PublicKeysController implements PublicKeysApi {
     private final PnAuditLogBuilder auditLogBuilder;
 
     /**
-     * PUT /pg-self/public-key/{kid}/delete : Rimozione public key
+     * DELETE /pg-self/public-key/{kid}/delete : Rimozione public key
      * servizio di rimozione della public key identificata tramite Kid
      *
      * @param xPagopaPnUid User Identifier (required)

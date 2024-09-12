@@ -127,7 +127,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   "/pg-self/public-key/{kid}/delete":
-    put:
+    delete:
       summary: Rimozione public key
       description: >-
         servizio di rimozione della public key identificata tramite Kid
