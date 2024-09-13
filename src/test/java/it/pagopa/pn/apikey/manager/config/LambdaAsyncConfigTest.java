@@ -29,7 +29,6 @@ class LambdaAsyncConfigTest {
     }
 
     @Test
-    @Disabled
     void testLambdaAsyncClient() {
         // Arrange
         when(awsConfigs.getProfileName()).thenReturn("default");

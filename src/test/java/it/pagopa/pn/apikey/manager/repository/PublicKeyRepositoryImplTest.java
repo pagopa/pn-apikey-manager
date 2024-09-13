@@ -101,6 +101,20 @@ class PublicKeyRepositoryImplTest {
     }
 
     @Test
+    void findByCxIdAndStatus_withValidCxIdAndNullStatus_returnsFluxOfPublicKeyModels() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        List<PublicKeyModel> publicKeyModelList = new ArrayList<>();
+        publicKeyModelList.add(publicKeyModel);
+
+        StepVerifier.create(repository.findByCxIdAndStatus("cxId", null))
+                .expectNextCount(0);
+    }
+
+    @Test
     void save_withValidPublicKeyModel_returnsSavedPublicKeyModel() {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setKid("kid");

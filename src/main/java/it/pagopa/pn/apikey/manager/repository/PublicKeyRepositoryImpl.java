@@ -77,7 +77,12 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
 
     @Override
     public Flux<PublicKeyModel> findByCxIdAndStatus(String xPagopaPnCxId, String status) {
-        Key key = Key.builder().partitionValue(xPagopaPnCxId).sortValue(status).build();
+        Key.Builder keyBuilder = Key.builder().partitionValue(xPagopaPnCxId);
+        if (status != null) {
+            keyBuilder.sortValue(status);
+        }
+        Key key = keyBuilder.build();
+
         QueryConditional conditional = QueryConditional.keyEqualTo(key);
 
         QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
