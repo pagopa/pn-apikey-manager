@@ -5,10 +5,6 @@ import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
-import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -34,17 +30,10 @@ import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_ACTION;
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TTL_PAYLOAD_INVALID_KID_CXID;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -66,7 +55,7 @@ class PublicKeyServiceTest {
         pnApikeyManagerConfig = new PnApikeyManagerConfig();
         pnApikeyManagerConfig.setLambdaName("lambdaName");
         validator = new PublicKeyValidator(publicKeyRepository);
-        publicKeyService = new PublicKeyService(publicKeyRepository, lambdaService, auditLogBuilder, validator, pnApikeyManagerConfig);
+        publicKeyService = new PublicKeyService(publicKeyRepository, lambdaService, auditLogBuilder, validator, pnApikeyManagerConfig, new PublicKeyConverter());
     }
 
     @Test
@@ -538,188 +527,6 @@ class PublicKeyServiceTest {
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
-                .verify();
-    }
-
-    @Test
-    void changeStatus_withInvalidStatusTransition_throwsApiKeyManagerException() {
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setStatus("ACTIVE");
-
-        when(publicKeyRepository.findByKidAndCxId(anyString(), anyString())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
-
-        StepVerifier.create(publicKeyService.changeStatus("kid", "INACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
-                .verify();
-    }
-
-    @Test
-    void createPublicKey_withValidData_returnsPublicKeyResponseDto() {
-        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
-        requestDto.setName("Test Key");
-        requestDto.setPublicKey("publicKeyData");
-
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setName("Test Key");
-        publicKeyModel.setCorrelationId("correlationId");
-        publicKeyModel.setPublicKey("publicKeyData");
-        publicKeyModel.setStatus("ACTIVE");
-        publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
-        publicKeyModel.setIssuer("issuer");
-        publicKeyModel.setCxId("cxId");
-
-        PublicKeyModel publicKeyModelCopy = new PublicKeyModel();
-        publicKeyModelCopy.setKid("kid_COPY");
-        publicKeyModelCopy.setName("Test Key");
-        publicKeyModelCopy.setCorrelationId("correlationId");
-        publicKeyModelCopy.setPublicKey("publicKeyData");
-        publicKeyModelCopy.setStatus("ACTIVE");
-        publicKeyModelCopy.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
-        publicKeyModelCopy.setIssuer("issuer");
-        publicKeyModelCopy.setTtl(publicKeyModelCopy.getExpireAt());
-        publicKeyModelCopy.setCxId("cxId");
-
-
-        when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ACTIVE"))).thenReturn(Flux.empty());
-        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModelCopy));
-
-        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), List.of(), "ADMIN"))
-                .expectNextMatches(response -> response.getKid() != null && response.getIssuer() != null)
-                .verifyComplete();
-    }
-
-    @Test
-    void createPublicKey_withExistingActiveKey_throwsApiKeyManagerException() {
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
-        publicKeyModel.setIssuer("issuer");
-        when(publicKeyRepository.findByCxIdAndStatus(anyString(), eq("ACTIVE"))).thenReturn(Flux.just(publicKeyModel));
-        PublicKeyRequestDto dto = new PublicKeyRequestDto();
-        dto.setName("Test Key");
-        dto.setPublicKey("publicKey");
-
-        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(dto), List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS_ACTIVE))
-                .verify();
-    }
-
-    @Test
-    void createPublicKey_withInvalidRole_throwsApiKeyManagerException() {
-        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(new PublicKeyRequestDto()), List.of(), "invalidRole"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.ACCESS_DENIED))
-                .verify();
-    }
-
-    @Test
-    void handlePublicKeyEventSuccessfully() {
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setExpireAt(Instant.now().minusSeconds(60));
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setCxId("cxId");
-        publicKeyModel.setStatus("DELETE");
-
-        MessageHeaders messageHeaders = new MessageHeaders(null);
-        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
-        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-
-        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
-
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
-
-        StepVerifier.create(result)
-                .expectNext(publicKeyModel)
-                .verifyComplete();
-    }
-
-    @Test
-    void handlePublicKeyEventKeyNotFound() {
-        MessageHeaders messageHeaders = new MessageHeaders(null);
-        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
-        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-
-        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.error(new RuntimeException("Key not found")));
-
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals("Key not found"))
-                .verify();
-    }
-
-    @Test
-    void handlePublicKeyEventKeyNotExpired() {
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setExpireAt(Instant.now().plusSeconds(60));
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setCxId("cxId");
-        publicKeyModel.setStatus("PENDING");
-
-        MessageHeaders messageHeaders = new MessageHeaders(null);
-        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
-        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-
-        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
-        when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
-
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
-
-        StepVerifier.create(result)
-                .verifyComplete();
-    }
-
-    @Test
-    void handlePublicKeyEventKeyAlreadyDeleted() {
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setExpireAt(Instant.now().minusSeconds(60));
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setCxId("cxId");
-        publicKeyModel.setStatus("DELETED");
-
-        MessageHeaders messageHeaders = new MessageHeaders(null);
-        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("DELETE").build();
-        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-
-        when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
-
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
-
-        StepVerifier.create(result)
-                .verifyComplete();
-
-        verify(publicKeyRepository, never()).updateItemStatus(any(), anyList());
-    }
-
-    @Test
-    void handlePublicKeyEventWithoutKidAndCxId() {
-        MessageHeaders messageHeaders = new MessageHeaders(null);
-        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("").cxId("").action("DELETE").build();
-        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals(TTL_PAYLOAD_INVALID_KID_CXID))
-                .verify();
-    }
-
-    @Test
-    void handlePublicKeyEventInvalidAction() {
-        MessageHeaders messageHeaders = new MessageHeaders(null);
-        PublicKeyEvent.Payload payload = PublicKeyEvent.Payload.builder().kid("kid").cxId("cxId").action("RESUME").build();
-        Message<PublicKeyEvent.Payload> message = MessageBuilder.createMessage(payload, messageHeaders);
-
-        Mono<PublicKeyModel> result = publicKeyService.handlePublicKeyTtlEvent(message);
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
-                        throwable.getMessage().equals(TTL_PAYLOAD_INVALID_ACTION))
                 .verify();
     }
 

@@ -2,10 +2,6 @@ package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import org.junit.jupiter.api.Assertions;
