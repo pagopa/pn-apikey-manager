@@ -290,6 +290,11 @@ Parameters:
       - true
       - false
 
+  EnableJwksCreation:
+    Type: String
+    Default: false
+    Description: Enable JWKS creation
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -331,6 +336,7 @@ Resources:
         ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_PURPOSES=${AttributeResolversCfgs1Purposes}'
         ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_NAME=${AttributeResolversCfgs1Name}'
         ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
+        ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds

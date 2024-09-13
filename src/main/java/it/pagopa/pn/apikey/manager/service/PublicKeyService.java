@@ -1,19 +1,12 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyPageable;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyRequestDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyResponseDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto;
-import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.CheckExceptionUtils;
 import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
@@ -36,16 +29,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
-import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto.ACTIVE;
-import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto.ROTATED;
-import static it.pagopa.pn.apikey.manager.utils.PublicKeyUtils.createJWKFromData;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.ACCESS_DENIED;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto.ACTIVE;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto.ROTATED;
+import static it.pagopa.pn.apikey.manager.utils.PublicKeyUtils.createJWKFromData;
 
 @Slf4j
 @Service
@@ -270,6 +260,11 @@ public class PublicKeyService {
     }
 
     public Mono<Void> handlePublicKeyEvent(String cxId) {
+        // Feature flag
+        if(Boolean.FALSE.equals(pnApikeyManagerConfig.getEnableJwksCreation())) {
+            return Mono.empty();
+        }
+
         return publicKeyRepository.findByCxIdAndStatus(cxId, null)
                 .filter(publicKeyModel -> ACTIVE.getValue().equals(publicKeyModel.getStatus()) || ROTATED.getValue().equals(publicKeyModel.getStatus()))
                 .map(publicKeyModel -> createJWKFromData(publicKeyModel.getPublicKey(), publicKeyModel.getExponent(), publicKeyModel.getKid(), publicKeyModel.getAlgorithm()))

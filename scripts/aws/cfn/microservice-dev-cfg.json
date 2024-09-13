@@ -5,6 +5,7 @@
     "MaxTasksNumber": "3",
     "AutoscalingThreshold": "3500",
     "EnhancedWebSecurityEnabled": "true",
-    "JwtIssuersManagerLambdaName": "pn-jwtIssuersManager"
+    "JwtIssuersManagerLambdaName": "pn-jwtIssuersManager",
+    "EnableJwksCreation": "true"
   }
 }

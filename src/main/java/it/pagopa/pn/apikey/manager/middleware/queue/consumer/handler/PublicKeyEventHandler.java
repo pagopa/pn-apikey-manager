@@ -32,7 +32,7 @@ public class PublicKeyEventHandler {
 
             Mono<Void> handledMessage = publicKeyService.handlePublicKeyEvent(response.getCxId())
                     .doOnSuccess(unused -> {
-                        MDC.remove(MDCUtils.MDC_PN_CTX_SAFESTORAGE_FILEKEY);
+                        MDC.remove(MDCUtils.MDC_CX_ID_KEY);
                         log.logEndingProcess(HANDLER_REQUEST);
                     })
                     .doOnError(throwable -> {

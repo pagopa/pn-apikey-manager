@@ -26,6 +26,7 @@ public class PnApikeyManagerConfig {
     private Dao dao;
 
     private List<AttributeResolver> attributeResolversCfgs;
+    private Boolean enableJwksCreation;
 
     @Data
     public static class Sqs {

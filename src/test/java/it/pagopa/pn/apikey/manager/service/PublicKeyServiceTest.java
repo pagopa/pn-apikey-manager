@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
@@ -46,14 +47,16 @@ class PublicKeyServiceTest {
     private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
     private LambdaService lambdaService;
+    @MockBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
     @BeforeEach
     void setUp() {
         publicKeyRepository = Mockito.mock(PublicKeyRepository.class);
         lambdaService = Mockito.mock(LambdaService.class);
-        pnApikeyManagerConfig = new PnApikeyManagerConfig();
-        pnApikeyManagerConfig.setLambdaName("lambdaName");
+        pnApikeyManagerConfig = mock(PnApikeyManagerConfig.class);
+        when(pnApikeyManagerConfig.getLambdaName()).thenReturn("lambdaName");
+        when(pnApikeyManagerConfig.getEnableJwksCreation()).thenReturn(true);
         validator = new PublicKeyValidator(publicKeyRepository);
         publicKeyService = new PublicKeyService(publicKeyRepository, lambdaService, auditLogBuilder, validator, pnApikeyManagerConfig, new PublicKeyConverter());
     }
@@ -534,7 +537,6 @@ class PublicKeyServiceTest {
     void handlePublicKeyEvent_shouldInvokeLambda_whenActiveOrRotatedPublicKeyExists() {
         // Arrange
         String cxId = "testCxId";
-        String functionName = "functionName";
 
         PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
         mockPublicKeyModel.setStatus("ACTIVE");
@@ -560,7 +562,6 @@ class PublicKeyServiceTest {
     void handlePublicKeyEvent_shouldHandleError_whenLambdaInvocationFails() {
         // Arrange
         String cxId = "testCxId";
-        String functionName = "functionName";
 
         PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
         mockPublicKeyModel.setStatus("ACTIVE");
@@ -581,5 +582,23 @@ class PublicKeyServiceTest {
 
         verify(publicKeyRepository, times(1)).findByCxIdAndStatus(cxId, null);
         verify(lambdaService, times(1)).invokeLambda(any(),any(), any());
+    }
+
+    @Test
+    void handlePublicKeyEvent_shouldSkipExecution_ifFeatureFlagIsDisabled() {
+        // Arrange
+        String cxId = "testCxId";
+        when(pnApikeyManagerConfig.getEnableJwksCreation()).thenReturn(false);
+
+        // Act
+        Mono<Void> result = publicKeyService.handlePublicKeyEvent(cxId);
+
+        // Assert
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+
+        verify(publicKeyRepository, times(0)).findByCxIdAndStatus(cxId, null);
+        verify(lambdaService, times(0)).invokeLambda(any(),any(), any());
     }
 }
