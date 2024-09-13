@@ -458,8 +458,8 @@ components:
         algorithm:
           description: Algoritmo di crittografia usato per la public key
           type: string
-          enum: ['RSA-2048']
-          default: 'RSA-2048'
+          enum: ['RS256']
+          default: 'RS256'
     PublicKeyResponse:
       title: Response censimento public key
       description: >-
