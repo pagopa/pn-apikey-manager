@@ -3,6 +3,7 @@ package it.pagopa.pn.apikey.manager.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +45,10 @@ class LambdaServiceTest {
         // Arrange
         String functionName = "testFunction";
         String cxId = "testCxId";
-        List<Map<String, Object>> jwksBody = new ArrayList<>();
+        Map<String, Object> jwk1 = PublicKeyUtils.createJWKFromData("modulus1", "exponent1", "kid1", "RS256");
+        Map<String, Object> jwk2 = PublicKeyUtils.createJWKFromData("modulus2", "exponent2", "kid2", "RS256");
+
+        List<Map<String, Object>> jwksBody = List.of(jwk1, jwk2);
         String actionType = "UPSERT";
 
         Map<String, Object> payload = new HashMap<>();

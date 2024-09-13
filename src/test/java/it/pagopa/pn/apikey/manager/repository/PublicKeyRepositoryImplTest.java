@@ -101,14 +101,24 @@ class PublicKeyRepositoryImplTest {
     }
 
     @Test
-    void findByCxIdAndStatus_withValidCxIdAndNullStatus_returnsFluxOfPublicKeyModels() {
+    void findByCxIdAndStatus_withValidCxIdAndNullStatus_returnsFluxOfPublicKeyModels_ActiveAndRotated() {
         DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
         when(table.index(any())).thenReturn(index);
         when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
 
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        PublicKeyModel mockPublicKeyModelActive = new PublicKeyModel();
+        mockPublicKeyModelActive.setStatus("ACTIVE");
+        mockPublicKeyModelActive.setPublicKey("testPublicKey");
+        mockPublicKeyModelActive.setKid("testKid");
+
+        PublicKeyModel mockPublicKeyModelRotated = new PublicKeyModel();
+        mockPublicKeyModelRotated.setStatus("ROTATED");
+        mockPublicKeyModelRotated.setPublicKey("testPublicKey");
+        mockPublicKeyModelRotated.setKid("testKid");
         List<PublicKeyModel> publicKeyModelList = new ArrayList<>();
-        publicKeyModelList.add(publicKeyModel);
+        publicKeyModelList.add(mockPublicKeyModelActive);
+        publicKeyModelList.add(mockPublicKeyModelRotated);
+
 
         StepVerifier.create(repository.findByCxIdAndStatus("cxId", null))
                 .expectNextCount(0);
