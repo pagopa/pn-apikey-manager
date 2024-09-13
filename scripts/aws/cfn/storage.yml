@@ -217,7 +217,7 @@ Resources:
           Value: pnStorage
         - Key: pnMicroservice
           Value: !Sub '${ProjectName}-paAggregations'
-
+      
   ApikeyManagerInternalQueue:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain

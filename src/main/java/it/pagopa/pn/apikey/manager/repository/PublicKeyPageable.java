@@ -12,11 +12,11 @@ public class PublicKeyPageable implements Pageable {
 
     private Integer limit;
     private String lastEvaluatedKey;
-    private String lastEvaluatedCreatedAt;
+    private String createdAt;
 
     @Override
     public boolean isPage() {
-        return StringUtils.hasText(lastEvaluatedKey) && StringUtils.hasText(lastEvaluatedCreatedAt);
+        return StringUtils.hasText(lastEvaluatedKey) && StringUtils.hasText(createdAt);
     }
 
     @Override

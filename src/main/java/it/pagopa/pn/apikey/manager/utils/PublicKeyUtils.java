@@ -1,5 +1,7 @@
 package it.pagopa.pn.apikey.manager.utils;
 
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;

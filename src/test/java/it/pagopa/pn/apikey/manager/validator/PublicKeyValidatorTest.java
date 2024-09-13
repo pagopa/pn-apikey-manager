@@ -1,4 +1,3 @@
-
 package it.pagopa.pn.apikey.manager.validator;
 
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
@@ -11,6 +10,8 @@ import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
@@ -245,5 +246,40 @@ class PublicKeyValidatorTest {
         StepVerifier.create(validator.checkIfItemIsNotAlreadyDeleted(publicKeyModel))
                 .expectNext(publicKeyModel)
                 .verifyComplete();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "ACTIVE, true",
+        "BLOCKED, false",
+        "DELETED, false"
+    })
+    void validatePublicKeyRotation_handlesVariousStatuses(String status, boolean shouldPass) {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setPublicKey("oldPublicKey");
+        publicKeyModel.setStatus(status);
+
+        if (shouldPass) {
+            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel, "newPublicKey"))
+                    .expectNext(publicKeyModel)
+                    .verifyComplete();
+        } else {
+            StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel, "newPublicKey"))
+                    .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                            ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
+                    .verify();
+        }
+    }
+
+    @Test
+    void validatePublicKeyRotation_withSamePublicKey_throwsApiKeyManagerException() {
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        publicKeyModel.setPublicKey("oldPublicKey");
+        publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
+
+        StepVerifier.create(validator.validatePublicKeyRotation(publicKeyModel, "oldPublicKey"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_USED))
+                .verify();
     }
 }
