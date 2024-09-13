@@ -16,6 +16,8 @@ import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.ArrayList;
@@ -95,6 +97,20 @@ class PublicKeyRepositoryImplTest {
         publicKeyModelList.add(publicKeyModel);
 
         StepVerifier.create(repository.findByCxIdAndStatus("cxId", "ACTIVE"))
+                .expectNextCount(0);
+    }
+
+    @Test
+    void findByCxIdAndStatus_withValidCxIdAndNullStatus_returnsFluxOfPublicKeyModels() {
+        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
+        when(table.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        PublicKeyModel publicKeyModel = new PublicKeyModel();
+        List<PublicKeyModel> publicKeyModelList = new ArrayList<>();
+        publicKeyModelList.add(publicKeyModel);
+
+        StepVerifier.create(repository.findByCxIdAndStatus("cxId", null))
                 .expectNextCount(0);
     }
 

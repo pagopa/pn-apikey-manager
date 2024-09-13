@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
@@ -44,12 +46,19 @@ class PublicKeyServiceTest {
     private PublicKeyRepository publicKeyRepository;
     private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+    private LambdaService lambdaService;
+    @MockBean
+    private PnApikeyManagerConfig pnApikeyManagerConfig;
 
     @BeforeEach
     void setUp() {
         publicKeyRepository = Mockito.mock(PublicKeyRepository.class);
+        lambdaService = Mockito.mock(LambdaService.class);
+        pnApikeyManagerConfig = mock(PnApikeyManagerConfig.class);
+        when(pnApikeyManagerConfig.getLambdaName()).thenReturn("lambdaName");
+        when(pnApikeyManagerConfig.getEnableJwksCreation()).thenReturn(true);
         validator = new PublicKeyValidator(publicKeyRepository);
-        publicKeyService = new PublicKeyService(publicKeyRepository, auditLogBuilder, validator, new PublicKeyConverter());
+        publicKeyService = new PublicKeyService(publicKeyRepository, lambdaService, auditLogBuilder, validator, pnApikeyManagerConfig, new PublicKeyConverter());
     }
 
     @Test
@@ -522,5 +531,74 @@ class PublicKeyServiceTest {
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
                 .verify();
+    }
+
+    @Test
+    void handlePublicKeyEvent_shouldInvokeLambda_whenActiveOrRotatedPublicKeyExists() {
+        // Arrange
+        String cxId = "testCxId";
+
+        PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
+        mockPublicKeyModel.setStatus("ACTIVE");
+        mockPublicKeyModel.setPublicKey("testPublicKey");
+        mockPublicKeyModel.setKid("testKid");
+
+        when(publicKeyRepository.findByCxIdAndStatus(cxId, null)).thenReturn(Flux.just(mockPublicKeyModel));
+        when(lambdaService.invokeLambda(any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        // Act
+        Mono<Void> result = publicKeyService.handlePublicKeyEvent(cxId);
+
+        // Assert
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(publicKeyRepository, times(1)).findByCxIdAndStatus(cxId, null);
+        verify(lambdaService, times(1)).invokeLambda(any(), any(), any());
+    }
+
+    @Test
+    void handlePublicKeyEvent_shouldHandleError_whenLambdaInvocationFails() {
+        // Arrange
+        String cxId = "testCxId";
+
+        PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
+        mockPublicKeyModel.setStatus("ACTIVE");
+        mockPublicKeyModel.setPublicKey("testPublicKey");
+        mockPublicKeyModel.setKid("testKid");
+
+        when(publicKeyRepository.findByCxIdAndStatus(cxId, null)).thenReturn(Flux.just(mockPublicKeyModel));
+        when(lambdaService.invokeLambda(any(), any(), any()))
+                .thenReturn(Mono.error(new RuntimeException("Lambda invocation failed")));
+
+        // Act
+        Mono<Void> result = publicKeyService.handlePublicKeyEvent(cxId);
+
+        // Assert
+        StepVerifier.create(result)
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(publicKeyRepository, times(1)).findByCxIdAndStatus(cxId, null);
+        verify(lambdaService, times(1)).invokeLambda(any(),any(), any());
+    }
+
+    @Test
+    void handlePublicKeyEvent_shouldSkipExecution_ifFeatureFlagIsDisabled() {
+        // Arrange
+        String cxId = "testCxId";
+        when(pnApikeyManagerConfig.getEnableJwksCreation()).thenReturn(false);
+
+        // Act
+        Mono<Void> result = publicKeyService.handlePublicKeyEvent(cxId);
+
+        // Assert
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+
+        verify(publicKeyRepository, times(0)).findByCxIdAndStatus(cxId, null);
+        verify(lambdaService, times(0)).invokeLambda(any(),any(), any());
     }
 }

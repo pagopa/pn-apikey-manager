@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -32,6 +33,9 @@ import java.util.function.Predicate;
 
 import static it.pagopa.pn.apikey.manager.constant.ApiKeyConstant.ENABLE_OPERATION;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.ACCESS_DENIED;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto.ACTIVE;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.PublicKeyStatusDto.ROTATED;
+import static it.pagopa.pn.apikey.manager.utils.PublicKeyUtils.createJWKFromData;
 
 @Slf4j
 @Service
@@ -40,12 +44,13 @@ import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.
 public class PublicKeyService {
 
     private final PublicKeyRepository publicKeyRepository;
+    private final LambdaService lambdaService;
     private final PnAuditLogBuilder auditLogBuilder;
     private final PublicKeyValidator validator;
+    private final PnApikeyManagerConfig pnApikeyManagerConfig;
     private final PublicKeyConverter publicKeyConverter;
 
     private static final String AUTOMATIC_DELETE = "AUTOMATIC_DELETE";
-
 
     public Mono<String> deletePublicKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String kid, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
         return PublicKeyUtils.validaAccessoOnlyAdmin(xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
@@ -252,5 +257,21 @@ public class PublicKeyService {
         publicKeysIssuerResponseDto.setIsPresent(isPresent);
         publicKeysIssuerResponseDto.setIssuerStatus(status);
         return publicKeysIssuerResponseDto;
+    }
+
+    public Mono<Void> handlePublicKeyEvent(String cxId) {
+        // Feature flag
+        if(Boolean.FALSE.equals(pnApikeyManagerConfig.getEnableJwksCreation())) {
+            return Mono.empty();
+        }
+
+        return publicKeyRepository.findByCxIdAndStatus(cxId, null)
+                .filter(publicKeyModel -> ACTIVE.getValue().equals(publicKeyModel.getStatus()) || ROTATED.getValue().equals(publicKeyModel.getStatus()))
+                .map(publicKeyModel -> createJWKFromData(publicKeyModel.getPublicKey(), publicKeyModel.getExponent(), publicKeyModel.getKid(), publicKeyModel.getAlgorithm()))
+                .collectList()
+                .switchIfEmpty(Mono.just(new ArrayList<>()))
+                .flatMap(jwks -> lambdaService.invokeLambda(pnApikeyManagerConfig.getLambdaName(), cxId, jwks))
+                .then()
+                .doOnError(e -> log.error("Error handling public key event", e));
     }
 }

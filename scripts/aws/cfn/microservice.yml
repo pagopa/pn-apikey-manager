@@ -140,6 +140,39 @@ Parameters:
     Default: 30
     Description: records batch size of apikey manager pipe (DynamoDB to SQS)
 
+  JwksCacheMaxDurationSec:
+    Type: String
+    Description: ''
+
+  JwksCacheRenewSec:
+    Type: String
+    Description: ''
+
+  AttributeResolversCfgs0KeyAttributeName:
+    Type: String
+    Default: 'virtual_key'
+    Description: 'Key attribute name for the first attribute resolver configuration'
+
+  AttributeResolversCfgs0Name:
+    Type: String
+    Default: 'DATABASE'
+    Description: 'Name for the first attribute resolver configuration'
+
+  AttributeResolversCfgs1Purposes:
+    Type: CommaDelimitedList
+    Default: 'REFINEMENT,BASE,MANDATE'
+    Description: 'List of purposes for the second attribute resolver configuration'
+
+  AttributeResolversCfgs1Name:
+    Type: String
+    Default: 'PGCUSTOM'
+    Description: 'Name for the second attribute resolver configuration'
+
+  JwtIssuersManagerLambdaName:
+    Type: String
+    Default: 'pn-jwtIssuersManager'
+    Description: 'Name of the lambda function that manages the JWT issuers'
+
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
@@ -257,6 +290,11 @@ Parameters:
       - true
       - false
 
+  EnableJwksCreation:
+    Type: String
+    Default: false
+    Description: Enable JWKS creation
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -291,7 +329,14 @@ Resources:
         ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
         ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
         ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
-
+        ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
+        ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXRENEWSEC=${JwksCacheRenewSec}'
+        ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_KEY_ATTRIBUTE_NAME=${AttributeResolversCfgs0KeyAttributeName}'
+        ContainerEnvEntry13: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_NAME=${AttributeResolversCfgs0Name}'
+        ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_PURPOSES=${AttributeResolversCfgs1Purposes}'
+        ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_NAME=${AttributeResolversCfgs1Name}'
+        ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
+        ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds

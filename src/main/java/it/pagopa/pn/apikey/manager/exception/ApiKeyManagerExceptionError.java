@@ -27,5 +27,6 @@ public class ApiKeyManagerExceptionError {
     public static final String PUBLIC_KEY_NOT_EXPIRED = "PublicKey with kid [%s] and cxid [%s], is not expired. Event will ignore";
     public static final String PUBLIC_KEY_ALREADY_DELETED = "PublicKey with kid [%s] and cxid [%s], is already DELETED. Event will ignore";
     public static final String PUBLIC_KEY_ALREADY_USED = "Public key already used.";
-
+    public static final String FAILED_TO_CREATEJWKS_JSON = "Failed to create JWKS JSON";
+    public static final String FAILED_TO_INVOKE_LAMBDA_FUNCTION = "Failed to invoke Lambda function";
 }

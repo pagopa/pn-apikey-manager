@@ -2,6 +2,10 @@ package it.pagopa.pn.apikey.manager.utils;
 
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
+import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import lombok.AccessLevel;
 import lombok.CustomLog;
@@ -10,8 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.FAILED_TO_CREATEJWKS_JSON;
 
 @CustomLog
 @NoArgsConstructor(access = AccessLevel.NONE)
@@ -38,5 +46,35 @@ public class PublicKeyUtils {
         log.debug("access granted for {}, role: {}, groups: {}", pnCxType, pnCxRole, pnCxGroups);
         log.logCheckingOutcome(process, true);
         return Mono.empty();
+    }
+
+    public static Map<String, Object> createJWKFromData(String n, String e, String kid, String alg) {
+        // Create a JWK Map
+        Map<String, Object> jwk = new HashMap<>();
+        jwk.put("kty", "RSA");   // Always RSA
+        jwk.put("n", n);         // Base64Url encoded modulus (from DB)
+        jwk.put("e", e);         // Base64Url encoded exponent (from DB)
+        jwk.put("kid", kid);     // Key ID (from DB)
+        jwk.put("alg", alg);     // Algorithm (from DB, e.g., "RS256")
+        jwk.put("use", "sig");   // Key use is always "sig" for signature
+
+        // Convert the JWK Map to JSON
+        return jwk;
+    }
+
+    public static String createJWKSJson(List<Map<String, Object>> jwkMaps) {
+        // Create a JWKS Map with "keys" field containing the list of JWKs
+        Map<String, List<Map<String, Object>>> jwks = new HashMap<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        jwks.put("keys", jwkMaps);
+        String jwksJson;
+
+        try {
+            jwksJson = objectMapper.writeValueAsString(jwks);
+        } catch (JsonProcessingException e) {
+            throw new ApiKeyManagerException(FAILED_TO_CREATEJWKS_JSON, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return jwksJson;
     }
 }
