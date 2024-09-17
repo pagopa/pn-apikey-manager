@@ -109,7 +109,7 @@ public class ManageApiKeyService {
 
                     logEvent.log();
 
-                    return apiKeyRepository.findByCxId(request.getxPagopaPnCxId())
+                    return apiKeyRepository.findByCxId(request.getxPagopaPnCxId(), ApiKeyModel.Scope.APIKEY.name())
                             .map(apiKeyModels -> {
                                 if (apiKeyModels.isEmpty()) {
                                     throw new ApiKeyManagerException("ApiKey does not exist", HttpStatus.NOT_FOUND);
@@ -199,6 +199,7 @@ public class ManageApiKeyService {
         }
         ApiKeyPageable pageable = toApiKeyPageable(limit, lastEvaluatedKey, lastEvaluatedLastUpdate);
         return apiKeyRepository.getAllWithFilter(xPagopaPnCxId, xPagopaPnCxGroups, pageable)
+                .doOnNext(p -> log.info("Found {} api keys", p.items().size()))
                 .zipWith(externalRegistriesClient.getPaGroupsById(xPagopaPnCxId, null))
                 .map(this::decodeGroupIdsToGroupNames)
                 .map(apiKeyModelPage -> apiKeyConverter.convertResponseToDto(apiKeyModelPage, showVirtualKey))

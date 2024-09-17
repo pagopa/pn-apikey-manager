@@ -18,15 +18,23 @@ import java.util.Map;
 @Import({SharedAutoConfiguration.class})
 public class PnApikeyManagerConfig {
 
+    private String userAttributesBaseUrl;
+    private String externalRegistriesBaseUrl;
+    private String clientDatavaultBasepath;
+    private Dao dao;
+
     private int jwksCacheMaxDurationSec;
     private int jwksCacheRenewSec;
     private String lambdaName;
-
     private Sqs sqs;
-    private Dao dao;
 
     private List<AttributeResolver> attributeResolversCfgs;
     private Boolean enableJwksCreation;
+
+    @Data
+    public static class Dao {
+        private String publicKeyTableName;
+    }
 
     @Data
     public static class Sqs {

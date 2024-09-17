@@ -14,6 +14,13 @@ public class ApiKeyManagerExceptionError {
 
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
     public static final String ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED = "ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED";
+    public static final String APIKEY_FORBIDDEN_OPERATION = "Given virtual key doesn't belong to user";
+    public static final String SAME_STATUS_APIKEY_ALREADY_EXISTS = "User has another Virtual key with status %s";
+
+    public static final String VIRTUALKEY_INVALID_STATUS = "Can not change Virtual key status from %s to %s";
+
+    public static final String TOS_CONSENT_NOT_FOUND = "TOS consent for the B2B api usage not accepted.";
+    public static final String VALID_PUBLIC_KEY_NOT_FOUND = "Valid public key not found, there must be at least a public key with status ACTIVE, ROTATED or BLOCKED.";
 
     public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
     public static final String PUBLIC_KEY_NAME_MANDATORY = "Name is mandatory";
