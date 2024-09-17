@@ -142,11 +142,11 @@ Parameters:
 
   JwksCacheMaxDurationSec:
     Type: String
-    Description: ''
+    Description: 'Duration time of the JWKS content cache. After this time, the renewal process begins.'
 
   JwksCacheRenewSec:
     Type: String
-    Description: ''
+    Description: 'Maximum usage time of a cache line. After this time, the line must be deleted even if it has not been renewed.'
 
   AttributeResolversCfgs0KeyAttributeName:
     Type: String
@@ -330,7 +330,7 @@ Resources:
         ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
         ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
         ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
-        ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXRENEWSEC=${JwksCacheRenewSec}'
+        ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_JWKSCACHERENEWSEC=${JwksCacheRenewSec}'
         ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_KEY_ATTRIBUTE_NAME=${AttributeResolversCfgs0KeyAttributeName}'
         ContainerEnvEntry13: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_NAME=${AttributeResolversCfgs0Name}'
         ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_PURPOSES=${AttributeResolversCfgs1Purposes}'

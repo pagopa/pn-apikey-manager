@@ -6,6 +6,8 @@
     "AutoscalingThreshold": "3500",
     "EnhancedWebSecurityEnabled": "true",
     "JwtIssuersManagerLambdaName": "pn-jwtIssuersManager",
-    "EnableJwksCreation": "true"
+    "EnableJwksCreation": "true",
+    "JwksCacheMaxDurationSec":"315576000",
+    "JwksCacheRenewSec": "315576000"
   }
 }
