@@ -91,6 +91,10 @@ Parameters:
     Type: String
     Description: 'Arn of dynamodb table containing VirtualKey information'
 
+  PublicKeyTableArn:
+    Type: String
+    Description: 'Arn of dynamodb table containing Public Key information'
+
   PaAggregationsTableName:
     Type: String
     Description: 'Name of dynamodb table containing aggregations'
@@ -103,9 +107,71 @@ Parameters:
     Type: String
     Description: 'Name of dynamodb table containing apikey'
 
+  PublicKeyTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing public keys'
+
+  PublicKeyTableStreamArn:
+    Type: String
+    Description: 'Arn of dynamodb table stream containing Public Key information'
+
   FlagPdnd:
     Type: String
     Description: 'Flag che definisce se la PA si deve integrare necessariamente con PDND Interoperabilità o meno'
+
+  ApikeyManagerInternalQueueName:
+    Type: String
+    Description: 'Name of Internal queue'
+
+  ApikeyManagerInternalQueueARN:
+    Type: String
+    Description: 'ARN for ApikeyManagerInternalQueue'
+
+  ApikeyManagerInternalQueueDLQName:
+    Type: String
+    Description: 'Name of Internal queue DLQ'
+
+  ApikeyManagerInternalQueueDLQARN:
+    Type: String
+    Description: 'ARN for ApikeyManagerInternalQueue DLQ'
+
+  ApiKeyManagerPipeBatchSize:
+    Type: Number
+    Default: 30
+    Description: records batch size of apikey manager pipe (DynamoDB to SQS)
+
+  JwksCacheMaxDurationSec:
+    Type: String
+    Description: ''
+
+  JwksCacheRenewSec:
+    Type: String
+    Description: ''
+
+  AttributeResolversCfgs0KeyAttributeName:
+    Type: String
+    Default: 'virtual_key'
+    Description: 'Key attribute name for the first attribute resolver configuration'
+
+  AttributeResolversCfgs0Name:
+    Type: String
+    Default: 'DATABASE'
+    Description: 'Name for the first attribute resolver configuration'
+
+  AttributeResolversCfgs1Purposes:
+    Type: CommaDelimitedList
+    Default: 'REFINEMENT,BASE,MANDATE'
+    Description: 'List of purposes for the second attribute resolver configuration'
+
+  AttributeResolversCfgs1Name:
+    Type: String
+    Default: 'PGCUSTOM'
+    Description: 'Name for the second attribute resolver configuration'
+
+  JwtIssuersManagerLambdaName:
+    Type: String
+    Default: 'pn-jwtIssuersManager'
+    Description: 'Name of the lambda function that manages the JWT issuers'
 
   # OpenApi Bucket params
   MicroserviceBucketName:
@@ -224,6 +290,11 @@ Parameters:
       - true
       - false
 
+  EnableJwksCreation:
+    Type: String
+    Default: false
+    Description: Enable JWKS creation
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -255,9 +326,20 @@ Resources:
         ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
-        ContainerEnvEntry7: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'
-        ContainerEnvEntry8: !Sub 'PN_APIKEY_USERATTRIBUTESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry9: !Sub 'PN_APIKEY_EXTERNALREGISTRIESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
+        ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
+        ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXRENEWSEC=${JwksCacheRenewSec}'
+        ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_KEY_ATTRIBUTE_NAME=${AttributeResolversCfgs0KeyAttributeName}'
+        ContainerEnvEntry13: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_NAME=${AttributeResolversCfgs0Name}'
+        ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_PURPOSES=${AttributeResolversCfgs1Purposes}'
+        ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_NAME=${AttributeResolversCfgs1Name}'
+        ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
+        ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
+        ContainerEnvEntry18: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'
+        ContainerEnvEntry19: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry20: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds
@@ -268,6 +350,81 @@ Resources:
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
+
+  PgPublicKeyTtlPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
+      Name: !Sub ${ProjectName}-apikey-manager-publickey-ttl-pipe
+      Source: !Ref PublicKeyTableStreamArn
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: TRIM_HORIZON
+          BatchSize: !Ref ApiKeyManagerPipeBatchSize
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["DELETE"] }'
+      Target: !Ref ApikeyManagerInternalQueueARN
+      TargetParameters:
+        InputTemplate: |
+          {
+            "cxId": <$.dynamodb.Keys.cxId.S>,
+            "kid": <$.dynamodb.Keys.kid.S>,
+            "action": "DELETE"
+          }
+
+  PgPublicKeyPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PnApiKeyManagerPipeExecutionRole.Arn
+      Name: !Sub ${ProjectName}-apikey-manager-publickey-pipe
+      Source: !Ref PublicKeyTableStreamArn
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: TRIM_HORIZON
+          BatchSize: !Ref ApiKeyManagerPipeBatchSize
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["INSERT", "MODIFY"] }'
+      Target: !Ref ApikeyManagerInternalQueueARN
+      TargetParameters:
+        InputTemplate: |
+          {
+            "cxId": <$.dynamodb.Keys.cxId.S>,
+            "action": "JWKS"
+          }
+
+  PnApiKeyManagerPipeExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - pipes.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-source-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: !Ref PublicKeyTableArn
+        - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-target-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource: !Ref ApikeyManagerInternalQueueARN
 
   ApikeyManagerMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -307,15 +464,28 @@ Resources:
               - !Ref AggregatesTableArn
               - !Ref PaAggregationsTableArn
               - !Ref ApiKeyTableArn
+              - !Ref PublicKeyTableArn
               - !Sub '${AggregatesTableArn}/index/*'
               - !Sub '${PaAggregationsTableArn}/index/*'
               - !Sub '${ApiKeyTableArn}/index/*'
+              - !Sub '${PublicKeyTableArn}/index/*'
           - Effect: Allow
             Action:
               - kms:Encrypt
               - kms:Decrypt
             Resource:
               - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${ApiKeyTablesEncryptKeyId}
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
+            Resource:
+              - !Ref ApikeyManagerInternalQueueARN
+              - !Ref ApikeyManagerInternalQueueDLQARN
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
@@ -405,6 +575,7 @@ Resources:
           - - !Ref PaAggregationsTableName
             - !Ref AggregatesTableName
             - !Ref ApiKeyTableName
+            - !Ref PublicKeyTableName
         RestApiStageArns: !Join
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
@@ -413,6 +584,9 @@ Resources:
           - ','
           - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
+        QueueArns: !Join
+          - ','
+          - - !Ref ApikeyManagerInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
@@ -422,4 +596,4 @@ Resources:
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
         LogGroupsNames: !Join
           - ','
-          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'    
+          - - !Sub '/aws/ecs/${ProjectName}-apikey-manager'
