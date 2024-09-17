@@ -35,6 +35,9 @@ build/
 ### Ignore all jks
 **/*.jks
 
+### Node ###
+node_modules
+
 ### Maven ###
 target/
 pom.xml.tag
