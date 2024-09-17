@@ -20,7 +20,5 @@ public interface PublicKeyRepository {
 
     Mono<Integer> countWithFilters(String xPagopaPnCxId);
 
-    Mono<Page<PublicKeyModel>> getIssuer(String xPagopaPnCxId);
-
     Mono<Page<PublicKeyModel>> findByCxIdAndWithoutTtl(String xPagopaPnCxId);
 }

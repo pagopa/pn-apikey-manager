@@ -235,7 +235,7 @@ public class PublicKeyService {
             return Mono.error(new ApiKeyManagerException(ACCESS_DENIED, HttpStatus.FORBIDDEN));
         }
 
-        return publicKeyRepository.getIssuer(xPagopaPnCxId)
+        return publicKeyRepository.findByCxIdAndWithoutTtl(xPagopaPnCxId)
                 .map(Page::items)
                 .flatMap(publicKeyModels -> {
                     log.debug("publicKeyModels.size: {}", publicKeyModels.size());

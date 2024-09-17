@@ -42,11 +42,6 @@ public class PnApikeyManagerConfig {
     }
 
     @Data
-    public static class Dao {
-        private String publicKeyTableName;
-    }
-
-    @Data
     public static class AttributeResolver {
         private Map<String, Object> cfg;  // Still generic for other fields
         private String name;

@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
@@ -20,6 +18,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -179,8 +178,9 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
                 .expressionValues(values)
                 .build();
     }
+
     @Override
-    public Mono<Page<PublicKeyModel>> getIssuer(String xPagopaPnCxId) {
+    public Mono<Page<PublicKeyModel>> findByCxIdAndWithoutTtl(String xPagopaPnCxId) {
 
         QueryConditional queryConditional = QueryConditional
                 .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)

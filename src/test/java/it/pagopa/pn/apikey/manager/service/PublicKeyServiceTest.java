@@ -480,7 +480,7 @@ class PublicKeyServiceTest {
         publicKeyModels.add(publicKeyModel);
         Page<PublicKeyModel> page = Page.create(publicKeyModels);
 
-        when(publicKeyRepository.getIssuer(any())).thenReturn(Mono.just(page));
+        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(page));
         Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PG);
 
         StepVerifier.create(result)
@@ -503,7 +503,7 @@ class PublicKeyServiceTest {
         publicKeyModels.add(publicKeyModel);
         Page<PublicKeyModel> page = Page.create(publicKeyModels);
 
-        when(publicKeyRepository.getIssuer(any())).thenReturn(Mono.just(page));
+        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(page));
         Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PG);
 
         StepVerifier.create(result)
@@ -516,7 +516,7 @@ class PublicKeyServiceTest {
         List<PublicKeyModel> publicKeyModels = new ArrayList<>();
         Page<PublicKeyModel> page = Page.create(publicKeyModels);
 
-        when(publicKeyRepository.getIssuer(any())).thenReturn(Mono.just(page));
+        when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(page));
         Mono<PublicKeysIssuerResponseDto> result = publicKeyService.getIssuer("cxId", CxTypeAuthFleetDto.PG);
 
         StepVerifier.create(result)

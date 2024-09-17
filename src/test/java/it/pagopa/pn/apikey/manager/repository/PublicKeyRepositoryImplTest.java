@@ -12,27 +12,12 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.core.async.SdkPublisher;
-import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.reactivestreams.Subscriber;
-import reactor.test.StepVerifier;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncIndex;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -176,22 +161,7 @@ class PublicKeyRepositoryImplTest {
     }
 
     @Test
-    void getIssuerSuccessfully() {
-        DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
-        when(table.index(any())).thenReturn(index);
-        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
-
-        Mono<Page<PublicKeyModel>> result = repository.getIssuer("cxId");
-
-        StepVerifier.create(result)
-                .expectNext(Page.create(new ArrayList<>()));
-    }
-
-    @Test
     void findByCxIdAndWithoutTtl_withValidCxId_returnsMonoOfPage() {
-        PublicKeyModel publicKeyModel = new PublicKeyModel();
-        publicKeyModel.setKid("kid");
-        publicKeyModel.setCxId("cxId");
         DynamoDbAsyncIndex<PublicKeyModel> index = mock(DynamoDbAsyncIndex.class);
         when(table.index(any())).thenReturn(index);
         when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
