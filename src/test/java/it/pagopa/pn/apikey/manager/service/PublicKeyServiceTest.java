@@ -559,9 +559,42 @@ class PublicKeyServiceTest {
     }
 
     @Test
+    void handlePublicKeyEvent_shouldInvokeLambda_whenActiveAndRotatedPublicKeyExists() {
+        // Arrange
+        String cxId = "testCxId";
+        when(pnApikeyManagerConfig.getEnableJwksCreation()).thenReturn(true);
+
+        PublicKeyModel mockPublicKeyModelActive = new PublicKeyModel();
+        mockPublicKeyModelActive.setStatus("ACTIVE");
+        mockPublicKeyModelActive.setPublicKey("testPublicKey");
+        mockPublicKeyModelActive.setKid("testKid");
+
+        PublicKeyModel mockPublicKeyModelRotated = new PublicKeyModel();
+        mockPublicKeyModelRotated.setStatus("ROTATED");
+        mockPublicKeyModelRotated.setPublicKey("testPublicKey");
+        mockPublicKeyModelRotated.setKid("testKid");
+
+        when(publicKeyRepository.findByCxIdAndStatus(cxId, null)).thenReturn(Flux.just(mockPublicKeyModelActive, mockPublicKeyModelRotated));
+        when(lambdaService.invokeLambda(any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        // Act
+        Mono<Void> result = publicKeyService.handlePublicKeyEvent(cxId);
+
+        // Assert
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(publicKeyRepository, times(1)).findByCxIdAndStatus(cxId, null);
+        verify(lambdaService, times(1)).invokeLambda(any(), any(), any());
+    }
+
+
+    @Test
     void handlePublicKeyEvent_shouldHandleError_whenLambdaInvocationFails() {
         // Arrange
         String cxId = "testCxId";
+        when(pnApikeyManagerConfig.getEnableJwksCreation()).thenReturn(true);
 
         PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
         mockPublicKeyModel.setStatus("ACTIVE");
