@@ -137,7 +137,7 @@ Parameters:
 
   ApiKeyManagerPipeBatchSize:
     Type: Number
-    Default: 30
+    Default: 10
     Description: records batch size of apikey manager pipe (DynamoDB to SQS)
 
   JwksCacheMaxDurationSec:
