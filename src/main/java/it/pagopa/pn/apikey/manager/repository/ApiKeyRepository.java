@@ -16,7 +16,7 @@ public interface ApiKeyRepository {
 
     Mono<ApiKeyModel> findById(String id);
 
-    Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId);
+    Mono<List<ApiKeyModel>> findByCxId(String xPagopaPnCxId, String scope);
 
     Mono<Page<ApiKeyModel>> findByCxIdAndStatusRotateAndEnabled(String xPagopaPnCxId);
 
@@ -27,5 +27,9 @@ public interface ApiKeyRepository {
     Mono<ApiKeyModel> changePdnd(String id, boolean flagPdnd);
 
     Mono<Page<ApiKeyModel>> findByUidAndCxIdAndStatusAndScope(String uid, String cxId, String status, String scope);
+
+    Mono<Page<ApiKeyModel>> getVirtualKeys(String xPagopaPnUid, String xPagopaPnCxId, List<ApiKeyModel> cumulativeQueryResult, ApiKeyPageable pageable, boolean admin);
+
+    Mono<Integer> countWithFilters(String xPagopaPnUid, String xPagopaPnCxId, boolean admin);
 
 }

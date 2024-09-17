@@ -74,6 +74,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '500':
           description: Internal error
           content:
@@ -91,6 +97,8 @@ paths:
         - $ref: '#/components/parameters/uidAuthFleet'
         - $ref: '#/components/parameters/cxTypeAuthFleet'
         - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
       requestBody:
         content:
           application/json:
@@ -106,6 +114,18 @@ paths:
                 $ref: '#/components/schemas/ResponseNewVirtualKey'
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition
           content:
             application/problem+json:
               schema:
@@ -137,6 +157,12 @@ paths:
           description: OK
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -186,6 +212,12 @@ paths:
           description: OK
         '400':
           description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -280,29 +312,18 @@ components:
         user:
           type: object
           $ref: '#/components/schemas/UserDto'
-        groups:
-          type: array
-          description: Gruppi a cui appartiene la virtual key
-          items:
-            type: string
         status:
           $ref: '#/components/schemas/VirtualKeyStatus'
 
     UserDto:
       type: object
       properties:
-        firstName:
+        denomination:
+          description: Nome + cognome __oppure__ ragione sociale
           type: string
-          maxLength: 80
-          pattern: '^([\x20-\xFF]{1,80})$'
-        lastName:
-          type: string
-          maxLength: 80
-          pattern: '^([\x20-\xFF]{1,80})$'
         fiscalCode:
           type: string
           maxLength: 16
-          pattern: '^([A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1})|([0-9]{11})$'
 
 
     VirtualKeyStatus:
