@@ -331,10 +331,16 @@ Resources:
         ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
         ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
         ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_JWKSCACHERENEWSEC=${JwksCacheRenewSec}'
-        ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_KEY_ATTRIBUTE_NAME=${AttributeResolversCfgs0KeyAttributeName}'
-        ContainerEnvEntry13: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_0_NAME=${AttributeResolversCfgs0Name}'
-        ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_PURPOSES=${AttributeResolversCfgs1Purposes}'
-        ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_1_NAME=${AttributeResolversCfgs1Name}'
+        ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_DATABASE_CFG_KEYATTRIBUTENAME=${AttributeResolversCfgs0KeyAttributeName}'
+        ContainerEnvEntry13: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_DATABASE_NAME=${AttributeResolversCfgs0Name}'
+        ContainerEnvEntry14:
+          Fn::Sub:
+            - 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_PGCUSTOM_CFG_PURPOSES=${PurposesList}'
+            - PurposesList:
+                Fn::Join:
+                  - ","
+                  - !Ref AttributeResolversCfgs1Purposes
+        ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_PGCUSTOM_NAME=${AttributeResolversCfgs1Name}'
         ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
         ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
         ContainerEnvEntry18: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'

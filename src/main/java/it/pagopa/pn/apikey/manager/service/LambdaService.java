@@ -35,7 +35,7 @@ public class LambdaService {
         payload.put("actionType", actionType);
         payload.put("iss", cxId);
 
-        payload.put("attributeResolversCfgs", pnApikeyManagerConfig.getAttributeResolversCfgs());
+        payload.put("attributeResolversCfgs", pnApikeyManagerConfig.retrieveAttributeResolvers());
 
         payload.put("JWKSCacheMaxDurationSec", pnApikeyManagerConfig.getJwksCacheMaxDurationSec());
         payload.put("JWKSCacheRenewSec", pnApikeyManagerConfig.getJwksCacheRenewSec());

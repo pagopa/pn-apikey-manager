@@ -7,6 +7,10 @@ import it.pagopa.pn.apikey.manager.utils.PublicKeyUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -15,7 +19,6 @@ import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,10 +27,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
+@EnableConfigurationProperties(value = PnApikeyManagerConfig.class)
+@TestPropertySource("classpath:application-test.properties")
 class LambdaServiceTest {
 
+    @MockBean
     private LambdaAsyncClient lambdaAsyncClient;
 
+    @Autowired
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
     private LambdaService lambdaService;
@@ -35,13 +42,11 @@ class LambdaServiceTest {
 
     @BeforeEach
     void setUp() {
-        lambdaAsyncClient = mock(LambdaAsyncClient.class);
-        pnApikeyManagerConfig = mock(PnApikeyManagerConfig.class);
         lambdaService = new LambdaService(lambdaAsyncClient, new ObjectMapper(), pnApikeyManagerConfig);
     }
 
     @Test
-    void testInvokeLambda() throws Exception {
+    void testInvokeLambda()  {
         // Arrange
         String functionName = "testFunction";
         String cxId = "testCxId";
@@ -49,19 +54,6 @@ class LambdaServiceTest {
         Map<String, Object> jwk2 = PublicKeyUtils.createJWKFromData("modulus2", "exponent2", "kid2", "RS256");
 
         List<Map<String, Object>> jwksBody = List.of(jwk1, jwk2);
-        String actionType = "UPSERT";
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("actionType", actionType);
-        payload.put("iss", cxId);
-        payload.put("attributeResolversCfgs", null);
-        payload.put("JWKSCacheMaxDurationSec", 3600);
-        payload.put("JWKSCacheRenewSec", 300);
-        payload.put("JWKSBody", jwksBody);
-
-        when(pnApikeyManagerConfig.getAttributeResolversCfgs()).thenReturn(null);
-        when(pnApikeyManagerConfig.getJwksCacheMaxDurationSec()).thenReturn(3600);
-        when(pnApikeyManagerConfig.getJwksCacheRenewSec()).thenReturn(300);
 
         InvokeResponse invokeResponse = InvokeResponse.builder().statusCode(200).logResult("logResult").build();
         CompletableFuture<InvokeResponse> future = CompletableFuture.completedFuture(invokeResponse);
@@ -78,7 +70,7 @@ class LambdaServiceTest {
     }
 
     @Test
-    void testInvokeLambdaWithError() throws Exception {
+    void testInvokeLambdaWithError() {
         // Arrange
         String functionName = "testFunction";
         String cxId = "testCxId";
