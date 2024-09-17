@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
@@ -66,7 +66,7 @@ class ManageApiKeyServiceTest {
     private ApiKeyBoConverter apiKeyBoConverter;
 
     @MockBean
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
+    private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
     @MockBean
     private ExternalRegistriesClient externalRegistriesClient;
@@ -101,7 +101,7 @@ class ManageApiKeyServiceTest {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
         apiKeyModels.add(apiKeyModel);
 
-        when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
+        when(apiKeyRepository.findByCxId("cxId", ApiKeyModel.Scope.APIKEY.name())).thenReturn(Mono.just(apiKeyModels));
         when(apiKeyRepository.setNewVirtualKey(anyList(), any())).thenReturn(Mono.just(apiKeyModels));
 
         RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
@@ -116,7 +116,7 @@ class ManageApiKeyServiceTest {
     void testChangeVirtualKeyEmpty() {
         List<ApiKeyModel> apiKeyModels = new ArrayList<>();
 
-        when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
+        when(apiKeyRepository.findByCxId("cxId", ApiKeyModel.Scope.APIKEY.name())).thenReturn(Mono.just(apiKeyModels));
 
         RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
         requestBodyApiKeyPkDto.setVirtualKey("virtualKey");
@@ -135,7 +135,7 @@ class ManageApiKeyServiceTest {
         apiKeyModels.add(apiKeyModel);
         apiKeyModels.add(apiKeyModel1);
 
-        when(apiKeyRepository.findByCxId("cxId")).thenReturn(Mono.just(apiKeyModels));
+        when(apiKeyRepository.findByCxId("cxId", ApiKeyModel.Scope.APIKEY.name())).thenReturn(Mono.just(apiKeyModels));
 
         RequestBodyApiKeyPkDto requestBodyApiKeyPkDto = new RequestBodyApiKeyPkDto();
         requestBodyApiKeyPkDto.setVirtualKey("virtualKey");

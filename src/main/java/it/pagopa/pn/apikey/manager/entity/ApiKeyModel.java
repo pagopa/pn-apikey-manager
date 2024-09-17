@@ -48,12 +48,16 @@ public class ApiKeyModel {
     @Getter(onMethod = @__({@DynamoDbAttribute("statusHistory")}))
     private List<ApiKeyHistoryModel> statusHistory = new ArrayList<>();
 
-    @Getter(onMethod = @__({@DynamoDbAttribute("x-pagopa-pn-uid")}))
+    @Getter(onMethod = @__({
+            @DynamoDbAttribute(ApiKeyConstant.UID),
+            @DynamoDbSecondaryPartitionKey(indexNames = {ApiKeyConstant.GSI_UID_CXID}),
+    }))
     private String uid;
 
     @Getter(onMethod = @__({
             @DynamoDbAttribute(ApiKeyConstant.PA_ID),
-            @DynamoDbSecondaryPartitionKey(indexNames = ApiKeyConstant.GSI_PA)
+            @DynamoDbSecondaryPartitionKey(indexNames = {ApiKeyConstant.GSI_PA}),
+            @DynamoDbSecondarySortKey(indexNames = {ApiKeyConstant.GSI_UID_CXID})
     }))
     private String cxId;
 
@@ -68,6 +72,9 @@ public class ApiKeyModel {
 
     @Getter(onMethod = @__({@DynamoDbAttribute("pdnd")}))
     private boolean pdnd;
+
+    @Getter(onMethod = @__({@DynamoDbAttribute("scope")}))
+    private Scope scope;
 
     public ApiKeyModel(ApiKeyModel apiKeyModel) {
         id = apiKeyModel.id;
@@ -87,6 +94,11 @@ public class ApiKeyModel {
         cxGroup = apiKeyModel.cxGroup;
         correlationId = apiKeyModel.correlationId;
         pdnd = apiKeyModel.pdnd;
+        scope = apiKeyModel.scope;
     }
 
+    public enum Scope {
+        APIKEY,
+        CLIENTID
+    }
 }
