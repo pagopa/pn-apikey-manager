@@ -422,7 +422,7 @@ Resources:
                   - dynamodb:GetRecords
                   - dynamodb:GetShardIterator
                   - dynamodb:ListStreams
-                Resource: !Ref PublicKeyTableArn
+                Resource: !Ref PublicKeyTableStreamArn
         - PolicyName: !Sub ${ProjectName}-apikey-manager-publickey-target-policy
           PolicyDocument:
             Version: 2012-10-17
