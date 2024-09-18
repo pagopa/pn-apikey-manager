@@ -347,7 +347,7 @@ class PublicKeyServiceTest {
         newActivePublicKey.setCorrelationId("kid");
         newActivePublicKey.setPublicKey("newPublicKey");
         newActivePublicKey.setStatus("ACTIVE");
-        newActivePublicKey.setExpireAt(Instant.now());
+        newActivePublicKey.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
         newActivePublicKey.setIssuer("cxId");
 
         PublicKeyModel newActivePublicKeyCopy = new PublicKeyModel();
