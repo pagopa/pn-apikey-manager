@@ -1,0 +1,381 @@
+openapi: 3.0.3
+info:
+  termsOfService: https://termofservice.it
+  x-api-id: api-internal-web-pa
+  title: 'Piattaforma Notifiche: API per la Gestione delle Virtual Keys'
+  x-summary: 'Piattaforma Notifiche: API per la Gestione delle Virtual Keys'
+  version: '1.0.0'
+  description: >-
+    ## Abstract
+      API utilizzate dal portale di Piattaforma Notifiche dedicate alla gestione delle virtual keys.
+  contact:
+    email: pn@pagopa.it
+  license:
+    name: Licenza di PN
+    url: 'https://da-definire/'
+servers:
+  - url: https://webapi.pn.pagopa.it
+    description: Ambiente di produzione
+  - url: https://webapi.uat.pn.pagopa.it
+    description: Ambiente di test
+  - url: https://webapi.dev.pn.pagopa.it
+    description: Ambiente di sviluppo
+tags:
+  - name: VirtualKeys
+    description: >-
+      Gestione delle virtual keys per gli utenti e amministratori
+
+paths:
+  "/pg-self/virtual-keys":
+    get:
+      summary: Visualizzazione virtual keys
+      description: >-
+        Servizio di consultazione della lista delle virtual keys censite.
+      tags:
+        - VirtualKeys
+      operationId: getVirtualKeys
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet'
+        - $ref: '#/components/parameters/cxTypeAuthFleet'
+        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: lastKey
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lastUpdate
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: showVirtualKey
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualKeysResponse'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    post:
+      summary: Censimento virtual key
+      description: >-
+        Servizio di creazione di una nuova virtual key.
+      tags:
+        - VirtualKeys
+      operationId: createVirtualKey
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet'
+        - $ref: '#/components/parameters/cxTypeAuthFleet'
+        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestNewVirtualKey"
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseNewVirtualKey'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/pg-self/virtual-keys/{id}":
+    delete:
+      summary: Eliminazione virtual key
+      description: >-
+        Servizio di eliminazione di una virtual key.
+      tags:
+        - VirtualKeys
+      operationId: deleteVirtualKey
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet'
+        - $ref: '#/components/parameters/cxTypeAuthFleet'
+        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
+        - $ref: '#/components/parameters/pathVirtualKeyId'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  "/pg-self/virtual-keys/{id}/status":
+    put:
+      summary: Cambia lo stato della virtualKey
+      description: >-
+        servizio di cambio stato della virtualKey
+      tags:
+        - VirtualKeys
+      operationId: changeStatusVirtualKeys
+      parameters:
+        - $ref: '#/components/parameters/uidAuthFleet'
+        - $ref: '#/components/parameters/cxTypeAuthFleet'
+        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxGroupsAuthFleet'
+        - $ref: '#/components/parameters/cxRoleAuthFleet'
+        - $ref: '#/components/parameters/pathVirtualKeyId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestVirtualKeyStatus"
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Wrong state transition (i.e. enable an enabled key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+components:
+  parameters:
+    ############################################################################################
+    ###                     PARAMETRI DI AUTENTICAZIONE E AUTORIZZAZIONE                     ###
+    ############################################################################################
+    cxTypeAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
+    cxIdAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
+    uidAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/uidAuthFleet'
+    cxGroupsAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'
+    cxRoleAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxRoleAuthFleet'
+    ############################################################################################
+    ###                        PARAMETRI RICERCA VIRTUAL KEY                                     ###
+    ############################################################################################
+
+    pathVirtualKeyId:
+      description: >-
+        Identificativo univoco della virtual key.
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        x-field-extra-annotation: "@lombok.ToString.Exclude"
+
+  schemas:
+    Problem:
+      $ref: './remote-refs.yaml#/components/schemas/Problem'
+
+    VirtualKeysResponse:
+      title: Elenco di virtual keys
+      description: >-
+        Dto contenente la lista delle virtual keys associate ad un utente.
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VirtualKey'
+        lastKey:
+          type: string
+        lastUpdate:
+          type: string
+        total:
+          type: integer
+
+    VirtualKey:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Id della virtual key
+        name:
+          type: string
+          description: Nome della virtual key
+        value:
+          type: string
+          description: Valore della virtual key
+        lastUpdate:
+          type: string
+          description: Data ultima modifica
+          format: date-time
+        user:
+          type: object
+          $ref: '#/components/schemas/UserDto'
+        status:
+          $ref: '#/components/schemas/VirtualKeyStatus'
+
+    UserDto:
+      type: object
+      properties:
+        denomination:
+          description: Nome + cognome __oppure__ ragione sociale
+          type: string
+        fiscalCode:
+          type: string
+          maxLength: 16
+
+
+    VirtualKeyStatus:
+      description: Stato della virtual key
+      type: string
+      enum: [ 'CREATED', 'ENABLED', 'BLOCKED', 'ROTATED', 'DELETED' ]
+
+    RequestNewVirtualKey:
+      title: Request creazione virtual key
+      description: >-
+        Request per la creazione di una nuova virtual key
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          pattern: '^(?!\s).+(?<!\s)$'
+          description: nome della virtual key
+
+    ResponseNewVirtualKey:
+      title: Response creazione virtual key
+      description: >-
+        Response per la creazione di una nuova virtual key
+      type: object
+      required:
+        - id
+        - virtualKey
+      properties:
+        id:
+          type: string
+          description: id della virtual key appena generata
+          x-field-extra-annotation: "@lombok.ToString.Exclude"
+        virtualKey:
+          type: string
+          description: Valore della virtual key appena generata
+          x-field-extra-annotation: "@lombok.ToString.Exclude"
+
+
+    RequestVirtualKeyStatus:
+      title: Richiesta di cambio stato per una virtual key
+      description: >-
+        Richiesta di cambio stato per una virtual key
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Action per il cambio stato di una virtual key
+          enum:
+            - 'BLOCK'
+            - 'ENABLE'
+            - 'ROTATE'
+

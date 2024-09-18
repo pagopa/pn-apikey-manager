@@ -133,7 +133,7 @@ class ApiKeyRepositoryImplTest {
         List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
         apiKeyModelList.add(apiKeyModel);
 
-        StepVerifier.create(apiKeyRepository.findByCxId("cxId"))
+        StepVerifier.create(apiKeyRepository.findByCxId("cxId", ApiKeyModel.Scope.APIKEY.name()))
                 .expectNextCount(0);
 
     }
@@ -192,5 +192,54 @@ class ApiKeyRepositoryImplTest {
         when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
         when(dynamoDbAsyncTable.index(any())).thenReturn(index);
         StepVerifier.create(apiKeyRepository.countWithFilters("id",new ArrayList<>())).expectNext(0);
+    }
+
+    @Test
+    void findByUidAndCxIdAndStatusAndScope(){
+        when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient,"","");
+
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
+        apiKeyModelList.add(apiKeyModel);
+
+        StepVerifier.create(apiKeyRepository.findByUidAndCxIdAndStatusAndScope("uid","cxId", "ENABLED", ApiKeyModel.Scope.CLIENTID.name())).expectNextCount(0);
+    }
+
+    @Test
+    void getVirtualKeys() {
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        List<ApiKeyModel> apiKeyModelList = new ArrayList<>();
+        apiKeyModelList.add(apiKeyModel);
+
+        Mockito.when(dynamoDbAsyncTable.index("")).thenReturn(index);
+        Mockito.when(index.query((QueryEnhancedRequest) any())).thenReturn(Subscriber::onComplete);
+
+        ApiKeyPageable pageable = ApiKeyPageable.builder()
+                .limit(10)
+                .lastEvaluatedKey("id")
+                .lastEvaluatedLastUpdate("")
+                .build();
+        StepVerifier.create(apiKeyRepository.getVirtualKeys("uid","cxId", new ArrayList<>(), pageable, true))
+                .expectNext(Page.create(apiKeyModelList));
+    }
+
+    @Test
+    void testCountVirtualKeys(){
+        Mockito.when(dynamoDbEnhancedAsyncClient.table(any(), any())).thenReturn(dynamoDbAsyncTable);
+        ApiKeyRepositoryImpl apiKeyRepository = new ApiKeyRepositoryImpl(dynamoDbEnhancedAsyncClient, "", "");
+
+        SdkPublisher<Page<Object>> sdkPublisher = mock(SdkPublisher.class);
+        DynamoDbAsyncIndex<Object> index = mock(DynamoDbAsyncIndex.class);
+        when(index.query((QueryEnhancedRequest) any())).thenReturn(sdkPublisher);
+        when(dynamoDbAsyncTable.index(any())).thenReturn(index);
+        StepVerifier.create(apiKeyRepository.countWithFilters("uid", "cxId", true)).expectNext(0);
     }
 }

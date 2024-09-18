@@ -32,6 +32,11 @@
         <dependency>
             <groupId>it.pagopa.pn</groupId>
             <artifactId>pn-commons</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>it.pagopa.pn</groupId>
+            <artifactId>pn-model</artifactId>
             <version>2.3.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.swagger/swagger-annotations -->
@@ -48,6 +53,19 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.idealo.spring</groupId>
+            <artifactId>spring-cloud-stream-binder-sqs</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-context</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -109,6 +127,11 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb-enhanced</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+            <version>2.20.0</version> <!-- Make sure to check for the latest version -->
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
@@ -272,6 +295,162 @@
                                 <skipDefaultInterface>false</skipDefaultInterface>
                                 <useTags>true</useTags>
                             </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>apikey-manager-pg-internal</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-pg-internal.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/6.0.0/server</templateDirectory>
+                            <configOptions>
+                                <basePackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1
+                                </basePackage>
+                                <modelPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto
+                                </modelPackage>
+                                <apiPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api
+                                </apiPackage>
+                                <configPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.config
+                                </configPackage>
+                                <dateLibrary>java11</dateLibrary>
+                                <delegatePattern>true</delegatePattern>
+                                <interfaceOnly>true</interfaceOnly>
+                                <annotationLibrary>none</annotationLibrary>
+                                <documentationProvider>source</documentationProvider>
+                                <openApiNullable>false</openApiNullable>
+                                <reactive>true</reactive>
+                                <skipDefaultInterface>false</skipDefaultInterface>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>virtual-key-internal</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-virtualkey-internal.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/6.0.0/server</templateDirectory>
+                            <configOptions>
+                                <basePackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1
+                                </basePackage>
+                                <modelPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto
+                                </modelPackage>
+                                <apiPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.api
+                                </apiPackage>
+                                <configPackage>
+                                    it.pagopa.pn.apikey.manager.generated.openapi.server.v1.config
+                                </configPackage>
+                                <dateLibrary>java11</dateLibrary>
+                                <delegatePattern>true</delegatePattern>
+                                <interfaceOnly>true</interfaceOnly>
+                                <annotationLibrary>none</annotationLibrary>
+                                <documentationProvider>source</documentationProvider>
+                                <openApiNullable>false</openApiNullable>
+                                <reactive>true</reactive>
+                                <skipDefaultInterface>false</skipDefaultInterface>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-client-pn-user-attributes</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pn-user-attributes/ff9085160d042e8cc3fc902231a4e94cd4eac2af/docs/openapi/pn-user-consents-api-internal.yaml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>webclient</library>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <configOptions>
+                                <swaggerAnnotations>false</swaggerAnnotations>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                            <modelPackage>${project.groupId}.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto
+                            </modelPackage>
+                            <apiPackage>${project.groupId}.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.api
+                            </apiPackage>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-client-pn-external-registries</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/f482750e1d0163a6cb24f7d68ad20a57b4aaa426/docs/openapi/api-private-v1.yaml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>webclient</library>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <configOptions>
+                                <swaggerAnnotations>false</swaggerAnnotations>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                            <modelPackage>${project.groupId}.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto
+                            </modelPackage>
+                            <apiPackage>${project.groupId}.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.api
+                            </apiPackage>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-client-pn-data-vault</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/fd6899d33ff9c719aae872c0a3a4db51a921ace7/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>webclient</library>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <configOptions>
+                                <swaggerAnnotations>false</swaggerAnnotations>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                            <modelPackage>it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto
+                            </modelPackage>
+                            <apiPackage>it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.api
+                            </apiPackage>
+                            <modelNameSuffix>Dto</modelNameSuffix>
                         </configuration>
                     </execution>
                 </executions>

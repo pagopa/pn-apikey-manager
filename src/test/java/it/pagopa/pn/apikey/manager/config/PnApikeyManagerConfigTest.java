@@ -3,58 +3,53 @@ package it.pagopa.pn.apikey.manager.config;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ContextConfiguration(classes = PnApikeyManagerConfig.class)
 @ExtendWith(SpringExtension.class)
+@EnableConfigurationProperties(value = PnApikeyManagerConfig.class)
+@TestPropertySource("classpath:application-test.properties")
 class PnApikeyManagerConfigTest {
 
     @Autowired
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
-    /**
-     * Method under test: {@link PnApikeyManagerConfig#canEqual(Object)}
-     */
     @Test
-    void testCanEqual() {
-        assertFalse(pnApikeyManagerConfig.canEqual("Other"));
-        assertTrue(pnApikeyManagerConfig.canEqual(pnApikeyManagerConfig));
+    void testJwksCacheMaxDurationSec() {
+        assertNotNull(pnApikeyManagerConfig);
+        assertEquals(3600, pnApikeyManagerConfig.getJwksCacheMaxDurationSec());
     }
 
-    /**
-     * Methods under test:
-     *
-     * <ul>
-     *   <li>{@link PnApikeyManagerConfig#equals(Object)}
-     *   <li>{@link PnApikeyManagerConfig#hashCode()}
-     * </ul>
-     */
     @Test
-    void testEquals2() {
-        PnApikeyManagerConfig pnApikeyManagerConfig = new PnApikeyManagerConfig();
-        assertEquals(pnApikeyManagerConfig, pnApikeyManagerConfig);
-        int expectedHashCodeResult = pnApikeyManagerConfig.hashCode();
-        assertEquals(expectedHashCodeResult, pnApikeyManagerConfig.hashCode());
+    void testJwksCacheRenewSec() {
+        assertNotNull(pnApikeyManagerConfig);
+        assertEquals(300, pnApikeyManagerConfig.getJwksCacheRenewSec());
     }
 
-    /**
-     * Methods under test:
-     *
-     * <ul>
-     *   <li>{@link PnApikeyManagerConfig#equals(Object)}
-     *   <li>{@link PnApikeyManagerConfig#hashCode()}
-     * </ul>
-     */
     @Test
-    void testEquals3() {
-        PnApikeyManagerConfig pnApikeyManagerConfig = new PnApikeyManagerConfig();
-        PnApikeyManagerConfig pnApikeyManagerConfig1 = new PnApikeyManagerConfig();
-        assertEquals(pnApikeyManagerConfig, pnApikeyManagerConfig1);
-        int expectedHashCodeResult = pnApikeyManagerConfig.hashCode();
-        assertEquals(expectedHashCodeResult, pnApikeyManagerConfig1.hashCode());
+    void testSqsConfig() {
+        assertNotNull(pnApikeyManagerConfig);
+        assertNotNull(pnApikeyManagerConfig.getSqs());
+        assertEquals("pn-apikey_manager_internal_queue", pnApikeyManagerConfig.getSqs().getInternalQueueName());
+    }
+
+    @Test
+    void testDaoConfig() {
+        assertNotNull(pnApikeyManagerConfig);
+        assertNotNull(pnApikeyManagerConfig.getDao());
+        assertEquals("pn-publicKey", pnApikeyManagerConfig.getDao().getPublicKeyTableName());
+    }
+
+    @Test
+    void testAttributeResolversConfig() {
+        List<PnApikeyManagerConfig.AttributeResolver> attributeResolvers = pnApikeyManagerConfig.retrieveAttributeResolvers();
+        assertNotNull(attributeResolvers);
+        assertEquals(2, attributeResolvers.size());
+
     }
 }
-

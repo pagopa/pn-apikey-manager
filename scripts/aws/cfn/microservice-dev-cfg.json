@@ -4,6 +4,10 @@
     "MinTasksNumber": "2",
     "MaxTasksNumber": "3",
     "AutoscalingThreshold": "3500",
-    "EnhancedWebSecurityEnabled": "true"
+    "EnhancedWebSecurityEnabled": "true",
+    "JwtIssuersManagerLambdaName": "pn-jwtIssuersManager",
+    "EnableJwksCreation": "true",
+    "JwksCacheMaxDurationSec":"315576000",
+    "JwksCacheRenewSec": "315576000"
   }
 }
