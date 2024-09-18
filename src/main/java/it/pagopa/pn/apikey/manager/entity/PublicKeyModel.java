@@ -82,7 +82,7 @@ public class PublicKeyModel {
     private String issuer;
 
     @Getter(onMethod = @__({@DynamoDbAttribute(COL_TTL)}))
-    private Instant ttl;
+    private Long ttl;
 
     public PublicKeyModel(PublicKeyModel publicKeyModel) {
         this.kid = publicKeyModel.kid;

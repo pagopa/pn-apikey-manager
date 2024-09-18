@@ -369,7 +369,7 @@ Resources:
           BatchSize: !Ref ApiKeyManagerPipeBatchSize
         FilterCriteria:
           Filters:
-            - Pattern: '{ "eventName": ["DELETE"] }'
+            - Pattern: '{ "eventName": ["REMOVE"] }'
       Target: !Ref ApikeyManagerInternalQueueARN
       TargetParameters:
         InputTemplate: |

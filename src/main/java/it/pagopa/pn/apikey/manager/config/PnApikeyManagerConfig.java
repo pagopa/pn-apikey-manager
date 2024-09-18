@@ -29,7 +29,7 @@ public class PnApikeyManagerConfig {
     private Sqs sqs;
 
     private AttributeResolverDatabase attributeResolversCfgsDatabase;
-    private AttributeResolverPgCustom attributeResolversCfgsPgCustom;
+    private AttributeResolverPgCustom attributeResolversCfgsPgcustom;
 
     private Boolean enableJwksCreation;
 
@@ -61,6 +61,6 @@ public class PnApikeyManagerConfig {
     }
 
     public List<AttributeResolver> retrieveAttributeResolvers(){
-        return List.of(attributeResolversCfgsDatabase, attributeResolversCfgsPgCustom);
+        return List.of(attributeResolversCfgsDatabase, attributeResolversCfgsPgcustom);
     }
 }

@@ -180,7 +180,7 @@ class PublicKeyServiceTest {
         publicKeyModelCopy.setStatus("ACTIVE");
         publicKeyModelCopy.setExpireAt(Instant.now().plus(1, ChronoUnit.DAYS));
         publicKeyModelCopy.setIssuer("issuer");
-        publicKeyModelCopy.setTtl(publicKeyModelCopy.getExpireAt());
+        publicKeyModelCopy.setTtl(publicKeyModelCopy.getExpireAt().getEpochSecond());
         publicKeyModelCopy.setCxId("cxId");
 
 

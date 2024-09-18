@@ -20,7 +20,7 @@ class PublicKeyModelTest {
         original.setStatus("status");
         original.setCxId("cxId");
         original.setIssuer("issuer");
-        original.setTtl(Instant.now());
+        original.setTtl(Instant.now().getEpochSecond());
 
         PublicKeyModel copy = new PublicKeyModel(original);
 

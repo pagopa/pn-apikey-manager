@@ -139,7 +139,7 @@ public class PublicKeyService {
         copyItem.setKid(publicKeyModel.getKid()+"_COPY");
         copyItem.setStatus(null);
         copyItem.setStatusHistory(null);
-        copyItem.setTtl(publicKeyModel.getExpireAt());
+        copyItem.setTtl(publicKeyModel.getExpireAt().getEpochSecond());
         return publicKeyRepository.save(copyItem);
     }
 
