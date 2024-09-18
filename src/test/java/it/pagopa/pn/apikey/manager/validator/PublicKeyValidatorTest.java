@@ -37,9 +37,10 @@ class PublicKeyValidatorTest {
     }
 
     @Test
-    void validatePublicKeyRequest_withValidName_returnsMonoOfRequest() {
+    void validatePublicKeyRequest_withValidNameAndPublicKey_returnsMonoOfRequest() {
         PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
         requestDto.setName("validName");
+        requestDto.setPublicKey("validPublicKey");
 
         StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
                 .expectNext(requestDto)
@@ -47,7 +48,7 @@ class PublicKeyValidatorTest {
     }
 
     @Test
-    void validatePublicKeyRequest_withNullPublicKey_throwsApiKeyManagerException() {
+    void validatePublicKeyRequest_withNullName_throwsApiKeyManagerException() {
         PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
         requestDto.setName(null);
 
@@ -59,13 +60,39 @@ class PublicKeyValidatorTest {
     }
 
     @Test
-    void validatePublicKeyRequest_withEmptyPublicKey_throwsApiKeyManagerException() {
+    void validatePublicKeyRequest_withEmptyName_throwsApiKeyManagerException() {
         PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
         requestDto.setName("");
 
         StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_NAME_MANDATORY) &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
+    @Test
+    void validatePublicKeyRequest_withNullPublicKey_throwsApiKeyManagerException() {
+        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
+        requestDto.setName("validName");
+        requestDto.setPublicKey(null);
+
+        StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_MANDATORY) &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
+                .verify();
+    }
+
+    @Test
+    void validatePublicKeyRequest_withEmptyPublicKey_throwsApiKeyManagerException() {
+        PublicKeyRequestDto requestDto = new PublicKeyRequestDto();
+        requestDto.setName("validName");
+        requestDto.setPublicKey("");
+
+        StepVerifier.create(validator.validatePublicKeyRequest(requestDto))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_MANDATORY) &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.BAD_REQUEST)
                 .verify();
     }

@@ -24,6 +24,7 @@ public class ApiKeyManagerExceptionError {
 
     public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
     public static final String PUBLIC_KEY_NAME_MANDATORY = "Name is mandatory";
+    public static final String PUBLIC_KEY_MANDATORY = "Public key is mandatory";
     public static final String PUBLIC_KEY_CAN_NOT_DELETE = "Public key can not be deleted";
     public static final String PUBLIC_KEY_INVALID_STATE_TRANSITION = "Invalid state transition";
     public static final String PUBLIC_KEY_ALREADY_EXISTS = "Public key with status %s already exists.";

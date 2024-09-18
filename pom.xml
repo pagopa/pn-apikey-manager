@@ -343,7 +343,7 @@
                         </goals>
                         <phase>process-resources</phase>
                         <configuration>
-                            <inputSpec>${project.basedir}/docs/openapi/pn-virtualkey-internal.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/docs/openapi/pn-apikey-manager-virtualkey-internal.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <modelNameSuffix>Dto</modelNameSuffix>

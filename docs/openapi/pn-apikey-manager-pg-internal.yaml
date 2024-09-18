@@ -87,7 +87,6 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  "/pg-self/public-key":
     post:
       summary: Censimento public key
       description: >-
@@ -126,7 +125,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  "/pg-self/public-key/{kid}/delete":
+  "/pg-self/public-keys/{kid}":
     delete:
       summary: Rimozione public key
       description: >-
@@ -175,7 +174,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  "/pg-self/public-key/{kid}/status":
+  "/pg-self/public-keys/{kid}/status":
     put:
       summary: Blocco/Riattivazione public key
       description: >-
@@ -224,7 +223,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  "/pg-self/public-key/{kid}/rotate":
+  "/pg-self/public-keys/{kid}/rotate":
     post:
       summary: Rotazione public key
       description: >-

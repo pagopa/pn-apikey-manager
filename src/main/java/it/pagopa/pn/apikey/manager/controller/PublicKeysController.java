@@ -29,7 +29,7 @@ public class PublicKeysController implements PublicKeysApi {
     private final PnAuditLogBuilder auditLogBuilder;
 
     /**
-     * DELETE /pg-self/public-key/{kid}/delete : Rimozione public key
+     * DELETE /pg-self/public-keys/{kid} : Rimozione public key
      * servizio di rimozione della public key identificata tramite Kid
      *
      * @param xPagopaPnUid User Identifier (required)
@@ -68,7 +68,7 @@ public class PublicKeysController implements PublicKeysApi {
     }
 
     /**
-     * PUT /pg-self/public-key/{kid}/status : Blocco/Riattivazione public key
+     * PUT /pg-self/public-keys/{kid}/status : Blocco/Riattivazione public key
      * servizio di blocco/riattivazione della public key identificata tramite Kid
      *
      * @param xPagopaPnUid User Identifier (required)
@@ -121,7 +121,7 @@ public class PublicKeysController implements PublicKeysApi {
     }
 
     /**
-     * POST /pg-self/public-key : Censimento public key
+     * POST /pg-self/public-keys : Censimento public key
      * servizio di censimento di una public key
      *
      * @param xPagopaPnUid User Identifier (required)
@@ -157,7 +157,7 @@ public class PublicKeysController implements PublicKeysApi {
     }
 
     /**
-     * POST /pg-self/public-key/{kid}/rotate : Rotazione public key
+     * POST /pg-self/public-keys/{kid}/rotate : Rotazione public key
      * servizio di rotazione della public key identificata tramite Kid
      *
      * @param xPagopaPnUid User Identifier (required)

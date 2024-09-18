@@ -346,7 +346,7 @@ Resources:
         ContainerEnvEntry18: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'
         ContainerEnvEntry19: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry20: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-        MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*'
+        MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*,/pg-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds
         VpcId: !Ref VpcId

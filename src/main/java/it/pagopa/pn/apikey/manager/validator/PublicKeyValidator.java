@@ -30,7 +30,10 @@ public class PublicKeyValidator {
 
     public Mono<PublicKeyRequestDto> validatePublicKeyRequest(PublicKeyRequestDto publicKeyRequestDto) {
         if (StringUtils.isEmpty(publicKeyRequestDto.getName())) {
-            return Mono.error(new ApiKeyManagerException("Name is mandatory", HttpStatus.BAD_REQUEST));
+            return Mono.error(new ApiKeyManagerException(PUBLIC_KEY_NAME_MANDATORY, HttpStatus.BAD_REQUEST));
+        }
+        if (StringUtils.isEmpty(publicKeyRequestDto.getPublicKey())) {
+            return Mono.error(new ApiKeyManagerException(PUBLIC_KEY_MANDATORY, HttpStatus.BAD_REQUEST));
         }
         return Mono.just(publicKeyRequestDto);
     }
