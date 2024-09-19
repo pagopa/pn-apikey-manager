@@ -239,7 +239,7 @@ class VirtualKeyValidatorTest {
         when(publicKeyRepository.findByCxIdAndWithoutTtl(anyString()))
                 .thenReturn(Mono.just(Page.create(List.of())));
 
-        Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", "testUid", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
+        Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
@@ -256,7 +256,7 @@ class VirtualKeyValidatorTest {
         when(publicKeyRepository.findByCxIdAndWithoutTtl(anyString()))
                 .thenReturn(Mono.just(Page.create(List.of())));
 
-        Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", "testUid", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
+        Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
@@ -275,7 +275,7 @@ class VirtualKeyValidatorTest {
         when(publicKeyRepository.findByCxIdAndWithoutTtl(anyString()))
                 .thenReturn(Mono.just(Page.create(List.of(activeKey))));
 
-        Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", "testUid", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
+        Mono<Void> result = validator.validateTosAndValidPublicKey("testCxId", CxTypeAuthFleetDto.PG, "USER", List.of("group1"));
 
         StepVerifier.create(result)
                 .verifyComplete();
