@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.client;
 
+import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,12 +24,12 @@ public class ExternalRegistriesWebClient extends CommonWebClient {
                                        @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-max-queued-connections}") Integer tcpMaxQueuedConnections,
                                        @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-pending-acquired-timeout}") Integer tcpPendingAcquireTimeout,
                                        @Value("${pn.apikey.manager.webclient.pn-external-registries.tcp-pool-idle-timeout}") Integer tcpPoolIdleTimeout,
-                                       @Value("${pn.apikey.manager.pn-external-registries.base-path}") String basePath) {
+                                        PnApikeyManagerConfig config) {
         this.tcpMaxPoolSize = tcpMaxPoolSize;
         this.tcpMaxQueuedConnections = tcpMaxQueuedConnections;
         this.tcpPendingAcquireTimeout = tcpPendingAcquireTimeout;
         this.tcpPoolIdleTimeout = tcpPoolIdleTimeout;
-        this.basePath = basePath;
+        this.basePath = config.getExternalRegistriesBaseUrl();
     }
 
     public WebClient init() {
