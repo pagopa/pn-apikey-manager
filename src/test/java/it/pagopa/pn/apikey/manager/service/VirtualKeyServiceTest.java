@@ -103,7 +103,7 @@ class VirtualKeyServiceTest {
         when(apiKeyRepository.save(any()))
                 .thenReturn(Mono.just(new ApiKeyModel()));
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
                 .expectComplete()
@@ -129,7 +129,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("User already has a rotated key", null)));
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
                 .expectError(ApiKeyManagerException.class)
@@ -163,7 +163,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("CxId does not match", HttpStatus.BAD_REQUEST)));
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
                 .expectError(ApiKeyManagerException.class)
@@ -200,7 +200,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateRotateVirtualKey(any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("virtualKey is not in enabled state", HttpStatus.CONFLICT)));
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
 
         StepVerifier.create(virtualKeyService.changeStatusVirtualKeys("uid", CxTypeAuthFleetDto.PG, "cxId", "role", List.of(), "existingId", requestDto))
                 .expectError(ApiKeyManagerException.class)
@@ -220,7 +220,7 @@ class VirtualKeyServiceTest {
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
 
         when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
@@ -250,7 +250,7 @@ class VirtualKeyServiceTest {
         requestDto.setStatus(RequestVirtualKeyStatusDto.StatusEnum.BLOCK);
 
         when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
@@ -290,7 +290,7 @@ class VirtualKeyServiceTest {
 
         apiKeyModel.setStatusHistory(apiKeyHistoryModelList);
         when(apiKeyRepository.findById("id")).thenReturn(Mono.just(apiKeyModel));
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains("Internal error"));
     }
@@ -320,7 +320,7 @@ class VirtualKeyServiceTest {
 
         when(apiKeyRepository.findById("id")).thenReturn(Mono.just(apiKeyModel));
         when(virtualKeyValidator.validateRoleForDeletion(any(), any(), any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException("Forbidden operation", HttpStatus.FORBIDDEN)));
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
 
         StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException)
@@ -360,7 +360,7 @@ class VirtualKeyServiceTest {
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
         when(virtualKeyValidator.validateRoleForDeletion(any(), any(), any(), any(), any())).thenReturn(Mono.just(apiKeyModel));
         when(virtualKeyValidator.isDeleteOperationAllowed(any())).thenReturn(Mono.just(apiKeyModel));
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
 
         StepVerifier.create(virtualKeyService.deleteVirtualKey("id", "xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", new ArrayList<>(), "xPagopaPnCxRole"))
                 .expectNextMatches(response -> response.equals("VirtualKey deleted"))
@@ -495,7 +495,7 @@ class VirtualKeyServiceTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setStatus("ACTIVE");
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.empty());
         when(publicKeyRepository.findByCxIdAndWithoutTtl(any())).thenReturn(Mono.just(Page.create(List.of(publicKeyModel))));
         when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel));
@@ -517,7 +517,7 @@ class VirtualKeyServiceTest {
     void createVirtualKey_TosConsentNotFound() {
         RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException(TOS_CONSENT_NOT_FOUND, HttpStatus.FORBIDDEN)));
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException(TOS_CONSENT_NOT_FOUND, HttpStatus.FORBIDDEN)));
 
         StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))
                 .verifyErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(TOS_CONSENT_NOT_FOUND));
@@ -527,7 +527,7 @@ class VirtualKeyServiceTest {
     void createVirtualKey_InternalError() {
         RequestNewVirtualKeyDto requestDto = new RequestNewVirtualKeyDto();
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
 
@@ -546,7 +546,7 @@ class VirtualKeyServiceTest {
         apiKeyModel.setScope(ApiKeyModel.Scope.CLIENTID);
         apiKeyModel.setStatus(VirtualKeyStatusDto.ENABLED.getValue());
 
-        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any(), any())).thenReturn(Mono.empty());
+        when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any())).thenReturn(Mono.error(new ApiKeyManagerException("Virtual key already exists", HttpStatus.CONFLICT)));
 
         StepVerifier.create(virtualKeyService.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), "ADMN", null))

@@ -89,8 +89,8 @@ public class VirtualKeyValidator {
         return Mono.just(virtualKeyModel);
     }
 
-    public Mono<Void> validateTosAndValidPublicKey(String xPagopaCxId, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, List<String> groups) {
-        return validateTosConsent(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxRole, groups)
+    public Mono<Void> validateTosAndValidPublicKey(String xPagopaCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, List<String> groups) {
+        return validateTosConsent(xPagopaCxId, xPagopaPnCxType, xPagopaPnCxRole, groups)
                 .then(publicKeyRepository.findByCxIdAndWithoutTtl(xPagopaCxId))
                 .flatMap(publicKeys -> {
                     if (publicKeys.items().stream().noneMatch(elem -> "ACTIVE".equals(elem.getStatus()) || "ROTATED".equals(elem.getStatus()) || "BLOCKED".equals(elem.getStatus()))) {
@@ -100,9 +100,9 @@ public class VirtualKeyValidator {
                 });
     }
 
-    private Mono<Void> validateTosConsent(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, List<String> groups) {
+    private Mono<Void> validateTosConsent(String xPagopaCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, List<String> groups) {
         return pnExternalRegistriesClient.findPrivacyNoticeVersion(ConsentTypeDto.TOS_DEST_B2B.getValue(), CxTypeAuthFleetDto.PG.getValue())
-                .flatMap(versionDto -> pnUserAttributesClient.getPgConsentByType(xPagopaPnUid, xPagopaPnCxType.getValue(), xPagopaPnCxRole, ConsentTypeDto.TOS_DEST_B2B, groups, Integer.toString(versionDto.getVersion())))
+                .flatMap(versionDto -> pnUserAttributesClient.getPgConsentByType(xPagopaCxId, xPagopaPnCxType.getValue(), xPagopaPnCxRole, ConsentTypeDto.TOS_DEST_B2B, groups, Integer.toString(versionDto.getVersion())))
                 .flatMap(consentDto -> {
                     if (Boolean.TRUE.equals(consentDto.getAccepted())) {
                         return Mono.empty();

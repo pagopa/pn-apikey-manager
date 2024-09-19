@@ -44,6 +44,8 @@ public class LambdaService {
         try {
             String jsonPayload = objectMapper.writeValueAsString(payload);
 
+            log.info("Invoking Lambda function {} with payload: {}", functionName, jsonPayload);
+
             InvokeRequest request = InvokeRequest.builder()
                     .functionName(functionName)
                     .payload(SdkBytes.fromUtf8String(jsonPayload))
