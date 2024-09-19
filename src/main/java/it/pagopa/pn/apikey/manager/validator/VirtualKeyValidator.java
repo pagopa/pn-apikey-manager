@@ -83,7 +83,7 @@ public class VirtualKeyValidator {
 
     public Mono<ApiKeyModel> isDeleteOperationAllowed(ApiKeyModel virtualKeyModel) {
         VirtualKeyStatusDto status = VirtualKeyStatusDto.fromValue(virtualKeyModel.getStatus());
-        if (!status.getValue().equals(VirtualKeyStatusDto.BLOCKED.getValue())) {
+        if (status.getValue().equals(VirtualKeyStatusDto.BLOCKED.getValue()) || status.getValue().equals(VirtualKeyStatusDto.ROTATED.getValue())) {
             return Mono.error(new ApiKeyManagerException(String.format(VIRTUALKEY_INVALID_STATUS, virtualKeyModel.getStatus(), VirtualKeyStatusDto.DELETED.getValue()), HttpStatus.CONFLICT));
         }
         return Mono.just(virtualKeyModel);
