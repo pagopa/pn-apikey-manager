@@ -40,7 +40,7 @@ public class PublicKeyValidator {
 
     public Mono<PublicKeyModel> validateDeletePublicKey(PublicKeyModel model) {
         log.debug("Validating delete public key with status {}", model.getStatus());
-        if (PublicKeyStatusDto.BLOCKED.getValue().equals(model.getStatus()) || PublicKeyStatusDto.ROTATED.getValue().equals(model.getStatus())) {
+        if (!PublicKeyStatusDto.BLOCKED.getValue().equals(model.getStatus()) && !PublicKeyStatusDto.ROTATED.getValue().equals(model.getStatus())) {
             return Mono.just(model);
         } else {
             return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.PUBLIC_KEY_CAN_NOT_DELETE, HttpStatus.CONFLICT));
