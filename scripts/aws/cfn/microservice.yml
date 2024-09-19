@@ -322,30 +322,29 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
-        ContainerEnvEntry3: !Sub 'PN_APIKEY_MANAGER_EXTERNAL_REGISTRIES_API_BASE_URL=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry4: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
-        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
-        ContainerEnvEntry7: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
-        ContainerEnvEntry8: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
-        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
-        ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
-        ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_JWKSCACHERENEWSEC=${JwksCacheRenewSec}'
-        ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_DATABASE_CFG_KEYATTRIBUTENAME=${AttributeResolversCfgs0KeyAttributeName}'
-        ContainerEnvEntry13: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_DATABASE_NAME=${AttributeResolversCfgs0Name}'
-        ContainerEnvEntry14:
+        ContainerEnvEntry3: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
+        ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
+        ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
+        ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry7: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry8: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
+        ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
+        ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHERENEWSEC=${JwksCacheRenewSec}'
+        ContainerEnvEntry11: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_DATABASE_CFG_KEYATTRIBUTENAME=${AttributeResolversCfgs0KeyAttributeName}'
+        ContainerEnvEntry12: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_DATABASE_NAME=${AttributeResolversCfgs0Name}'
+        ContainerEnvEntry13:
           Fn::Sub:
             - 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_PGCUSTOM_CFG_PURPOSES=${PurposesList}'
             - PurposesList:
                 Fn::Join:
                   - ","
                   - !Ref AttributeResolversCfgs1Purposes
-        ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_PGCUSTOM_NAME=${AttributeResolversCfgs1Name}'
-        ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
-        ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
-        ContainerEnvEntry18: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'
-        ContainerEnvEntry19: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry20: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_PGCUSTOM_NAME=${AttributeResolversCfgs1Name}'
+        ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
+        ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
+        ContainerEnvEntry17: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'
+        ContainerEnvEntry18: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry19: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*,/pg-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds
@@ -492,6 +491,11 @@ Resources:
             Resource:
               - !Ref ApikeyManagerInternalQueueARN
               - !Ref ApikeyManagerInternalQueueDLQARN
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${JwtIssuersManagerLambdaName}'
 
   ApiKeyManagerApiGateway:
     Type: AWS::CloudFormation::Stack
