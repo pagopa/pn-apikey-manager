@@ -57,7 +57,7 @@ class PublicKeysControllerTest {
         Mono<ResponseEntity<Void>> response = publicKeysController.deletePublicKeys(xPagopaPnUid, CxTypeAuthFleetDto.PG, xPagopaPnCxId, xPagopaPnCxRole, kid, xPagopaPnCxGroups, exchange);
 
         StepVerifier.create(response)
-                .expectNext(ResponseEntity.ok().build())
+                .expectNext(ResponseEntity.noContent().build())
                 .verifyComplete();
     }
 

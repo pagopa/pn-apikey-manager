@@ -63,7 +63,7 @@ public class PublicKeysController implements PublicKeysApi {
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent))
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
-                    return ResponseEntity.ok().build();
+                    return ResponseEntity.noContent().build();
                 });
     }
 
