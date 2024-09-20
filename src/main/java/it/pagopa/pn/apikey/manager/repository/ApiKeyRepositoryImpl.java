@@ -339,12 +339,13 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
             expressionValues.put(":uid", AttributeValue.builder().s(xPagopaPnUid).build());
         }
 
-        filterExpression.append("#scope = :scope AND (#status = :statusEnabled OR #status = :statusRotated)");
+        filterExpression.append("#scope = :scope AND (#status = :statusEnabled OR #status = :statusRotated OR #status = :statusBlocked)");
         expressionNames.put("#scope", "scope");
         expressionNames.put("#status", "status");
         expressionValues.put(":scope", AttributeValue.builder().s(ApiKeyModel.Scope.CLIENTID.name()).build());
         expressionValues.put(":statusEnabled", AttributeValue.builder().s(VirtualKeyStatusDto.ENABLED.name()).build());
         expressionValues.put(":statusRotated", AttributeValue.builder().s(VirtualKeyStatusDto.ROTATED.name()).build());
+        expressionValues.put(":statusBlocked", AttributeValue.builder().s(VirtualKeyStatusDto.BLOCKED.name()).build());
 
         return Expression.builder()
                 .expression(filterExpression.toString())
