@@ -171,9 +171,10 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
         Map<String, AttributeValue> values = new HashMap<>();
         values.put(":ACTIVE", AttributeValue.builder().s("ACTIVE").build());
         values.put(":ROTATED", AttributeValue.builder().s("ROTATED").build());
+        values.put(":BLOCKED", AttributeValue.builder().s("BLOCKED").build());
 
         return Expression.builder()
-                .expression("attribute_not_exists(#ttl) AND (#status = :ACTIVE OR #status = :ROTATED)")
+                .expression("attribute_not_exists(#ttl) AND (#status = :ACTIVE OR #status = :ROTATED OR #status = :BLOCKED)")
                 .expressionNames(names)
                 .expressionValues(values)
                 .build();
