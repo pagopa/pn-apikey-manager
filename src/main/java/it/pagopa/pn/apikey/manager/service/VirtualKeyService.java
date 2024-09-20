@@ -177,7 +177,7 @@ public class VirtualKeyService {
                     if (admin) {
                         return page.flatMap(apiKeyModelPage -> {
                             List<String> internalIds = apiKeyModelPage.items().stream()
-                                    .map(apiKeyModel -> "PG-" + apiKeyModel.getUid())
+                                    .map(apiKeyModel -> "PF-" + apiKeyModel.getUid())
                                     .collect(Collectors.toList());
                             return pnDataVaultClient.getRecipientDenominationByInternalId(internalIds)
                                     .collectMap(BaseRecipientDtoDto::getInternalId, baseRecipientDtoDto -> baseRecipientDtoDto)
