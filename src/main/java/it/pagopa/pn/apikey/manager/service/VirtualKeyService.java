@@ -180,13 +180,18 @@ public class VirtualKeyService {
                                     .map(apiKeyModel -> "PF-" + apiKeyModel.getUid())
                                     .collect(Collectors.toList());
                             return pnDataVaultClient.getRecipientDenominationByInternalId(internalIds)
-                                    .collectMap(BaseRecipientDtoDto::getInternalId, baseRecipientDtoDto -> baseRecipientDtoDto)
+                                    .collectMap(baseRecipientDtoDto -> internalIdWithoutPrefix(baseRecipientDtoDto.getInternalId()), baseRecipientDtoDto -> baseRecipientDtoDto)
                                     .flatMap(mapBaseRecipient -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, mapBaseRecipient, admin));
                         });
                     } else {
                         return page.flatMap(apiKeyModelPage -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, null, admin));
                     }
                 });
+    }
+
+    private String internalIdWithoutPrefix(String internalId) {
+        internalId  = internalId.replace("PF-","").replace("PG-","");
+        return internalId;
     }
 
     private Mono<VirtualKeysResponseDto> convertToDtoAndSetTotal(String xPagopaPnUid, String xPagopaPnCxId, Boolean showVirtualKey, Page<ApiKeyModel> apiKeyModelPage,
