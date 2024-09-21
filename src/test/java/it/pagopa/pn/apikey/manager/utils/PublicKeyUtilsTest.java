@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static it.pagopa.pn.apikey.manager.TestUtils.VALID_PUBLIC_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PublicKeyUtilsTest {
@@ -66,20 +67,19 @@ class PublicKeyUtilsTest {
 
     @Test
     void testCreateJWKFromData() {
-        String n = "modulus";
         String e = "exponent";
         String kid = "keyId";
         String alg = "RS256";
 
         Map<String, Object> expectedJwk = new HashMap<>();
         expectedJwk.put("kty", "RSA");
-        expectedJwk.put("n", n);
+        expectedJwk.put("n", "m4Y-SQaygmOUU_TRCfNDHnYFsBdERf4X65fgAOd1cnC9118xqg6lI9d8MmNk_YXj9jv5ByvLfdcUsc_frA3gzQ");
         expectedJwk.put("e", e);
         expectedJwk.put("kid", kid);
         expectedJwk.put("alg", alg);
         expectedJwk.put("use", "sig");
 
-        Map<String, Object> actualJwk = PublicKeyUtils.createJWKFromData(n, e, kid, alg);
+        Map<String, Object> actualJwk = PublicKeyUtils.createJWKFromData(VALID_PUBLIC_KEY, e, kid, alg);
 
         assertEquals(expectedJwk, actualJwk);
     }

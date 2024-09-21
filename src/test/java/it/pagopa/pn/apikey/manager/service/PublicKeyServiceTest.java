@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import static it.pagopa.pn.apikey.manager.TestUtils.VALID_PUBLIC_KEY;
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -541,7 +542,7 @@ class PublicKeyServiceTest {
 
         PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
         mockPublicKeyModel.setStatus("ACTIVE");
-        mockPublicKeyModel.setPublicKey("testPublicKey");
+        mockPublicKeyModel.setPublicKey(VALID_PUBLIC_KEY);
         mockPublicKeyModel.setKid("testKid");
 
         when(publicKeyRepository.findByCxIdAndStatus(cxId, null)).thenReturn(Flux.just(mockPublicKeyModel));
@@ -567,12 +568,12 @@ class PublicKeyServiceTest {
 
         PublicKeyModel mockPublicKeyModelActive = new PublicKeyModel();
         mockPublicKeyModelActive.setStatus("ACTIVE");
-        mockPublicKeyModelActive.setPublicKey("testPublicKey");
+        mockPublicKeyModelActive.setPublicKey(VALID_PUBLIC_KEY);
         mockPublicKeyModelActive.setKid("testKid");
 
         PublicKeyModel mockPublicKeyModelRotated = new PublicKeyModel();
         mockPublicKeyModelRotated.setStatus("ROTATED");
-        mockPublicKeyModelRotated.setPublicKey("testPublicKey");
+        mockPublicKeyModelRotated.setPublicKey(VALID_PUBLIC_KEY);
         mockPublicKeyModelRotated.setKid("testKid");
 
         when(publicKeyRepository.findByCxIdAndStatus(cxId, null)).thenReturn(Flux.just(mockPublicKeyModelActive, mockPublicKeyModelRotated));
@@ -599,7 +600,7 @@ class PublicKeyServiceTest {
 
         PublicKeyModel mockPublicKeyModel = new PublicKeyModel();
         mockPublicKeyModel.setStatus("ACTIVE");
-        mockPublicKeyModel.setPublicKey("testPublicKey");
+        mockPublicKeyModel.setPublicKey(VALID_PUBLIC_KEY);
         mockPublicKeyModel.setKid("testKid");
 
         when(publicKeyRepository.findByCxIdAndStatus(cxId, null)).thenReturn(Flux.just(mockPublicKeyModel));
