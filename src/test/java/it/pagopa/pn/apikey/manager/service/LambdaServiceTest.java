@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,21 +40,22 @@ class LambdaServiceTest {
 
     private LambdaService lambdaService;
 
-
     @BeforeEach
     void setUp() {
         lambdaService = new LambdaService(lambdaAsyncClient, new ObjectMapper(), pnApikeyManagerConfig);
     }
 
     @Test
-    void testInvokeLambda()  {
+    void testInvokeLambda() {
         // Arrange
         String functionName = "testFunction";
         String cxId = "testCxId";
-        Map<String, Object> jwk1 = PublicKeyUtils.createJWKFromData("modulus1", "exponent1", "kid1", "RS256");
-        Map<String, Object> jwk2 = PublicKeyUtils.createJWKFromData("modulus2", "exponent2", "kid2", "RS256");
 
-        List<Map<String, Object>> jwksBody = List.of(jwk1, jwk2);
+        String pemKey = "MEgCQQCbhj5JBrKCY5RT9NEJ80MedgWwF0RF/hfrl+AA53VycL3XXzGqDqUj13wy\n" +
+                "Y2T9heP2O/kHK8t91xSxz9+sDeDNAgMBAAE=";
+        Map<String, Object> jwk1 = PublicKeyUtils.createJWKFromData(pemKey, "exponent1", "kid1", "RS256");
+
+        List<Map<String, Object>> jwksBody = List.of(jwk1);
 
         InvokeResponse invokeResponse = InvokeResponse.builder().statusCode(200).logResult("logResult").build();
         CompletableFuture<InvokeResponse> future = CompletableFuture.completedFuture(invokeResponse);
