@@ -81,7 +81,6 @@ async function scanTable(params, callback) {
 
         if (typeof data.LastEvaluatedKey !== 'undefined') {
           params.ExclusiveStartKey = data.LastEvaluatedKey;
-          //console.log("Params with LEK: ", params)
           scanTable(params, callback);
         }
       }, DELAY_MS);
@@ -98,7 +97,12 @@ async function main(){
       console.log(err);
     } else {
 
-      let now_str = new Date().toISOString();
+
+
+      let now = new Date();
+      let now_str = now.toISOString();
+      now_str = now_str.replace('Z', '') + "000001";
+
       console.log("Scanned items: ", data.length);
       console.log("now: ", now_str);
       
