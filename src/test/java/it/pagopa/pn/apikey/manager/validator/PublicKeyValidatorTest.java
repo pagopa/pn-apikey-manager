@@ -112,9 +112,9 @@ class PublicKeyValidatorTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setStatus(PublicKeyStatusDto.BLOCKED.getValue());
 
-        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "BLOCK"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
+                        throwable.getMessage().contains(String.format(ApiKeyManagerExceptionError.PUBLICKEY_INVALID_STATUS, publicKeyModel.getStatus(), "BLOCK")))
                 .verify();
     }
 
@@ -133,9 +133,9 @@ class PublicKeyValidatorTest {
         PublicKeyModel publicKeyModel = new PublicKeyModel();
         publicKeyModel.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
 
-        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "INVALID"))
+        StepVerifier.create(validator.validateChangeStatus(publicKeyModel, "ENABLE"))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
+                        throwable.getMessage().contains(String.format(ApiKeyManagerExceptionError.PUBLICKEY_INVALID_STATUS, publicKeyModel.getStatus(), "ENABLE")))
                 .verify();
     }
 

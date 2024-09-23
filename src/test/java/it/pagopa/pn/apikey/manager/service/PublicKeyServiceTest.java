@@ -152,8 +152,9 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.findByKidAndCxId(anyString(), anyString())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
 
-        StepVerifier.create(publicKeyService.changeStatus("kid", "INACTIVE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
-                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_STATE_TRANSITION))
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ENABLE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        throwable.getMessage().contains(String.format(ApiKeyManagerExceptionError.PUBLICKEY_INVALID_STATUS, publicKeyModel.getStatus(), "ENABLE")))
                 .verify();
     }
 
