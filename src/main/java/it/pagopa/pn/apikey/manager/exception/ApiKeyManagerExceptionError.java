@@ -38,4 +38,5 @@ public class ApiKeyManagerExceptionError {
     public static final String FAILED_TO_CREATEJWKS_JSON = "Failed to create JWKS JSON";
     public static final String FAILED_TO_INVOKE_LAMBDA_FUNCTION = "Failed to invoke Lambda function";
     public static final String ERROR_EXTRACTING_MODULUS = "Error extracting modulus from RSA public key";
+    public static final String PUBLICKEY_INVALID_STATUS = "Can not change public key status from %s to %s";
 }
