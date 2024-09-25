@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.converter;
 
+import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
@@ -27,14 +28,16 @@ class VirtualKeyConverterTest {
         apiKeyModel.setStatus("ENABLED");
         apiKeyModel.setUid("uid");
 
-        BaseRecipientDtoDto baseRecipientDto = new BaseRecipientDtoDto();
-        baseRecipientDto.setTaxId("taxId");
-        baseRecipientDto.setDenomination("denomination");
+        PgUserDetailDto pgUserDetailDto = new PgUserDetailDto();
+        pgUserDetailDto.setId("id");
+        pgUserDetailDto.setName("name");
+        pgUserDetailDto.setSurname("surname");
+        pgUserDetailDto.setTaxCode("taxCode");
 
         Page<ApiKeyModel> page = Page.create(List.of(apiKeyModel));
-        Map<String, BaseRecipientDtoDto> mapBaseRecipient = Map.of("uid", baseRecipientDto);
+        Map<String, PgUserDetailDto> mapPgUserDetail = Map.of("uid", pgUserDetailDto);
 
-        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapBaseRecipient, true);
+        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapPgUserDetail, true);
 
         assertEquals(1, responseDto.getItems().size());
         assertEquals("id", responseDto.getItems().get(0).getId());
@@ -42,16 +45,16 @@ class VirtualKeyConverterTest {
         assertEquals("virtualKey", responseDto.getItems().get(0).getValue());
         assertNotNull(responseDto.getItems().get(0).getLastUpdate());
         assertEquals(VirtualKeyStatusDto.ENABLED, responseDto.getItems().get(0).getStatus());
-        assertEquals("taxId", responseDto.getItems().get(0).getUser().getFiscalCode());
-        assertEquals("denomination", responseDto.getItems().get(0).getUser().getDenomination());
+        assertEquals("taxCode", responseDto.getItems().get(0).getUser().getFiscalCode());
+        assertEquals("name surname", responseDto.getItems().get(0).getUser().getDenomination());
     }
 
     @Test
     void convertResponseToDto_shouldReturnEmptyItems_whenNoApiKeyModels() {
         Page<ApiKeyModel> page = Page.create(List.of());
-        Map<String, BaseRecipientDtoDto> mapBaseRecipient = Map.of();
+        Map<String, PgUserDetailDto> mapPgUserDetail = Map.of();
 
-        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapBaseRecipient, true);
+        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapPgUserDetail, true);
 
         assertTrue(responseDto.getItems().isEmpty());
     }
@@ -66,14 +69,16 @@ class VirtualKeyConverterTest {
         apiKeyModel.setStatus("ENABLED");
         apiKeyModel.setUid("uid");
 
-        BaseRecipientDtoDto baseRecipientDto = new BaseRecipientDtoDto();
-        baseRecipientDto.setTaxId("taxId");
-        baseRecipientDto.setDenomination("denomination");
+        PgUserDetailDto pgUserDetailDto = new PgUserDetailDto();
+        pgUserDetailDto.setId("id");
+        pgUserDetailDto.setName("name");
+        pgUserDetailDto.setSurname("surname");
+        pgUserDetailDto.setTaxCode("taxCode");
 
         Page<ApiKeyModel> page = Page.create(List.of(apiKeyModel));
-        Map<String, BaseRecipientDtoDto> mapBaseRecipient = Map.of("uid", baseRecipientDto);
+        Map<String, PgUserDetailDto> mapPgUserDetail = Map.of("uid", pgUserDetailDto);
 
-        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapBaseRecipient, false);
+        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapPgUserDetail, false);
 
         assertEquals(1, responseDto.getItems().size());
         assertEquals("id", responseDto.getItems().get(0).getId());
@@ -81,8 +86,8 @@ class VirtualKeyConverterTest {
         assertNull(responseDto.getItems().get(0).getValue());
         assertNotNull(responseDto.getItems().get(0).getLastUpdate());
         assertEquals(VirtualKeyStatusDto.ENABLED, responseDto.getItems().get(0).getStatus());
-        assertEquals("taxId", responseDto.getItems().get(0).getUser().getFiscalCode());
-        assertEquals("denomination", responseDto.getItems().get(0).getUser().getDenomination());
+        assertEquals("taxCode", responseDto.getItems().get(0).getUser().getFiscalCode());
+        assertEquals("name surname", responseDto.getItems().get(0).getUser().getDenomination());
     }
 
     @Test
@@ -95,9 +100,11 @@ class VirtualKeyConverterTest {
         apiKeyModel.setStatus("ENABLED");
         apiKeyModel.setUid("uid");
 
-        BaseRecipientDtoDto baseRecipientDto = new BaseRecipientDtoDto();
-        baseRecipientDto.setTaxId("taxId");
-        baseRecipientDto.setDenomination("denomination");
+        PgUserDetailDto pgUserDetailDto = new PgUserDetailDto();
+        pgUserDetailDto.setId("id");
+        pgUserDetailDto.setName("name");
+        pgUserDetailDto.setSurname("surname");
+        pgUserDetailDto.setTaxCode("taxCode");
 
         Map<String, AttributeValue> lastEvaluatedKey = Map.of(
                 "id", AttributeValue.builder().s("lastKeyId").build(),
@@ -105,9 +112,9 @@ class VirtualKeyConverterTest {
         );
 
         Page<ApiKeyModel> page = Page.create(List.of(apiKeyModel), lastEvaluatedKey);
-        Map<String, BaseRecipientDtoDto> mapBaseRecipient = Map.of("uid", baseRecipientDto);
+        Map<String, PgUserDetailDto> mapPgUserDetail = Map.of("uid", pgUserDetailDto);
 
-        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapBaseRecipient, true);
+        VirtualKeysResponseDto responseDto = virtualKeyConverter.convertResponseToDto(page, mapPgUserDetail, true);
 
         assertEquals("lastKeyId", responseDto.getLastKey());
         assertEquals("lastKeyUpdate", responseDto.getLastUpdate());

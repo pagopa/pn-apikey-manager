@@ -1,13 +1,13 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.client.PnDataVaultClient;
+import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
+import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
 import it.pagopa.pn.apikey.manager.constant.VirtualKeyConstant;
 import it.pagopa.pn.apikey.manager.converter.VirtualKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
 
@@ -37,7 +37,7 @@ public class VirtualKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final VirtualKeyValidator virtualKeyValidator;
     private final VirtualKeyConverter virtualKeyConverter;
-    private final PnDataVaultClient pnDataVaultClient;
+    private final PnExternalRegistriesClient pnExternalRegistriesClient;
 
     public Mono<Void> changeStatusVirtualKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, String xPagopaPnCxRole, List<String> xPagopaPnCxGroups, String id, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto) {
         log.info("Starting changeStatusVirtualKeys - id={}, xPagopaPnUid={}, xPagopaPnCxType={}, xPagopaPnCxId={}, xPagopaPnCxRole={}, status={}",
@@ -92,7 +92,7 @@ public class VirtualKeyService {
                     log.info("Finding virtualKey by id={}", id);
                     return apiKeyRepository.findById(id);
                 }))
-                .flatMap(apiKey -> virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId,xPagopaPnUid,apiKey))
+                .flatMap(apiKey -> virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKey))
                 .flatMap(virtualKeyValidator::validateRotateVirtualKey)
                 .flatMap(apiKey -> {
                     log.info("Rotating virtualKey - id={}, xPagopaPnUid={}", apiKey.getId(), xPagopaPnUid);
@@ -177,11 +177,11 @@ public class VirtualKeyService {
                     if (admin) {
                         return page.flatMap(apiKeyModelPage -> {
                             List<String> internalIds = apiKeyModelPage.items().stream()
-                                    .map(apiKeyModel -> "PF-" + apiKeyModel.getUid())
-                                    .collect(Collectors.toList());
-                            return pnDataVaultClient.getRecipientDenominationByInternalId(internalIds)
-                                    .collectMap(baseRecipientDtoDto -> internalIdWithoutPrefix(baseRecipientDtoDto.getInternalId()), baseRecipientDtoDto -> baseRecipientDtoDto)
-                                    .flatMap(mapBaseRecipient -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, mapBaseRecipient, admin));
+                                    .map(ApiKeyModel::getUid)
+                                    .toList();
+                            return Flux.fromIterable(internalIds).flatMap(uid -> pnExternalRegistriesClient.getPgUsersDetailsPrivate(uid, xPagopaPnCxId))
+                                    .collectMap(PgUserDetailDto::getId, pgUserDetailDto -> pgUserDetailDto)
+                                    .flatMap(mapPgUserDetail -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, mapPgUserDetail, admin));
                         });
                     } else {
                         return page.flatMap(apiKeyModelPage -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, null, admin));
@@ -189,14 +189,9 @@ public class VirtualKeyService {
                 });
     }
 
-    private String internalIdWithoutPrefix(String internalId) {
-        internalId  = internalId.replace("PF-","").replace("PG-","");
-        return internalId;
-    }
-
     private Mono<VirtualKeysResponseDto> convertToDtoAndSetTotal(String xPagopaPnUid, String xPagopaPnCxId, Boolean showVirtualKey, Page<ApiKeyModel> apiKeyModelPage,
-                                                                 Map<String, BaseRecipientDtoDto> mapBaseRecipient, Boolean admin) {
-        VirtualKeysResponseDto virtualKeysResponseDto = virtualKeyConverter.convertResponseToDto(apiKeyModelPage, mapBaseRecipient, showVirtualKey);
+                                                                 Map<String, PgUserDetailDto> mapPgUserDetail, Boolean admin) {
+        VirtualKeysResponseDto virtualKeysResponseDto = virtualKeyConverter.convertResponseToDto(apiKeyModelPage, mapPgUserDetail, showVirtualKey);
         return apiKeyRepository.countWithFilters(xPagopaPnUid, xPagopaPnCxId, admin).map(integer -> {
             virtualKeysResponseDto.setTotal(integer);
             return virtualKeysResponseDto;

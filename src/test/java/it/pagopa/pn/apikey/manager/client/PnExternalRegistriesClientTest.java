@@ -1,6 +1,8 @@
 package it.pagopa.pn.apikey.manager.client;
 
+import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.api.InternalOnlyApi;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.api.PrivacyNoticeApi;
+import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PrivacyNoticeVersionResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,12 +20,14 @@ import static org.mockito.Mockito.when;
 class PnExternalRegistriesClientTest {
 
     private PrivacyNoticeApi privacyNoticeApi;
+    private InternalOnlyApi internalOnlyApi;
     private PnExternalRegistriesClient pnExternalRegistriesClient;
 
     @BeforeEach
     void setUp() {
         privacyNoticeApi = Mockito.mock(PrivacyNoticeApi.class);
-        pnExternalRegistriesClient = new PnExternalRegistriesClient(privacyNoticeApi);
+        internalOnlyApi = Mockito.mock(InternalOnlyApi.class);
+        pnExternalRegistriesClient = new PnExternalRegistriesClient(privacyNoticeApi, internalOnlyApi);
     }
 
     @Test
@@ -59,6 +63,19 @@ class PnExternalRegistriesClientTest {
         Mono<PrivacyNoticeVersionResponseDto> result = pnExternalRegistriesClient.findPrivacyNoticeVersion("consentType", "portalType");
 
         StepVerifier.create(result)
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should return PgUserDetailDto when getPgUsersDetailsPrivate is successful")
+    void getPgUsersDetailsPrivateSuccessful() {
+        PgUserDetailDto responseDto = new PgUserDetailDto();
+        when(internalOnlyApi.getPgUsersDetailsPrivate(anyString(), anyString())).thenReturn(Mono.just(responseDto));
+
+        Mono<PgUserDetailDto> result = pnExternalRegistriesClient.getPgUsersDetailsPrivate("xPagopaPnUid", "xPagopaPnCxId");
+
+        StepVerifier.create(result)
+                .expectNext(responseDto)
                 .verifyComplete();
     }
 }
