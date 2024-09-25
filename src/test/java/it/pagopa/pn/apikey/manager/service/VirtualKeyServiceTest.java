@@ -1,6 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
-import it.pagopa.pn.apikey.manager.client.PnDataVaultClient;
+import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
@@ -8,7 +8,6 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
-import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
@@ -22,7 +21,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
@@ -34,7 +32,6 @@ import java.util.List;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.TOS_CONSENT_NOT_FOUND;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -60,9 +57,6 @@ class VirtualKeyServiceTest {
 
     @MockBean
     private VirtualKeyValidator virtualKeyValidator;
-
-    @MockBean
-    private PnDataVaultClient pnDataVaultClient;
 
     @MockBean
     private PnExternalRegistriesClient pnExternalRegistriesClient;
@@ -157,10 +151,10 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(),any(),any()))
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("CxId does not match", HttpStatus.BAD_REQUEST)));
 
         when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
@@ -191,10 +185,10 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(),any(),any()))
+        when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxIdAndUid(any(), any(),any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
                 .thenReturn(Mono.just(existingApiKey));
 
         when(virtualKeyValidator.validateRotateVirtualKey(any()))
@@ -402,10 +396,11 @@ class VirtualKeyServiceTest {
         apiKeyModels.add(getApiKeyModel());
         Page<ApiKeyModel> page = Page.create(apiKeyModels);
 
-        BaseRecipientDtoDto baseRecipientDto = new BaseRecipientDtoDto();
-        baseRecipientDto.setInternalId("internalId");
-        baseRecipientDto.setTaxId("taxId");
-        baseRecipientDto.setDenomination("denomination");
+        PgUserDetailDto pgUserDetailDto = new PgUserDetailDto();
+        pgUserDetailDto.setId("internalId");
+        pgUserDetailDto.setTaxCode("taxId");
+        pgUserDetailDto.setName("name");
+        pgUserDetailDto.setSurname("surname");
 
         VirtualKeysResponseDto responseDto = new VirtualKeysResponseDto();
         VirtualKeyDto virtualKeyDto = getVirtualKeyDto();
@@ -416,7 +411,7 @@ class VirtualKeyServiceTest {
 
         when(apiKeyRepository.getVirtualKeys(any(), any(), any(), any(), anyBoolean())).thenReturn(Mono.just(page));
         when(apiKeyRepository.countWithFilters(any(), any(), anyBoolean())).thenReturn(Mono.just(1));
-        when(pnDataVaultClient.getRecipientDenominationByInternalId(any())).thenReturn(Flux.just(baseRecipientDto));
+        when(pnExternalRegistriesClient.getPgUsersDetailsPrivate(any(), any())).thenReturn(Mono.just(pgUserDetailDto));
 
         Mono<VirtualKeysResponseDto> result = virtualKeyService.getVirtualKeys(xPagopaPnUid, cxType, xPagopaPnCxId, xPagopaPnCxGroups, xPagopaPnCxRole, limit, lastKey, lastUpdate, showPublicKey);
 
@@ -442,7 +437,7 @@ class VirtualKeyServiceTest {
         VirtualKeyDto virtualKeyDto = new VirtualKeyDto();
         UserDtoDto userDto = new UserDtoDto();
         userDto.setFiscalCode("taxId");
-        userDto.setDenomination("denomination");
+        userDto.setDenomination("name surname");
         virtualKeyDto.setValue("virtualKey");
         virtualKeyDto.setStatus(VirtualKeyStatusDto.ENABLED);
         virtualKeyDto.setId("id");

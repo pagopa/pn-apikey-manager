@@ -342,9 +342,8 @@ Resources:
         ContainerEnvEntry14: !Sub 'PN_APIKEY_MANAGER_ATTRIBUTE_RESOLVERS_CFGS_PGCUSTOM_NAME=${AttributeResolversCfgs1Name}'
         ContainerEnvEntry15: !Sub 'PN_APIKEY_MANAGER_LAMBDANAME=${JwtIssuersManagerLambdaName}'
         ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
-        ContainerEnvEntry17: 'PN_APIKEY_MANAGER_CLIENT_DATAVAULT_BASEPATH=http://alb.confidential.pn.internal:8080'
-        ContainerEnvEntry18: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry19: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry18: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*,/pg-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds

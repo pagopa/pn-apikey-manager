@@ -1,7 +1,7 @@
 package it.pagopa.pn.apikey.manager.converter;
 
+import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.UserDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
@@ -20,12 +20,12 @@ import static java.util.Date.from;
 @Component
 public class VirtualKeyConverter {
 
-    public VirtualKeysResponseDto convertResponseToDto(Page<ApiKeyModel> pageApiKeyModels, Map<String, BaseRecipientDtoDto> mapBaseRecipient, Boolean showVirtualKey) {
+    public VirtualKeysResponseDto convertResponseToDto(Page<ApiKeyModel> pageApiKeyModels, Map<String, PgUserDetailDto> mapPgUserDetail, Boolean showVirtualKey) {
         List<ApiKeyModel> apiKeyModels = pageApiKeyModels.items();
 
         VirtualKeysResponseDto virtualKeysResponseDto = new VirtualKeysResponseDto();
 
-        List<VirtualKeyDto> virtualKeyDtos = getVirtualKeyDtosFromApiKeyModel(apiKeyModels, mapBaseRecipient, showVirtualKey);
+        List<VirtualKeyDto> virtualKeyDtos = getVirtualKeyDtosFromApiKeyModel(apiKeyModels, mapPgUserDetail, showVirtualKey);
 
         virtualKeysResponseDto.setItems(virtualKeyDtos);
 
@@ -38,17 +38,17 @@ public class VirtualKeyConverter {
         return virtualKeysResponseDto;
     }
 
-    private List<VirtualKeyDto> getVirtualKeyDtosFromApiKeyModel(List<ApiKeyModel> apiKeyModels, Map<String, BaseRecipientDtoDto> mapBaseRecipient, Boolean showVirtualKey) {
+    private List<VirtualKeyDto> getVirtualKeyDtosFromApiKeyModel(List<ApiKeyModel> apiKeyModels, Map<String, PgUserDetailDto> mapPgUserDetail, Boolean showVirtualKey) {
         List<VirtualKeyDto> virtualKeyDtos = new ArrayList<>();
 
         for (ApiKeyModel apiKeyModel : apiKeyModels) {
-            virtualKeyDtos.add(getVirtualKeyDtoFromApiKeyModel(apiKeyModel, mapBaseRecipient, showVirtualKey));
+            virtualKeyDtos.add(getVirtualKeyDtoFromApiKeyModel(apiKeyModel, mapPgUserDetail, showVirtualKey));
         }
 
         return virtualKeyDtos;
     }
 
-    private VirtualKeyDto getVirtualKeyDtoFromApiKeyModel(ApiKeyModel apiKeyModel, Map<String, BaseRecipientDtoDto> mapBaseRecipient, Boolean showVirtualKey) {
+    private VirtualKeyDto getVirtualKeyDtoFromApiKeyModel(ApiKeyModel apiKeyModel, Map<String, PgUserDetailDto> mapPgUserDetail, Boolean showVirtualKey) {
         VirtualKeyDto virtualKeyDto = new VirtualKeyDto();
         virtualKeyDto.setId(apiKeyModel.getId());
         virtualKeyDto.setName(apiKeyModel.getName());
@@ -60,11 +60,11 @@ public class VirtualKeyConverter {
 
         virtualKeyDto.setStatus(VirtualKeyStatusDto.fromValue(apiKeyModel.getStatus()));
 
-        if (mapBaseRecipient != null) {
+        if (mapPgUserDetail != null) {
             UserDtoDto user = new UserDtoDto();
-            if (mapBaseRecipient.get(apiKeyModel.getUid()) != null) {
-                user.setFiscalCode(mapBaseRecipient.get(apiKeyModel.getUid()).getTaxId());
-                user.setDenomination(mapBaseRecipient.get(apiKeyModel.getUid()).getDenomination());
+            if (mapPgUserDetail.get(apiKeyModel.getUid()) != null) {
+                user.setFiscalCode(mapPgUserDetail.get(apiKeyModel.getUid()).getTaxCode());
+                user.setDenomination(mapPgUserDetail.get(apiKeyModel.getUid()).getName() + " " + mapPgUserDetail.get(apiKeyModel.getUid()).getSurname());
             }
             virtualKeyDto.setUser(user);
         }
