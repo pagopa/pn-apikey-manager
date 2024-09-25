@@ -2,7 +2,6 @@ package it.pagopa.pn.apikey.manager.converter;
 
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.generated.openapi.msclient.pndatavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeysResponseDto;
 import org.junit.jupiter.api.Test;

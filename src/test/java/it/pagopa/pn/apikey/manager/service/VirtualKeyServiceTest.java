@@ -397,9 +397,9 @@ class VirtualKeyServiceTest {
         Page<ApiKeyModel> page = Page.create(apiKeyModels);
 
         PgUserDetailDto pgUserDetailDto = new PgUserDetailDto();
-        pgUserDetailDto.setId("id");
+        pgUserDetailDto.setId("internalId");
         pgUserDetailDto.setTaxCode("taxId");
-        pgUserDetailDto.setName("denomination");
+        pgUserDetailDto.setName("name");
         pgUserDetailDto.setSurname("surname");
 
         VirtualKeysResponseDto responseDto = new VirtualKeysResponseDto();
@@ -437,7 +437,7 @@ class VirtualKeyServiceTest {
         VirtualKeyDto virtualKeyDto = new VirtualKeyDto();
         UserDtoDto userDto = new UserDtoDto();
         userDto.setFiscalCode("taxId");
-        userDto.setDenomination("denomination");
+        userDto.setDenomination("name surname");
         virtualKeyDto.setValue("virtualKey");
         virtualKeyDto.setStatus(VirtualKeyStatusDto.ENABLED);
         virtualKeyDto.setId("id");
