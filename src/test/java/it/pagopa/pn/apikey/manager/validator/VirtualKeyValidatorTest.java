@@ -4,15 +4,16 @@ import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pne
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,8 +27,10 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto.BLOCKED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -81,7 +84,53 @@ class VirtualKeyValidatorTest {
         apiKeyModel.setCxId("differentCxId");
         apiKeyModel.setUid("differentUid");
 
-        Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel);
+
+        Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel, RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
+                        ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
+                .verify();
+    }
+
+    @Test
+    void checkCxIdAndUid_shouldReturnError_ApiKeyBlockedByAdmin() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setCxId("testCxId");
+        apiKeyModel.setUid("testUid");
+        ApiKeyHistoryModel model = new ApiKeyHistoryModel();
+        model.setChangeByDenomination("testAdmin");
+        model.setStatus(BLOCKED.toString());
+        model.setDate(LocalDateTime.now());
+        ApiKeyHistoryModel model2 = new ApiKeyHistoryModel();
+        model2.setChangeByDenomination("testUid");
+        model2.setStatus(BLOCKED.toString());
+        model2.setDate(LocalDateTime.now());
+        apiKeyModel.setStatusHistory(List.of(model, model2));
+
+        Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel, RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
+
+        StepVerifier.create(result)
+                .expectNext(apiKeyModel)
+                .verifyComplete();
+    }
+
+    @Test
+    void checkCxIdAndUid_shouldReturnError_ApiKeyBlockedByOwner() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setCxId("differentCxId");
+        apiKeyModel.setUid("testUid");
+        ApiKeyHistoryModel model = new ApiKeyHistoryModel();
+        model.setChangeByDenomination("testAdmin");
+        model.setStatus(BLOCKED.toString());
+        model.setDate(LocalDateTime.now().minusDays(1));
+        ApiKeyHistoryModel model2 = new ApiKeyHistoryModel();
+        model2.setChangeByDenomination("testUid");
+        model2.setStatus(BLOCKED.toString());
+        model2.setDate(LocalDateTime.now());
+        apiKeyModel.setStatusHistory(List.of(model, model2));
+
+        Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel, RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
@@ -95,7 +144,7 @@ class VirtualKeyValidatorTest {
         apiKeyModel.setCxId("testCxId");
         apiKeyModel.setUid("testUid");
 
-        Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel);
+        Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel, RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
 
         StepVerifier.create(result)
                 .expectNext(apiKeyModel)

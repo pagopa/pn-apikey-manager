@@ -3,12 +3,13 @@ package it.pagopa.pn.apikey.manager.validator;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
+import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.ApiKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto;
+import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.VirtualKeyStatusDto;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
 import it.pagopa.pn.apikey.manager.repository.PublicKeyRepository;
 import it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils;
@@ -16,12 +17,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Objects;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto.StatusEnum.BLOCK;
+import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto.StatusEnum.ENABLE;
 
 @Component
 @Slf4j
@@ -50,8 +54,19 @@ public class VirtualKeyValidator {
                 });
     }
 
-    public Mono<ApiKeyModel> checkCxIdAndUid(String xPagopaPnCxId, String xPagopaPnCxUid, ApiKeyModel apiKey) {
-        log.info("Checking CxId for virtualKey - id={}, cxId={}, uid={}", apiKey.getId(),apiKey.getCxId(), apiKey.getUid());
+    public Mono<ApiKeyModel> checkCxIdAndUid(String xPagopaPnCxId, String xPagopaPnCxUid, ApiKeyModel apiKey, RequestVirtualKeyStatusDto.StatusEnum statusEnum) {
+        log.info("Checking CxId for virtualKey - id={}, cxId={}, uid={}", apiKey.getId(), apiKey.getCxId(), apiKey.getUid());
+        if (ENABLE.equals(statusEnum)) {
+            String blockedBy = apiKey.getStatusHistory().stream()
+                    .sorted((o1, o2) -> o2.getDate().compareTo(o1.getDate()))
+                    .filter(apiKeyHistoryModel -> apiKeyHistoryModel.getStatus().equals(ApiKeyStatusDto.BLOCKED.toString()))
+                    .findFirst()
+                    .map(ApiKeyHistoryModel::getChangeByDenomination)
+                    .orElse(null);
+            if (StringUtils.hasText(blockedBy) && !blockedBy.equalsIgnoreCase(xPagopaPnCxUid)) {
+                return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_OPERATION, HttpStatus.FORBIDDEN));
+            }
+        }
         if (!Objects.equals(xPagopaPnCxId, apiKey.getCxId()) || !Objects.equals(xPagopaPnCxUid, apiKey.getUid())) {
             return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_OPERATION, HttpStatus.FORBIDDEN));
         }
