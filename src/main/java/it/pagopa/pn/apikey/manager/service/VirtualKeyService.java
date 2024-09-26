@@ -60,7 +60,7 @@ public class VirtualKeyService {
         return apiKeyRepository.findById(id)
                 .flatMap(apiKeyModel -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))
                         .then(VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
-                                .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin))
+                                .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin, requestVirtualKeyStatusDto.getStatus()))
                                 .flatMap(apiKey -> virtualKeyValidator.validateStateTransition(apiKey, requestVirtualKeyStatusDto)
                                         .then(Mono.defer(() -> updateApiKeyStatus(apiKey, xPagopaPnUid, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))))
                                 )
@@ -68,11 +68,11 @@ public class VirtualKeyService {
                 ).then();
     }
 
-    private Mono<ApiKeyModel> checkUserPermission(String xPagopaPnUid, String xPagopaPnCxId, ApiKeyModel apiKeyModel, Boolean isAdmin) {
-        if (isAdmin) {
+    private Mono<ApiKeyModel> checkUserPermission(String xPagopaPnUid, String xPagopaPnCxId, ApiKeyModel apiKeyModel, Boolean isAdmin, RequestVirtualKeyStatusDto.StatusEnum statusEnum) {
+        if (Boolean.TRUE.equals(isAdmin)) {
             return virtualKeyValidator.checkCxId(xPagopaPnCxId, apiKeyModel);
         } else {
-            return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKeyModel);
+            return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKeyModel, statusEnum);
         }
     }
 
@@ -87,12 +87,12 @@ public class VirtualKeyService {
 
     private Mono<Void> rotateVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
         log.info("Starting rotate of virtualKey - id={}, xPagopaPnUid={}", id, xPagopaPnUid);
-        return virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, ApiKeyStatusDto.ROTATED.toString())
+        return virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ROTATED.toString())
                 .then(Mono.defer(() -> {
                     log.info("Finding virtualKey by id={}", id);
                     return apiKeyRepository.findById(id);
                 }))
-                .flatMap(apiKey -> virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKey))
+                .flatMap(apiKey -> virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKey, RequestVirtualKeyStatusDto.StatusEnum.ROTATE))
                 .flatMap(virtualKeyValidator::validateRotateVirtualKey)
                 .flatMap(apiKey -> {
                     log.info("Rotating virtualKey - id={}, xPagopaPnUid={}", apiKey.getId(), xPagopaPnUid);

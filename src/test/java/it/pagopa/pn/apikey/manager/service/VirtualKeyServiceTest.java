@@ -85,7 +85,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any(), any()))
                 .thenReturn(Mono.just(existingApiKey));
 
         when(virtualKeyValidator.validateRotateVirtualKey(any()))
@@ -154,7 +154,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any(), any()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("CxId does not match", HttpStatus.BAD_REQUEST)));
 
         when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
@@ -188,7 +188,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
-        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any()))
+        when(virtualKeyValidator.checkCxIdAndUid(any(), any(), any(), any()))
                 .thenReturn(Mono.just(existingApiKey));
 
         when(virtualKeyValidator.validateRotateVirtualKey(any()))
@@ -216,7 +216,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
-        when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
+        when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any(), any())).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any(ApiKeyModel.class))).thenReturn(Mono.just(new ApiKeyModel()));
@@ -246,7 +246,7 @@ class VirtualKeyServiceTest {
         when(virtualKeyValidator.validateCxType(any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.validateTosAndValidPublicKey(any(), any(), any(), any())).thenReturn(Mono.empty());
         when(apiKeyRepository.findById(id)).thenReturn(Mono.just(new ApiKeyModel()));
-        when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any())).thenReturn(Mono.just(new ApiKeyModel()));
+        when(virtualKeyValidator.checkCxIdAndUid(anyString(), anyString(), any(), any())).thenReturn(Mono.just(new ApiKeyModel()));
         when(virtualKeyValidator.validateStateTransition(any(), any())).thenReturn(Mono.empty());
         when(virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any(ApiKeyModel.class))).thenReturn(Mono.just(new ApiKeyModel()));
