@@ -179,7 +179,8 @@ public class VirtualKeyService {
                             List<String> internalIds = apiKeyModelPage.items().stream()
                                     .map(ApiKeyModel::getUid)
                                     .toList();
-                            return Flux.fromIterable(internalIds).flatMap(uid -> pnExternalRegistriesClient.getPgUsersDetailsPrivate(uid, xPagopaPnCxId))
+                            String institutionId = internalIdWithoutPrefix(xPagopaPnCxId);
+                            return Flux.fromIterable(internalIds).flatMap(uid -> pnExternalRegistriesClient.getPgUsersDetailsPrivate(uid, institutionId))
                                     .collectMap(PgUserDetailDto::getId, pgUserDetailDto -> pgUserDetailDto)
                                     .flatMap(mapPgUserDetail -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, mapPgUserDetail, admin));
                         });
@@ -187,6 +188,11 @@ public class VirtualKeyService {
                         return page.flatMap(apiKeyModelPage -> convertToDtoAndSetTotal(xPagopaPnUid, xPagopaPnCxId, showVirtualKey, apiKeyModelPage, null, admin));
                     }
                 });
+    }
+
+    private String internalIdWithoutPrefix(String internalId) {
+        internalId  = internalId.replace("PF-","").replace("PG-","");
+        return internalId;
     }
 
     private Mono<VirtualKeysResponseDto> convertToDtoAndSetTotal(String xPagopaPnUid, String xPagopaPnCxId, Boolean showVirtualKey, Page<ApiKeyModel> apiKeyModelPage,
