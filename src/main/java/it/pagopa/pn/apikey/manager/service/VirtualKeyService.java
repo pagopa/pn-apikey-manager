@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
+import static it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils.decodeToEntityStatus;
 
 @Service
 @lombok.CustomLog
@@ -74,15 +75,6 @@ public class VirtualKeyService {
         } else {
             return virtualKeyValidator.checkCxIdAndUid(xPagopaPnCxId, xPagopaPnUid, apiKeyModel, statusEnum);
         }
-    }
-
-    private String decodeToEntityStatus(RequestVirtualKeyStatusDto.StatusEnum status) {
-        log.debug("Requested operation: {}", status);
-        return switch (status) {
-            case BLOCK -> ApiKeyStatusDto.BLOCKED.name();
-            case ENABLE -> ApiKeyStatusDto.ENABLED.name();
-            default -> throw new IllegalStateException("Unexpected value: " + status);
-        };
     }
 
     private Mono<Void> rotateVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId) {
