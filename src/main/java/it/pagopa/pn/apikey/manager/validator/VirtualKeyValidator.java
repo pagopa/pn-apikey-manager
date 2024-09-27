@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.*;
-import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto.StatusEnum.BLOCK;
 import static it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.RequestVirtualKeyStatusDto.StatusEnum.ENABLE;
+import static it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils.decodeToEntityStatus;
 
 @Component
 @Slf4j
@@ -64,7 +64,7 @@ public class VirtualKeyValidator {
                     .map(ApiKeyHistoryModel::getChangeByDenomination)
                     .orElse(null);
             if (StringUtils.hasText(blockedBy) && !blockedBy.equalsIgnoreCase(xPagopaPnCxUid)) {
-                return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_OPERATION, HttpStatus.FORBIDDEN));
+                return Mono.error(new ApiKeyManagerException(APIKEY_FORBIDDEN_OPERATION_FOR_NON_ADMIN, HttpStatus.FORBIDDEN));
             }
         }
         if (!Objects.equals(xPagopaPnCxId, apiKey.getCxId()) || !Objects.equals(xPagopaPnCxUid, apiKey.getUid())) {
@@ -140,6 +140,6 @@ public class VirtualKeyValidator {
         {
             return Mono.empty();
         }
-        return Mono.error(new ApiKeyManagerException("Invalid state transition", HttpStatus.CONFLICT));
+        return Mono.error(new ApiKeyManagerException(String.format(VIRTUALKEY_INVALID_STATUS, apiKeyModel.getStatus(), decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus())), HttpStatus.CONFLICT));
     }
 }

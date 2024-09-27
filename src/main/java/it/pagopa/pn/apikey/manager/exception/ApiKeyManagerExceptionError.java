@@ -15,6 +15,7 @@ public class ApiKeyManagerExceptionError {
     public static final String INVALID_NAME_LENGTH = "Il nome della PA deve essere lungo almeno 3 caratteri";
     public static final String ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED = "ERROR_CODE_APIKEY_MANAGER_EVENTTYPENOTSUPPORTED";
     public static final String APIKEY_FORBIDDEN_OPERATION = "Given virtual key doesn't belong to user";
+    public static final String APIKEY_FORBIDDEN_OPERATION_FOR_NON_ADMIN = "User is not authorized to revoke an operation made by an administrator.";
     public static final String SAME_STATUS_APIKEY_ALREADY_EXISTS = "User has another Virtual key with status %s";
 
     public static final String VIRTUALKEY_INVALID_STATUS = "Can not change Virtual key status from %s to %s";
@@ -25,8 +26,7 @@ public class ApiKeyManagerExceptionError {
     public static final String PUBLIC_KEY_DOES_NOT_EXISTS = "Public key does not exist.";
     public static final String PUBLIC_KEY_NAME_MANDATORY = "Name is mandatory";
     public static final String PUBLIC_KEY_MANDATORY = "Public key is mandatory";
-    public static final String PUBLIC_KEY_CAN_NOT_DELETE = "Public key can not be deleted";
-    public static final String PUBLIC_KEY_INVALID_STATE_TRANSITION = "Invalid state transition";
+    public static final String PUBLIC_KEY_INVALID_DELETION = "Public key can only be deleted when has status BLOCKED or ROTATED.";
     public static final String PUBLIC_KEY_ALREADY_EXISTS = "Public key with status %s already exists.";
     public static final String PUBLIC_KEY_ALREADY_EXISTS_ACTIVE = "Public key with status ACTIVE already exists, to create a new public key use the rotate operation.";
     public static final String ACCESS_DENIED = "Access denied.";

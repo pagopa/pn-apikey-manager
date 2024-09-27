@@ -174,7 +174,7 @@ class PublicKeyValidatorTest {
 
         StepVerifier.create(validator.validateDeletePublicKey(publicKeyModel))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
-                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_CAN_NOT_DELETE) &&
+                        throwable.getMessage().equals(ApiKeyManagerExceptionError.PUBLIC_KEY_INVALID_DELETION) &&
                         ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
                 .verify();
     }
