@@ -341,7 +341,7 @@ components:
       properties:
         name:
           type: string
-          pattern: '^(?!\s).+(?<!\s)$'
+          pattern: '^\S.*\S$'
           description: nome della virtual key
 
     ResponseNewVirtualKey:

@@ -151,7 +151,7 @@ public class PublicKeysController implements PublicKeysApi {
         return publicKeyService.createPublicKey(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, publicKeyRequestDto, xPagopaPnCxGroups, xPagopaPnCxRole)
                 .map(s -> {
                     logEvent.generateSuccess(logMessage).log();
-                    return ResponseEntity.ok().body(s);
+                    return ResponseEntity.status(HttpStatus.CREATED).body(s);
                 })
                 .doOnError(throwable -> CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, logEvent));
     }
