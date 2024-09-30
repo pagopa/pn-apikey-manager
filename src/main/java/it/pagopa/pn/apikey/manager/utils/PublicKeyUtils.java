@@ -38,7 +38,7 @@ public class PublicKeyUtils {
         String process = "validating access admin only";
         log.logChecking(process);
         if (!CxTypeAuthFleetDto.PG.name().equals(pnCxType.getValue())
-                || (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
+                || (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toLowerCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
 
             log.logCheckingOutcome(process, false, "only a PG admin can access this resource");
             return Mono.error(new ApiKeyManagerException(ApiKeyManagerExceptionError.ACCESS_DENIED , HttpStatus.FORBIDDEN));
