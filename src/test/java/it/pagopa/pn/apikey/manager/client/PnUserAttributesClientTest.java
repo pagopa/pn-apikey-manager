@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnu
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentDto;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class PnUserAttributesClientTest {
         when(consentsApi.getPgConsentByType(anyString(), any(CxTypeAuthFleetDto.class), anyString(), any(ConsentTypeDto.class), any(), anyString()))
                 .thenReturn(Mono.just(expectedConsent));
 
-        Mono<ConsentDto> result = pnUserAttributesClient.getPgConsentByType("uid", CxTypeAuthFleetDto.PG.getValue(), "ADMIN", ConsentTypeDto.TOS_DEST_B2B, null, "v1");
+        Mono<ConsentDto> result = pnUserAttributesClient.getPgConsentByType("uid", CxTypeAuthFleetDto.PG.getValue(), RoleConstant.ADMIN_ROLE, ConsentTypeDto.TOS_DEST_B2B, null, "v1");
 
         assertEquals(expectedConsent, result.block());
     }

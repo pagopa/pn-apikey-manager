@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import it.pagopa.pn.apikey.manager.converter.PublicKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
@@ -72,7 +73,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
 
-        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "ADMIN");
+        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, RoleConstant.ADMIN_ROLE);
 
         StepVerifier.create(result)
                 .expectNext("Public key deleted")
@@ -89,7 +90,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.findByKidAndCxId(any(), any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
 
-        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, "ADMIN");
+        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", null, RoleConstant.ADMIN_ROLE);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.CONFLICT)
@@ -98,7 +99,7 @@ class PublicKeyServiceTest {
 
     @Test
     void deletePublicKey_CxTypeNotAllowed() {
-        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, "ADMIN");
+        Mono<String> result = publicKeyService.deletePublicKey("uid", CxTypeAuthFleetDto.PA, "cxId", "kid", null, RoleConstant.ADMIN_ROLE);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.FORBIDDEN)
@@ -118,7 +119,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
 
-        StepVerifier.create(publicKeyService.changeStatus("kid", statusToUpdate, "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.changeStatus("kid", statusToUpdate, "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), RoleConstant.ADMIN_ROLE))
                 .verifyComplete();
     }
 
@@ -152,7 +153,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.findByKidAndCxId(anyString(), anyString())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.findByCxIdAndStatus(any(), any())).thenReturn(Flux.empty());
 
-        StepVerifier.create(publicKeyService.changeStatus("kid", "ENABLE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.changeStatus("kid", "ENABLE", "uid", CxTypeAuthFleetDto.PG, "cxId", List.of(), RoleConstant.ADMIN_ROLE))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException &&
                         throwable.getMessage().contains(String.format(ApiKeyManagerExceptionError.PUBLICKEY_INVALID_STATUS, publicKeyModel.getStatus(), "ENABLE")))
                 .verify();
@@ -190,7 +191,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModel));
         when(publicKeyRepository.save(any())).thenReturn(Mono.just(publicKeyModelCopy));
 
-        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(requestDto), List.of(), RoleConstant.ADMIN_ROLE))
                 .expectNextMatches(response -> response.getKid() != null && response.getIssuer() != null)
                 .verifyComplete();
     }
@@ -206,7 +207,7 @@ class PublicKeyServiceTest {
         dto.setName("Test Key");
         dto.setPublicKey("publicKey");
 
-        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(dto), List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.createPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", Mono.just(dto), List.of(), RoleConstant.ADMIN_ROLE))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(ApiKeyManagerExceptionError.PUBLIC_KEY_ALREADY_EXISTS_ACTIVE))
                 .verify();
     }
@@ -370,7 +371,7 @@ class PublicKeyServiceTest {
         when(publicKeyRepository.save(argThat(model -> model != null && "new_kid_COPY".equals(model.getKid()))))
                 .thenReturn(Mono.just(newActivePublicKeyCopy));
 
-        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(requestDto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(requestDto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), RoleConstant.ADMIN_ROLE))
                 // Verifico che in risposta arrivino i dati della nuova chiave creata e non della copia
                 .expectNextMatches(response -> response.getKid().equalsIgnoreCase("new_kid") && response.getIssuer().equalsIgnoreCase("cxId"))
                 .verifyComplete();
@@ -389,7 +390,7 @@ class PublicKeyServiceTest {
         dto.setName("Test Key");
         dto.setPublicKey("publicKey");
 
-        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), "ADMIN"))
+        StepVerifier.create(publicKeyService.rotatePublicKey(Mono.just(dto), "uid", CxTypeAuthFleetDto.PG, "cxId", "kid", List.of(), RoleConstant.ADMIN_ROLE))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && throwable.getMessage().contains(String.format(PUBLIC_KEY_ALREADY_EXISTS, PublicKeyStatusDto.ROTATED.getValue())))
                 .verify();
     }
@@ -409,7 +410,7 @@ class PublicKeyServiceTest {
         CxTypeAuthFleetDto cxType = CxTypeAuthFleetDto.PG;
         String xPagopaPnCxId = "cxId";
         List<String> xPagopaPnCxGroups = List.of();
-        String xPagopaPnCxRole = "admin";
+        String xPagopaPnCxRole = RoleConstant.ADMIN_ROLE;
         Integer limit = 10;
         String lastKey = "lastKey";
         String createdAt = "2024-08-25T10:15:30.00Z";

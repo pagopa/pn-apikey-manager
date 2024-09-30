@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.utils;
 
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -11,7 +12,7 @@ class VirtualKeyUtilsTest {
 
     @Test
     void isRoleAdmin_withAdminRoleAndEmptyGroups_returnsTrue() {
-        Mono<Boolean> result = VirtualKeyUtils.isRoleAdmin("ADMIN", Collections.emptyList());
+        Mono<Boolean> result = VirtualKeyUtils.isRoleAdmin(RoleConstant.ADMIN_ROLE, Collections.emptyList());
 
         StepVerifier.create(result)
                 .expectNext(true)
@@ -20,7 +21,7 @@ class VirtualKeyUtilsTest {
 
     @Test
     void isRoleAdmin_withAdminRoleAndNonEmptyGroups_returnsFalse() {
-        Mono<Boolean> result = VirtualKeyUtils.isRoleAdmin("ADMIN", List.of("group1"));
+        Mono<Boolean> result = VirtualKeyUtils.isRoleAdmin(RoleConstant.ADMIN_ROLE, List.of("group1"));
 
         StepVerifier.create(result)
                 .expectNext(false)
@@ -56,7 +57,7 @@ class VirtualKeyUtilsTest {
 
     @Test
     void isRoleAdmin_withAdminRoleAndNullGroups_returnsFalse() {
-        Mono<Boolean> result = VirtualKeyUtils.isRoleAdmin("ADMIN", null);
+        Mono<Boolean> result = VirtualKeyUtils.isRoleAdmin(RoleConstant.ADMIN_ROLE, null);
 
         StepVerifier.create(result)
                 .expectNext(true)
