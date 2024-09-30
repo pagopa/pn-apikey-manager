@@ -19,12 +19,13 @@ import java.util.Set;
 
 import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.FAILED_TO_CREATEJWKS_JSON;
 import static it.pagopa.pn.apikey.manager.utils.RSAModulusExtractor.extractModulus;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 
 @CustomLog
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class PublicKeyUtils {
 
-    public static final Set<String> ALLOWED_ROLES = Set.of("ADMIN");
+    public static final Set<String> ALLOWED_ROLES = Set.of(RoleConstant.ADMIN_ROLE);
 
     /**
      * Effettua la validazione dell'accesso per le Persone Giuridiche su risorse accessibili solo dagli amministratori.

@@ -1,6 +1,7 @@
 package it.pagopa.pn.apikey.manager.controller;
 
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
@@ -193,10 +194,10 @@ class VirtualKeyControllerTest {
         virtualKeysResponseDto.setLastKey(lastKey);
         virtualKeysResponseDto.setLastUpdate(lastUpdate);
 
-        when(virtualKeyService.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, "ADMIN", 10, lastKey, lastUpdate, showVirtualKey))
+        when(virtualKeyService.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, xPagopaPnCxGroups, RoleConstant.ADMIN_ROLE, 10, lastKey, lastUpdate, showVirtualKey))
                 .thenReturn(Mono.just(virtualKeysResponseDto));
 
-        StepVerifier.create(virtualKeyController.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, "ADMIN", xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, exchange))
+        StepVerifier.create(virtualKeyController.getVirtualKeys(xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId, RoleConstant.ADMIN_ROLE, xPagopaPnCxGroups, 10, lastKey, lastUpdate, showVirtualKey, exchange))
                 .expectNext(ResponseEntity.ok().body(virtualKeysResponseDto))
                 .verifyComplete();
     }
@@ -211,7 +212,7 @@ class VirtualKeyControllerTest {
 
         when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(responseDto));
 
-        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", RoleConstant.ADMIN_ROLE, Mono.just(requestDto), null, exchange))
                 .expectNext(ResponseEntity.status(HttpStatus.CREATED).body(responseDto))
                 .verifyComplete();
     }
@@ -224,7 +225,7 @@ class VirtualKeyControllerTest {
 
         when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(new IllegalArgumentException("Bad request")));
 
-        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", RoleConstant.ADMIN_ROLE, Mono.just(requestDto), null, exchange))
                 .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException && throwable.getMessage().equals("Bad request"))
                 .verify();
     }
@@ -237,7 +238,7 @@ class VirtualKeyControllerTest {
 
         when(virtualKeyService.createVirtualKey(any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(new RuntimeException("Internal error")));
 
-        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", Mono.just(requestDto), null, exchange))
+        StepVerifier.create(virtualKeyController.createVirtualKey("uid", CxTypeAuthFleetDto.PG, "cxId", RoleConstant.ADMIN_ROLE, Mono.just(requestDto), null, exchange))
                 .expectErrorMatches(throwable -> throwable instanceof RuntimeException && throwable.getMessage().equals("Internal error"))
                 .verify();
     }

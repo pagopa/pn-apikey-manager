@@ -2,6 +2,7 @@ package it.pagopa.pn.apikey.manager.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ class PublicKeyUtilsTest {
     @Test
     void validaAccessoOnlyAdmin_grantsAccessForAdmin() {
 
-        Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, "ADMIN", List.of());
+        Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, RoleConstant.ADMIN_ROLE, List.of());
 
         StepVerifier.create(result)
                 .verifyComplete();
@@ -39,7 +40,7 @@ class PublicKeyUtilsTest {
     @Test
     void validaAccessoOnlyAdmin_deniesAccessForNonPGType() {
 
-        Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PF, "ADMIN", List.of());
+        Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PF, RoleConstant.ADMIN_ROLE, List.of());
 
         StepVerifier.create(result)
                 .expectError(ApiKeyManagerException.class)
@@ -48,7 +49,7 @@ class PublicKeyUtilsTest {
 
     @Test
     void validaAccessoOnlyAdmin_deniesAccessForNonEmptyGroups() {
-        Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, "ADMIN", List.of("group1"));
+        Mono<Void> result = PublicKeyUtils.validaAccessoOnlyAdmin(CxTypeAuthFleetDto.PG, RoleConstant.ADMIN_ROLE, List.of("group1"));
 
         StepVerifier.create(result)
                 .expectError(ApiKeyManagerException.class)

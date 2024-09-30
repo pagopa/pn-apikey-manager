@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.controller;
 
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
@@ -154,7 +155,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.changeStatus(anyString(), anyString(), anyString(), any(), anyString(), anyList(), anyString()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("Not found", HttpStatus.NOT_FOUND)));
 
-        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", "ADMIN","ENABLE", List.of(), exchange))
+        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "kid", RoleConstant.ADMIN_ROLE,"ENABLE", List.of(), exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.NOT_FOUND)
                 .verify();
     }
@@ -165,7 +166,7 @@ class PublicKeysControllerTest {
         when(publicKeyService.changeStatus(anyString(), anyString(), anyString(), any(), anyString(), anyList(), anyString()))
                 .thenReturn(Mono.error(new ApiKeyManagerException("Internal error", HttpStatus.INTERNAL_SERVER_ERROR)));
 
-        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", "kid", "ENABLE", List.of(), exchange))
+        StepVerifier.create(publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", RoleConstant.ADMIN_ROLE, "kid", "ENABLE", List.of(), exchange))
                 .expectErrorMatches(throwable -> throwable instanceof ApiKeyManagerException && ((ApiKeyManagerException) throwable).getStatus() == HttpStatus.INTERNAL_SERVER_ERROR)
                 .verify();
     }
@@ -174,7 +175,7 @@ class PublicKeysControllerTest {
     void changeStatusPublicKey_InvalidStatus() {
         ServerWebExchange exchange = mock(ServerWebExchange.class);
 
-        Assertions.assertThrows(ApiKeyManagerException.class, () -> publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "ADMIN", "kid", "INVALID", List.of(), exchange));
+        Assertions.assertThrows(ApiKeyManagerException.class, () -> publicKeysController.changeStatusPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", RoleConstant.ADMIN_ROLE, "kid", "INVALID", List.of(), exchange));
     }
 
     @Test
@@ -210,7 +211,7 @@ class PublicKeysControllerTest {
         PublicKeyResponseDto publicKeyResponseDto = new PublicKeyResponseDto();
         when(publicKeyService.rotatePublicKey(any(), any(), any(), any(), any(), any(), any())).thenReturn(Mono.just(publicKeyResponseDto));
 
-        StepVerifier.create(publicKeysController.rotatePublicKey("xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", "ADMIN", "kid", Mono.just(new PublicKeyRequestDto()), List.of("group"), null))
+        StepVerifier.create(publicKeysController.rotatePublicKey("xPagopaPnUid", CxTypeAuthFleetDto.PG, "xPagopaPnCxId", RoleConstant.ADMIN_ROLE, "kid", Mono.just(new PublicKeyRequestDto()), List.of("group"), null))
                 .expectNext(ResponseEntity.ok().body(publicKeyResponseDto))
                 .verifyComplete();
     }
@@ -222,7 +223,7 @@ class PublicKeysControllerTest {
         String xPagopaPnCxId = "user1";
         List<String> xPagopaPnCxGroups = new ArrayList<>();
         xPagopaPnCxGroups.add("RECLAMI");
-        String xPagopaPnCxRole = "ADMIN";
+        String xPagopaPnCxRole = RoleConstant.ADMIN_ROLE;
         Boolean showPublicKey = true;
         String lastKey = "72a081da-4bd3-11ed-bdc3-0242ac120002";
         String createdAt = "2024-10-25T16:25:58.334862500";

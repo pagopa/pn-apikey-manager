@@ -16,3 +16,4 @@ Note:
 
 2) lo script viene eseguito sempre nella region `eu-south-1` 
 
+pn-apikey-manager-pg-internal.yaml

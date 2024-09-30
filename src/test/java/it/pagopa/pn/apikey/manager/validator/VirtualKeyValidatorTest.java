@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pne
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
@@ -220,7 +221,7 @@ class VirtualKeyValidatorTest {
         virtualKeyModel.setCxId("testCxId");
         virtualKeyModel.setUid("testUid");
 
-        Mono<ApiKeyModel> result = validator.validateRoleForDeletion(virtualKeyModel, "testUid", "testCxId", "ADMIN", List.of("group1"));
+        Mono<ApiKeyModel> result = validator.validateRoleForDeletion(virtualKeyModel, "testUid", "testCxId", RoleConstant.ADMIN_ROLE, List.of("group1"));
 
         StepVerifier.create(result)
                 .expectNext(virtualKeyModel)

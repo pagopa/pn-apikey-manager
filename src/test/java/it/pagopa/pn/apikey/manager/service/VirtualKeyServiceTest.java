@@ -4,6 +4,7 @@ import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pne
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
+import it.pagopa.pn.apikey.manager.constant.RoleConstant;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
 import it.pagopa.pn.apikey.manager.entity.PublicKeyModel;
@@ -207,7 +208,7 @@ class VirtualKeyServiceTest {
         String id = "keyId";
         String xPagopaPnUid = "userUid";
         String xPagopaPnCxId = "cxId";
-        String xPagopaPnCxRole = "admin";
+        String xPagopaPnCxRole = RoleConstant.ADMIN_ROLE;
         List<String> xPagopaPnCxGroups = List.of("group1", "group2");
 
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
@@ -237,7 +238,7 @@ class VirtualKeyServiceTest {
         String id = "keyId";
         String xPagopaPnUid = "userUid";
         String xPagopaPnCxId = "cxId";
-        String xPagopaPnCxRole = "admin";
+        String xPagopaPnCxRole = RoleConstant.ADMIN_ROLE;
         List<String> xPagopaPnCxGroups = List.of("group1", "group2");
 
         RequestVirtualKeyStatusDto requestDto = new RequestVirtualKeyStatusDto();
@@ -367,7 +368,7 @@ class VirtualKeyServiceTest {
         CxTypeAuthFleetDto cxType = CxTypeAuthFleetDto.PA;
         String xPagopaPnCxId = "cxId";
         List<String> xPagopaPnCxGroups = List.of("group1");
-        String xPagopaPnCxRole = "ADMIN";
+        String xPagopaPnCxRole = RoleConstant.ADMIN_ROLE;
         Integer limit = 10;
         String lastKey = "lastKey";
         String lastUpdate = "lastUpdate";
