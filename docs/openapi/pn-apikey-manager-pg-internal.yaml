@@ -107,7 +107,7 @@ paths:
               $ref: "#/components/schemas/PublicKeyRequest"
         required: true
       responses:
-        '200':
+        '201':
           description: OK
           content:
             application/json:

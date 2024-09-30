@@ -195,7 +195,7 @@ class PublicKeysControllerTest {
         StepVerifier.create(publicKeysController.newPublicKey("uid", CxTypeAuthFleetDto.PG, "cxId", "role", Mono.just(new PublicKeyRequestDto()), List.of(),
                         new DefaultServerWebExchange(serverHttpRequestDecorator, response, webSessionManager, codecConfigurer,
                                 new AcceptHeaderLocaleContextResolver())))
-                .expectNext(ResponseEntity.ok().body(publicKeyResponseDto))
+                .expectNext(ResponseEntity.status(HttpStatus.CREATED).body(publicKeyResponseDto))
                 .verifyComplete();
     }
 
