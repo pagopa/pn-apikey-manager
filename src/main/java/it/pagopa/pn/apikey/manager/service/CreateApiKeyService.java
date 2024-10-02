@@ -146,6 +146,7 @@ public class CreateApiKeyService {
         apiKeyModel.setCxType(xPagopaPnCxType.getValue());
         apiKeyModel.getStatusHistory().add(manageApiKeyService.createNewApiKeyHistory(CREATE, xPagopaPnUid));
         apiKeyModel.setPdnd(Boolean.parseBoolean(flagPdnd));
+        apiKeyModel.setScope(ApiKeyModel.Scope.APIKEY);
         log.debug("constructed apiKeyModel: {}", apiKeyModel.getId());
         return apiKeyModel;
     }
