@@ -80,7 +80,7 @@ class PublicKeyUtilsTest {
         expectedJwk.put("alg", alg);
         expectedJwk.put("use", "sig");
 
-        Map<String, Object> actualJwk = PublicKeyUtils.createJWKFromData(VALID_PUBLIC_KEY, e, kid, alg);
+        Map<String, Object> actualJwk = PublicKeyUtils.createJWKFromData(VALID_PUBLIC_KEY, e, kid);
 
         assertEquals(expectedJwk, actualJwk);
     }

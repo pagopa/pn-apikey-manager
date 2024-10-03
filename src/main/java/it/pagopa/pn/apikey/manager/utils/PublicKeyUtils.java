@@ -27,6 +27,8 @@ public class PublicKeyUtils {
 
     public static final Set<String> ALLOWED_ROLES = Set.of(RoleConstant.ADMIN_ROLE.toLowerCase());
 
+    public static final String JWKS_ALG = "RS256";
+
     /**
      * Effettua la validazione dell'accesso per le Persone Giuridiche su risorse accessibili solo dagli amministratori.
      *
@@ -48,14 +50,14 @@ public class PublicKeyUtils {
         return Mono.empty();
     }
 
-    public static Map<String, Object> createJWKFromData(String key, String e, String kid, String alg) {
+    public static Map<String, Object> createJWKFromData(String key, String e, String kid) {
         // Create a JWK Map
         Map<String, Object> jwk = new HashMap<>();
         jwk.put("kty", "RSA");   // Always RSA
         jwk.put("n", extractModulus(key));         // Base64Url encoded modulus (from DB)
         jwk.put("e", e);         // Base64Url encoded exponent (from DB)
         jwk.put("kid", kid);     // Key ID (from DB)
-        jwk.put("alg", alg);     // Algorithm (from DB, e.g., "RS256")
+        jwk.put("alg", JWKS_ALG);     // Algorithm ("RS256")
         jwk.put("use", "sig");   // Key use is always "sig" for signature
 
         // Convert the JWK Map to JSON

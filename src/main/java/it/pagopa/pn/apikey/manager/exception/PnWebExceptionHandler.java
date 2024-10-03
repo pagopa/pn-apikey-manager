@@ -15,12 +15,18 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
 
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static it.pagopa.pn.commons.utils.MDCUtils.MDC_TRACE_ID_KEY;
 
@@ -83,6 +89,35 @@ public class PnWebExceptionHandler implements ErrorWebExceptionHandler {
     }
 
     private Problem handleException(Throwable throwable) {
+        if(throwable instanceof WebExchangeBindException) {
+          return handleWebExchangeBindException((WebExchangeBindException) throwable);
+        }
+
+        return handleGenericException(throwable);
+
+
+    }
+
+    private Problem handleWebExchangeBindException(WebExchangeBindException ex) {
+        Problem problem = new Problem();
+        problem.setStatus(HttpStatus.BAD_REQUEST.value());
+        problem.setTitle(getErrorsMessages(ex.getAllErrors()));
+        problem.setTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+        problem.setTraceId(MDC.get(MDC_TRACE_ID_KEY));
+        return problem;
+    }
+
+    private String getErrorsMessages(List<ObjectError> allErrors) {
+        return allErrors.stream().map(error -> {
+            try {
+                return ((FieldError) error).getField() + " " + error.getDefaultMessage();
+            } catch (Exception e) {
+                return error.getDefaultMessage();
+            }
+        }).collect(Collectors.joining("; "));
+    }
+
+    private Problem handleGenericException(Throwable throwable) {
         Problem problem = new Problem();
         problem.setTitle("ERROR");
         problem.setStatus(STATUS_500);

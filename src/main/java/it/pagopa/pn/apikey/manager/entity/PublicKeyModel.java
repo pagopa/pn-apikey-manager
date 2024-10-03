@@ -19,6 +19,7 @@ public class PublicKeyModel {
     public static final String COL_CORRELATION_ID = "correlationId";
     public static final String COL_PUBLIC_KEY = "publickey";
     public static final String COL_EXPONENT = "exponent";
+    public static final String COL_KEY_SIZE = "keySize";
     public static final String COL_ALGORITHM = "algorithm";
     public static final String COL_EXPIRE_AT = "expireAt";
     public static final String COL_CREATED_AT = "createdAt";
@@ -50,6 +51,9 @@ public class PublicKeyModel {
 
     @Getter(onMethod = @__({@DynamoDbAttribute(COL_EXPONENT)}))
     private String exponent;
+
+    @Getter(onMethod = @__({@DynamoDbAttribute(COL_KEY_SIZE)}))
+    private Integer keySize;
 
     @Getter(onMethod = @__({@DynamoDbAttribute(COL_ALGORITHM)}))
     private String algorithm;
@@ -90,6 +94,7 @@ public class PublicKeyModel {
         this.correlationId = publicKeyModel.correlationId;
         this.publicKey = publicKeyModel.publicKey;
         this.exponent = publicKeyModel.exponent;
+        this.keySize = publicKeyModel.keySize;
         this.algorithm = publicKeyModel.algorithm;
         this.expireAt = publicKeyModel.expireAt;
         this.createdAt = publicKeyModel.createdAt;
