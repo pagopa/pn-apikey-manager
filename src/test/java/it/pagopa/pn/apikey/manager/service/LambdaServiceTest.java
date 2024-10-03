@@ -18,7 +18,6 @@ import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ class LambdaServiceTest {
 
         String pemKey = "MEgCQQCbhj5JBrKCY5RT9NEJ80MedgWwF0RF/hfrl+AA53VycL3XXzGqDqUj13wy\n" +
                 "Y2T9heP2O/kHK8t91xSxz9+sDeDNAgMBAAE=";
-        Map<String, Object> jwk1 = PublicKeyUtils.createJWKFromData(pemKey, "exponent1", "kid1", "RS256");
+        Map<String, Object> jwk1 = PublicKeyUtils.createJWKFromData(pemKey, "exponent1", "kid1");
 
         List<Map<String, Object>> jwksBody = List.of(jwk1);
 

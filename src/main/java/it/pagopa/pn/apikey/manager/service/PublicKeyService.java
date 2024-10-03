@@ -123,7 +123,7 @@ public class PublicKeyService {
         model.setName(publicKeyRequestDto.getName());
         model.setPublicKey(publicKeyRequestDto.getPublicKey());
         model.setExponent(publicKeyRequestDto.getExponent());
-        model.setAlgorithm(publicKeyRequestDto.getAlgorithm().getValue());
+        model.setKeySize(publicKeyRequestDto.getKeySize().getValue());
         model.setExpireAt(Instant.now().plus(355, ChronoUnit.DAYS));
         model.setCreatedAt(Instant.now());
         model.setStatus(PublicKeyStatusDto.ACTIVE.getValue());
@@ -267,7 +267,7 @@ public class PublicKeyService {
 
         return publicKeyRepository.findByCxIdAndStatus(cxId, null)
                 .filter(publicKeyModel -> ACTIVE.getValue().equals(publicKeyModel.getStatus()) || ROTATED.getValue().equals(publicKeyModel.getStatus()))
-                .map(publicKeyModel -> createJWKFromData(publicKeyModel.getPublicKey(), publicKeyModel.getExponent(), publicKeyModel.getKid(), publicKeyModel.getAlgorithm()))
+                .map(publicKeyModel -> createJWKFromData(publicKeyModel.getPublicKey(), publicKeyModel.getExponent(), publicKeyModel.getKid()))
                 .collectList()
                 .switchIfEmpty(Mono.just(new ArrayList<>()))
                 .flatMap(jwks -> lambdaService.invokeLambda(pnApikeyManagerConfig.getLambdaName(), cxId, jwks))

@@ -447,18 +447,21 @@ components:
         name:
           type: string
           description: nome della public key
+          maxLength: 254
+          pattern: '^[a-zA-Z0-9-\s]+$'
         publicKey:
           type: string
           description: Valore della public key (esclusi header e footer)
+          maxLength: 500
         exponent:
           type: string
           description: Esponente della public key
           default: 'AQAB'
-        algorithm:
-          description: Algoritmo di crittografia usato per la public key
-          type: string
-          enum: ['RS256']
-          default: 'RS256'
+        keySize:
+          description: Dimensione della chiave
+          type: integer
+          enum: [2048]
+          default: 2048
     PublicKeyResponse:
       title: Response censimento public key
       description: >-
