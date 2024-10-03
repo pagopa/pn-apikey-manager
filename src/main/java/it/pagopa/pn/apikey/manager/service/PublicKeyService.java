@@ -124,6 +124,7 @@ public class PublicKeyService {
         model.setPublicKey(publicKeyRequestDto.getPublicKey());
         model.setExponent(publicKeyRequestDto.getExponent());
         model.setKeySize(publicKeyRequestDto.getKeySize().getValue());
+        model.setAlgorithm(publicKeyRequestDto.getAlgorithm().getValue());
         model.setExpireAt(Instant.now().plus(355, ChronoUnit.DAYS));
         model.setCreatedAt(Instant.now());
         model.setStatus(PublicKeyStatusDto.ACTIVE.getValue());

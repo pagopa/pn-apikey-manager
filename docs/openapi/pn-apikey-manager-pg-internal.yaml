@@ -457,6 +457,11 @@ components:
           type: string
           description: Esponente della public key
           default: 'AQAB'
+        algorithm:
+          description: Algoritmo di crittografia usato per la generazione della public key
+          type: string
+          enum: [ 'RSA' ]
+          default: 'RSA'
         keySize:
           description: Dimensione della chiave
           type: integer
