@@ -46,8 +46,8 @@ public class VirtualKeyValidator {
 
     public Mono<Void> checkVirtualKeyAlreadyExistsWithStatus(String xPagopaPnUid, String xPagopaPnCxId, String status) {
         return apiKeyRepository.findByUidAndCxIdAndStatusAndScope(xPagopaPnUid, xPagopaPnCxId, status, ApiKeyModel.Scope.CLIENTID.toString())
-                .flatMap(existingRotatedKeys -> {
-                    if (!existingRotatedKeys.items().isEmpty()) {
+                .flatMap(existingKeys -> {
+                    if (!existingKeys.items().isEmpty()) {
                         return Mono.error(new ApiKeyManagerException(String.format(SAME_STATUS_APIKEY_ALREADY_EXISTS, status), HttpStatus.CONFLICT));
                     }
                     return Mono.empty();
