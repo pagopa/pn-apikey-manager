@@ -95,19 +95,15 @@ class VirtualKeyValidatorTest {
     }
 
     @Test
-    void checkCxIdAndUid_shouldReturnError_ApiKeyBlockedByAdmin() {
+    void checkCxIdAndUid_shouldNotReturnError_ApiKeyBlockedByUser() {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setCxId("testCxId");
         apiKeyModel.setUid("testUid");
         ApiKeyHistoryModel model = new ApiKeyHistoryModel();
-        model.setChangeByDenomination("testAdmin");
+        model.setChangeByDenomination("testUid");
         model.setStatus(BLOCKED.toString());
         model.setDate(LocalDateTime.now());
-        ApiKeyHistoryModel model2 = new ApiKeyHistoryModel();
-        model2.setChangeByDenomination("testUid");
-        model2.setStatus(BLOCKED.toString());
-        model2.setDate(LocalDateTime.now());
-        apiKeyModel.setStatusHistory(List.of(model, model2));
+        apiKeyModel.setStatusHistory(List.of(model));
 
         Mono<ApiKeyModel> result = validator.checkCxIdAndUid("testCxId", "testUid", apiKeyModel, RequestVirtualKeyStatusDto.StatusEnum.ENABLE);
 

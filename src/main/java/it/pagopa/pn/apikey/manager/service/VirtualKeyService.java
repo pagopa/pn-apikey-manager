@@ -2,12 +2,9 @@ package it.pagopa.pn.apikey.manager.service;
 
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
-import it.pagopa.pn.apikey.manager.constant.ApiKeyConstant;
-import it.pagopa.pn.apikey.manager.constant.VirtualKeyConstant;
 import it.pagopa.pn.apikey.manager.converter.VirtualKeyConverter;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyHistoryModel;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyModel;
-import it.pagopa.pn.apikey.manager.exception.ApiKeyManagerException;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyPageable;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
@@ -15,7 +12,6 @@ import it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils;
 import it.pagopa.pn.apikey.manager.validator.VirtualKeyValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static it.pagopa.pn.apikey.manager.exception.ApiKeyManagerExceptionError.APIKEY_CX_TYPE_NOT_ALLOWED;
 import static it.pagopa.pn.apikey.manager.utils.VirtualKeyUtils.decodeToEntityStatus;
 
 @Service
@@ -58,9 +53,9 @@ public class VirtualKeyService {
     }
 
     private Mono<Void> reactivateOrBlockVirtualKey(String id, String xPagopaPnUid, String xPagopaPnCxId, String xPagopaPnCxRole, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto, List<String> xPagopaPnCxGroups) {
-        return apiKeyRepository.findById(id)
-                .flatMap(apiKeyModel -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))
-                        .then(VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
+        return virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))
+                .then(Mono.defer(() -> apiKeyRepository.findById(id))
+                        .flatMap(apiKeyModel -> VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
                                 .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin, requestVirtualKeyStatusDto.getStatus()))
                                 .flatMap(apiKey -> virtualKeyValidator.validateStateTransition(apiKey, requestVirtualKeyStatusDto)
                                         .then(Mono.defer(() -> updateApiKeyStatus(apiKey, xPagopaPnUid, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))))
@@ -140,14 +135,9 @@ public class VirtualKeyService {
     }
 
     public Mono<String> deleteVirtualKey(String id, String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole) {
-
-        if (!VirtualKeyConstant.ALLOWED_CX_TYPE_VIRTUAL_KEY.contains(xPagopaPnCxType)) {
-            log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
-        }
-
-        return virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)
-                .then(apiKeyRepository.findById(id))
+        return virtualKeyValidator.validateCxType(xPagopaPnCxType)
+                .then(Mono.defer(() -> virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnCxType, xPagopaPnCxRole, xPagopaPnCxGroups)))
+                .then(Mono.defer(() -> apiKeyRepository.findById(id)))
                 .flatMap(virtualKeyModel -> virtualKeyValidator.validateRoleForDeletion(virtualKeyModel, xPagopaPnUid, xPagopaPnCxId, xPagopaPnCxRole, xPagopaPnCxGroups))
                 .flatMap(virtualKeyValidator::isDeleteOperationAllowed)
                 .flatMap(virtualKeyModel -> this.updateApiKeyStatus(virtualKeyModel, xPagopaPnUid, VirtualKeyStatusDto.DELETED.getValue()))
@@ -157,12 +147,9 @@ public class VirtualKeyService {
 
     public Mono<VirtualKeysResponseDto> getVirtualKeys(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, List<String> xPagopaPnCxGroups, String xPagopaPnCxRole,
                                                        Integer limit, String lastKey, String lastUpdate, Boolean showVirtualKey) {
-        if (!ApiKeyConstant.ALLOWED_CX_TYPE_VIRTUALKEY.contains(xPagopaPnCxType)) {
-            log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
-        }
         ApiKeyPageable pageable = toApiKeyPageable(limit, lastKey, lastUpdate);
-        return VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
+        return virtualKeyValidator.validateCxType(xPagopaPnCxType)
+                .then(VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups))
                 .flatMap(admin -> {
                     log.debug("admin: {}", admin);
                     Mono<Page<ApiKeyModel>> page = apiKeyRepository.getVirtualKeys(xPagopaPnUid, xPagopaPnCxId, new ArrayList<>(), pageable, admin);
@@ -205,11 +192,8 @@ public class VirtualKeyService {
     }
 
     public Mono<ResponseNewVirtualKeyDto> createVirtualKey(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxId, Mono<RequestNewVirtualKeyDto> requestNewVirtualKeyDto, String role, List<String> groups) {
-        if (!VirtualKeyConstant.ALLOWED_CX_TYPE_VIRTUAL_KEY.contains(xPagopaPnCxType)) {
-            log.error("CxTypeAuthFleet {} not allowed", xPagopaPnCxType);
-            return Mono.error(new ApiKeyManagerException(String.format(APIKEY_CX_TYPE_NOT_ALLOWED, xPagopaPnCxType), HttpStatus.FORBIDDEN));
-        }
-        return virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnCxType, role, groups)
+        return virtualKeyValidator.validateCxType(xPagopaPnCxType)
+                .then(Mono.defer(() -> virtualKeyValidator.validateTosAndValidPublicKey(xPagopaPnCxId, xPagopaPnCxType, role, groups)))
                 .then(Mono.defer(() -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, VirtualKeyStatusDto.ENABLED.getValue())))
                 .then(requestNewVirtualKeyDto)
                 .flatMap(dto -> createVirtualKeyModel(dto, xPagopaPnUid, xPagopaPnCxType, xPagopaPnCxId))
@@ -227,7 +211,7 @@ public class VirtualKeyService {
         model.setPdnd(false);
         model.setStatus(VirtualKeyStatusDto.ENABLED.getValue());
         ApiKeyHistoryModel historyModel = new ApiKeyHistoryModel();
-        historyModel.setChangeByDenomination(UUID.randomUUID().toString());
+        historyModel.setChangeByDenomination(xPagopaPnUid);
         historyModel.setDate(LocalDateTime.now());
         historyModel.setStatus(VirtualKeyStatusDto.CREATED.getValue());
         model.setStatusHistory(List.of(historyModel));
