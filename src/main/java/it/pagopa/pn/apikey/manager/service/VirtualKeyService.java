@@ -53,15 +53,14 @@ public class VirtualKeyService {
     }
 
     private Mono<Void> reactivateOrBlockVirtualKey(String id, String xPagopaPnUid, String xPagopaPnCxId, String xPagopaPnCxRole, RequestVirtualKeyStatusDto requestVirtualKeyStatusDto, List<String> xPagopaPnCxGroups) {
-        return virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(xPagopaPnUid, xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))
-                .then(Mono.defer(() -> apiKeyRepository.findById(id))
-                        .flatMap(apiKeyModel -> VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
-                                .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin, requestVirtualKeyStatusDto.getStatus()))
-                                .flatMap(apiKey -> virtualKeyValidator.validateStateTransition(apiKey, requestVirtualKeyStatusDto)
-                                        .then(Mono.defer(() -> updateApiKeyStatus(apiKey, xPagopaPnUid, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))))
-                                )
-                        )
-                ).then();
+        return apiKeyRepository.findById(id)
+                .flatMap(apiKeyModel -> virtualKeyValidator.checkVirtualKeyAlreadyExistsWithStatus(apiKeyModel.getUid(), xPagopaPnCxId, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))
+                        .then(VirtualKeyUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups))
+                        .flatMap(isAdmin -> checkUserPermission(xPagopaPnUid, xPagopaPnCxId, apiKeyModel, isAdmin, requestVirtualKeyStatusDto.getStatus()))
+                        .flatMap(apiKey -> virtualKeyValidator.validateStateTransition(apiKey, requestVirtualKeyStatusDto))
+                        .then(Mono.defer(() -> updateApiKeyStatus(apiKeyModel, xPagopaPnUid, decodeToEntityStatus(requestVirtualKeyStatusDto.getStatus()))))
+                )
+                .then();
     }
 
     private Mono<ApiKeyModel> checkUserPermission(String xPagopaPnUid, String xPagopaPnCxId, ApiKeyModel apiKeyModel, Boolean isAdmin, RequestVirtualKeyStatusDto.StatusEnum statusEnum) {
