@@ -187,16 +187,13 @@ public class PublicKeyRepositoryImpl implements PublicKeyRepository {
                 .keyEqualTo(Key.builder().partitionValue(xPagopaPnCxId)
                         .build());
 
-        Map<String, String> expressionNames = new HashMap<>();
-        expressionNames.put("#ttl", "ttl");
-
         QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
-                .filterExpression(Expression.builder().expression("attribute_not_exists(#ttl)").expressionNames(expressionNames).build())
+                .filterExpression(getFilterExpressionForGetAllQuery())
                 .scanIndexForward(false)
                 .build();
 
-        return Mono.from(table.index(PublicKeyModel.GSI_CXID_STATUS)
+        return Mono.from(table.index(PublicKeyModel.GSI_CXID_CREATEDAT)
                 .query(queryEnhancedRequest));
     }
 

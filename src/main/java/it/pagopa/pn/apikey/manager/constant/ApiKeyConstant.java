@@ -19,8 +19,6 @@ public final class ApiKeyConstant {
     public static final String GSI_UID_CXID = "uid-cxId-index";
 
     public static final Set<CxTypeAuthFleetDto> ALLOWED_CX_TYPE = Set.of(CxTypeAuthFleetDto.PA);
-    public static final Set<CxTypeAuthFleetDto> ALLOWED_CX_TYPE_VIRTUALKEY = Set.of(CxTypeAuthFleetDto.PG);
-    public static final Set<CxTypeAuthFleetDto> ALLOWED_CX_TYPE_PUBLIC_KEY = Set.of(CxTypeAuthFleetDto.PG);
 
     public static final String ENABLE_OPERATION = "ENABLE";
     public static final String BLOCK_OPERATION = "BLOCK";
