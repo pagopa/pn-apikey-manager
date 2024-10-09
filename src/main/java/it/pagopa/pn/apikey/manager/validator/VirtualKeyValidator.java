@@ -108,7 +108,7 @@ public class VirtualKeyValidator {
         return validateTosConsent(xPagopaCxId, xPagopaPnCxType, xPagopaPnCxRole, groups)
                 .then(publicKeyRepository.findByCxIdAndWithoutTtl(xPagopaCxId))
                 .flatMap(publicKeys -> {
-                    if (publicKeys.items().stream().noneMatch(elem -> "ACTIVE".equals(elem.getStatus()) || "ROTATED".equals(elem.getStatus()) || "BLOCKED".equals(elem.getStatus()))) {
+                    if (publicKeys.items().isEmpty()) {
                         return Mono.error(new ApiKeyManagerException(VALID_PUBLIC_KEY_NOT_FOUND, HttpStatus.FORBIDDEN));
                     }
                     return Mono.empty();
