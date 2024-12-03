@@ -295,6 +295,33 @@ Parameters:
     Default: false
     Description: Enable JWKS creation
 
+    # Logging parameters
+  WireTapLogActivation:
+    Type: String
+    Default: false
+    Description: Activation of wire logs
+    AllowedValues:
+      - true
+      - false
+
+  PnCronAnalyzer:
+    Type: String
+    Default: '-'
+    Description: Cron for which you send the metric to CloudWatch
+
+    # EFS parameters
+  FargateEFSFileSystemID:
+    Type: String
+    Description: "EFS Filesystem"
+
+  MountEfs:
+    Type: String
+    Default: false
+    AllowedValues:
+      - "true"
+      - "false"
+
+
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -319,6 +346,9 @@ Resources:
         AutoscalingStrategy: REST-API
         MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager'
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        EfsFilesystem: !Ref FargateEFSFileSystemID
+        MountEfs: !Ref MountEfs
+        WireTapLogActivation: !Ref WireTapLogActivation
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'PN_APIKEY_MANAGER_AWS_USAGEPLAN_DEFAULT=${UsagePlanDefault}'
@@ -344,6 +374,8 @@ Resources:
         ContainerEnvEntry16: !Sub 'PN_APIKEY_MANAGER_ENABLE_JWKS_CREATION=${EnableJwksCreation}'
         ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry18: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry19: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
+        ContainerEnvEntry20: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*,/pg-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds
@@ -517,7 +549,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
         WAFName: !Sub '${ProjectName}-apikey-manager-self'
-        IntendedUsage: WEB 
+        IntendedUsage: WEB
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGateway.Outputs.APIGatewayARN
         Limit: !Ref WebWafLimit
         EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
@@ -545,7 +577,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
         WAFName: !Sub '${ProjectName}-apikey-manager-bo'
-        IntendedUsage: BACKOFFICE 
+        IntendedUsage: BACKOFFICE
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.APIGatewayARN
 
   ApiKeyManagerApiGatewayPrvt:
@@ -569,7 +601,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
         WAFName: !Sub '${ProjectName}-apikey-manager-prvt'
-        IntendedUsage: WEB 
+        IntendedUsage: WEB
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayPrvt.Outputs.APIGatewayARN
         EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 

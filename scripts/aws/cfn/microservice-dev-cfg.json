@@ -7,7 +7,10 @@
     "EnhancedWebSecurityEnabled": "true",
     "JwtIssuersManagerLambdaName": "pn-jwtIssuersManager",
     "EnableJwksCreation": "true",
-    "JwksCacheMaxDurationSec":"315576000",
-    "JwksCacheRenewSec": "315576000"
+    "JwksCacheMaxDurationSec": "315576000",
+    "JwksCacheRenewSec": "315576000",
+    "PnCronAnalyzer": "* */1 * * * *",
+    "WireTapLogActivation": "false",
+    "MountEfs": "false"
   }
 }
