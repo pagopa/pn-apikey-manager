@@ -3,6 +3,7 @@ Description: 'Example microservice deploy'
 
 Transform:
   - UpdateDeploymentTransform
+  - GenerateLBPriorityIdMacro
 
 Parameters:
 
@@ -382,7 +383,12 @@ Resources:
         VpcId: !Ref VpcId
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
-        LoadbalancerRulePriority: !Ref MicroserviceNumber
+        LoadbalancerRulePriority: 
+          Fn::Transform:
+            Name: GenerateLBPriorityIdMacro
+            Parameters:
+              msNumber: !Ref MicroserviceNumber
+              index: 1
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
