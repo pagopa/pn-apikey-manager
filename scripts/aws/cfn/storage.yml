@@ -25,6 +25,10 @@ Parameters:
     Type: String
     Description: 'Where to send Logs'
   
+  CdcKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send CDC'
+    
   ApiKeyTablesEncryptKeyId:
     Type: String
     Description: Dynamo table encryption key
