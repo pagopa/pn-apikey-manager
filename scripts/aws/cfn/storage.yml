@@ -25,6 +25,10 @@ Parameters:
     Type: String
     Description: 'Where to send Logs'
   
+  CdcKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send CDC'
+    
   ApiKeyTablesEncryptKeyId:
     Type: String
     Description: Dynamo table encryption key
@@ -138,8 +142,10 @@ Resources:
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      KinesisStreamSpecification:
+        StreamArn: !Ref CdcKinesisSourceStreamArn
       StreamSpecification:
-        StreamViewType: KEYS_ONLY
+        StreamViewType: NEW_IMAGE        
       TimeToLiveSpecification:
         AttributeName: "ttl"
         Enabled: true
