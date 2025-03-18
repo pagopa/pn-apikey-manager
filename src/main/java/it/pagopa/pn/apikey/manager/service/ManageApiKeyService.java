@@ -266,6 +266,7 @@ public class ManageApiKeyService {
         newApiKeyModel.setCorrelationId(apiKeyModel.getCorrelationId());
         newApiKeyModel.getStatusHistory().add(createNewApiKeyHistory(CREATE, xPagopaPnUid));
         newApiKeyModel.setScope(ApiKeyModel.Scope.APIKEY);
+        newApiKeyModel.setPdnd(apiKeyModel.isPdnd());
         return newApiKeyModel;
     }
 

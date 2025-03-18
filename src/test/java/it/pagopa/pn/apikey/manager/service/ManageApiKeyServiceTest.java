@@ -261,6 +261,28 @@ class ManageApiKeyServiceTest {
                 .verify();
     }
 
+    @Test
+    void testChangeStatus7() {
+        ApiKeyModel apiKeyModel = new ApiKeyModel();
+        apiKeyModel.setId("42");
+        apiKeyModel.setStatus("ENABLED");
+
+        ApiKeyModel apiKeyModel1 = new ApiKeyModel();
+        apiKeyModel1.setId("42");
+        apiKeyModel1.setStatus("BLOCKED");
+        apiKeyModel1.setPdnd(true);
+
+        when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
+        when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
+
+        RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
+        requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
+
+        StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA,"cxId", new ArrayList<>()))
+                .expectNextMatches(ApiKeyModel::isPdnd)
+                .verifyComplete();
+    }
+
 
 
     /**
