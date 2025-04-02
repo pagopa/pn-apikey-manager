@@ -528,32 +528,6 @@ Resources:
             Resource:
               - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${JwtIssuersManagerLambdaName}'
 
-  ApiKeyManagerApiGateway:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager'
-        IntendedUsage: WEB
-        DnsName: !Ref WebApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: 'api-key-self'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
-
-  ApiKeyManagerApiGatewayWaf:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
-      Parameters:
-        WAFName: !Sub '${ProjectName}-apikey-manager-self'
-        IntendedUsage: WEB
-        APIGatewayARNs: !GetAtt ApiKeyManagerApiGateway.Outputs.APIGatewayARN
-        Limit: !Ref WebWafLimit
-        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
-
   ApiKeyManagerApiGatewayAggregate:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -580,31 +554,6 @@ Resources:
         IntendedUsage: BACKOFFICE
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.APIGatewayARN
 
-  ApiKeyManagerApiGatewayPrvt:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-apikey-manager-prvt'
-        IntendedUsage: WEB
-        DnsName: !Ref WebApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: 'api-key-prvt'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
-
-  ApiKeyManagerApiGatewayPrvtWaf:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
-      Parameters:
-        WAFName: !Sub '${ProjectName}-apikey-manager-prvt'
-        IntendedUsage: WEB
-        APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayPrvt.Outputs.APIGatewayARN
-        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
-
   ApiKeyManagerMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -619,20 +568,16 @@ Resources:
             - !Ref PublicKeyTableName
         RestApiStageArns: !Join
           - ','
-          - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiStageArn
-            - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiStageArn
+          - - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiStageArn
         RestApiNames: !Join
           - ','
-          - - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiName
-            - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
+          - - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiName
         QueueArns: !Join
           - ','
           - - !Ref ApikeyManagerInternalQueueName
         AlarmArns: !Join
           - ','
           - - !GetAtt ApikeyManagerMicroservice.Outputs.FatalLogsMetricAlarmArn
-            - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiErrorAlarmArn
-            - !GetAtt ApiKeyManagerApiGateway.Outputs.RestApiLatencyAlarmArn
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiErrorAlarmArn
             - !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.RestApiLatencyAlarmArn
         LogGroupsNames: !Join
