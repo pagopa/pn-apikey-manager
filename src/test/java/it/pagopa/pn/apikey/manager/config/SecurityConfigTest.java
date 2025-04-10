@@ -22,25 +22,20 @@ class SecurityConfigTest {
 
     @Test
     void testStrictTransportSecurity() {
-        // Mock del WebFilterChain
         WebFilterChain mockChain = mock(WebFilterChain.class);
         when(mockChain.filter(any())).thenReturn(Mono.empty());
 
-        // Creazione di un MockServerWebExchange
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/").build()
         );
 
-        // Esecuzione del filtro
         strictTransportSecurity.filter(exchange, mockChain).block();
 
-        // Verifica dell'intestazione Strict-Transport-Security
         String headerValue = exchange.getResponse().getHeaders().getFirst("Strict-Transport-Security");
         assertNotNull(headerValue, "L'intestazione Strict-Transport-Security non dovrebbe essere null");
         assertEquals("max-age=31536000; includeSubDomains; preload", headerValue,
                 "Il valore dell'intestazione Strict-Transport-Security non è corretto");
 
-        // Verifica che il filtro abbia chiamato il chain
         verify(mockChain, times(1)).filter(exchange);
     }
 }
