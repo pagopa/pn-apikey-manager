@@ -13,8 +13,11 @@ import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.apikey.manager.generated.openapi.server.v1.prvt.dto.RequestBodyApiKeyPkDto;
 import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.repository.ApiKeyRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -235,20 +238,26 @@ class ManageApiKeyServiceTest {
         ApiKeyModel apiKeyModel = new ApiKeyModel();
         apiKeyModel.setId("42");
         apiKeyModel.setStatus("ENABLED");
+        apiKeyModel.setPdnd(true);
 
         ApiKeyModel apiKeyModel1 = new ApiKeyModel();
         apiKeyModel1.setId("42");
-        apiKeyModel1.setStatus("BLOCKED");
+        apiKeyModel1.setStatus("ROTATED");
+        apiKeyModel1.setPdnd(true);
 
         when(apiKeyRepository.findById("42")).thenReturn(Mono.just(apiKeyModel));
-        when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1));
+        when(apiKeyRepository.save(any())).thenReturn(Mono.just(apiKeyModel1), Mono.just(apiKeyModel));
 
         RequestApiKeyStatusDto requestApiKeyStatusDto = new RequestApiKeyStatusDto();
         requestApiKeyStatusDto.setStatus(RequestApiKeyStatusDto.StatusEnum.ROTATE);
 
         StepVerifier.create(apiKeyService.changeStatus("42", Mono.just(requestApiKeyStatusDto), "1234", CxTypeAuthFleetDto.PA,"cxId", new ArrayList<>()))
-                .expectNext(apiKeyModel1)
+                .expectNext(apiKeyModel)
                 .verifyComplete();
+
+        ArgumentCaptor<ApiKeyModel> argumentCaptor = ArgumentCaptor.forClass(ApiKeyModel.class);
+        Mockito.verify(apiKeyRepository, Mockito.times(2)).save(argumentCaptor.capture());
+        Assertions.assertTrue(argumentCaptor.getValue().isPdnd());
     }
 
     @Test
@@ -260,8 +269,6 @@ class ManageApiKeyServiceTest {
                 .expectError(ApiKeyManagerException.class)
                 .verify();
     }
-
-
 
     /**
      * Method under test: {@link ManageApiKeyService#getBoApiKeyList(String)}
