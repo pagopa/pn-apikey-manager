@@ -236,7 +236,6 @@ components:
       required: true
       schema:
         type: string
-        x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
   schemas:
     Problem:
       $ref: './remote-refs.yaml#/components/schemas/Problem'

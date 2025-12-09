@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +21,7 @@ import org.springframework.http.codec.support.DefaultServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.mock.http.server.reactive.MockServerHttpResponse;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
@@ -37,7 +37,7 @@ import reactor.test.StepVerifier;
 @EnableConfigurationProperties
 class UsagePlanControllerTest {
 
-    @MockBean
+    @MockitoBean
     private UsagePlanService usagePlanService;
 
     @Autowired

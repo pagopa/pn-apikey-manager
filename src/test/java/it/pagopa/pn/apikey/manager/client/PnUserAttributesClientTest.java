@@ -38,7 +38,7 @@ class PnUserAttributesClientTest {
         when(consentsApi.getPgConsentByType(anyString(), any(CxTypeAuthFleetDto.class), anyString(), any(ConsentTypeDto.class), any(), anyString()))
                 .thenReturn(Mono.just(expectedConsent));
 
-        Mono<ConsentDto> result = pnUserAttributesClient.getPgConsentByType("uid", CxTypeAuthFleetDto.PG.getValue(), RoleConstant.ADMIN_ROLE, ConsentTypeDto.TOS_DEST_B2B, null, "v1");
+        Mono<ConsentDto> result = pnUserAttributesClient.getPgConsentByType("uid", CxTypeAuthFleetDto.PG.getValue(), RoleConstant.ADMIN_ROLE, ConsentTypeDto.TOS_DEST_B2_B, null, "v1");
 
         assertEquals(expectedConsent, result.block());
     }
@@ -49,7 +49,7 @@ class PnUserAttributesClientTest {
         when(consentsApi.getPgConsentByType(anyString(), any(CxTypeAuthFleetDto.class), anyString(), any(ConsentTypeDto.class), any(), anyString()))
                 .thenReturn(Mono.error(new RuntimeException("Error")));
 
-        StepVerifier.create(pnUserAttributesClient.getPgConsentByType("uid", CxTypeAuthFleetDto.PG.getValue(), "USER", ConsentTypeDto.TOS_DEST_B2B, null, "v1"))
+        StepVerifier.create(pnUserAttributesClient.getPgConsentByType("uid", CxTypeAuthFleetDto.PG.getValue(), "USER", ConsentTypeDto.TOS_DEST_B2_B, null, "v1"))
                 .verifyError();
     }
 }

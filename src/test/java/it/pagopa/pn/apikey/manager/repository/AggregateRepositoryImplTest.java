@@ -4,7 +4,7 @@ import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
@@ -25,10 +25,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 class AggregateRepositoryImplTest {
 
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
-    @MockBean
+    @MockitoBean
     private DynamoDbAsyncTable<ApiKeyAggregateModel> dynamoDbAsyncTable;
 
     private AggregateRepositoryImpl aggregateRepository;

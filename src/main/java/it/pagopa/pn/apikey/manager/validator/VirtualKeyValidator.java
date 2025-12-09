@@ -116,8 +116,8 @@ public class VirtualKeyValidator {
     }
 
     private Mono<Void> validateTosConsent(String xPagopaCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, List<String> groups) {
-        return pnExternalRegistriesClient.findPrivacyNoticeVersion(ConsentTypeDto.TOS_DEST_B2B.getValue(), CxTypeAuthFleetDto.PG.getValue())
-                .flatMap(versionDto -> pnUserAttributesClient.getPgConsentByType(xPagopaCxId, xPagopaPnCxType.getValue(), xPagopaPnCxRole, ConsentTypeDto.TOS_DEST_B2B, groups, Integer.toString(versionDto.getVersion())))
+        return pnExternalRegistriesClient.findPrivacyNoticeVersion(ConsentTypeDto.TOS_DEST_B2_B.getValue(), CxTypeAuthFleetDto.PG.getValue())
+                .flatMap(versionDto -> pnUserAttributesClient.getPgConsentByType(xPagopaCxId, xPagopaPnCxType.getValue(), xPagopaPnCxRole, ConsentTypeDto.TOS_DEST_B2_B, groups, Integer.toString(versionDto.getVersion())))
                 .flatMap(consentDto -> {
                     if (Boolean.TRUE.equals(consentDto.getAccepted())) {
                         return Mono.empty();
