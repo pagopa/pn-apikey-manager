@@ -380,7 +380,6 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/7.4.0/client</templateDirectory>
                             <inputSpec>https://raw.githubusercontent.com/pagopa/pn-user-attributes/ff9085160d042e8cc3fc902231a4e94cd4eac2af/docs/openapi/pn-user-consents-api-internal.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
@@ -414,7 +413,6 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/7.4.0/client</templateDirectory>
                             <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/0f83c07ebd1b86d75c009cfd0e9a94692d9c9856/docs/openapi/api-private-v1.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
