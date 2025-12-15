@@ -1,7 +1,6 @@
 package it.pagopa.pn.apikey.manager.middleware.queue.consumer;
 
 import io.awspring.cloud.sqs.annotation.SqsListener;
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.model.PublicKeyEventAction;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
@@ -17,7 +16,6 @@ import org.springframework.messaging.Message;
 @CustomLog
 public class InternalConsumer {
     private final PublicKeyService publicKeyService;
-    private final PnApikeyManagerConfig pnApikeyManagerConfig;
     private static final String HANDLER_REQUEST_JWKS = "pnPublicKeyEventInboundConsumer";
     private static final String HANDLER_REQUEST_DELETE = "pnPublicKeyTtlEventInboundConsumer";
 
@@ -25,7 +23,7 @@ public class InternalConsumer {
      * Handles messages from the internal SQS queue.
      * @param message the incoming message containing PublicKeyEvent payload
      */
-    @SqsListener(queueNames = "#{@pnApikeyManagerConfig.sqs.internalQueueName}")
+    @SqsListener(value = "${pn.apikey.manager.sqs.internalQueueName}")
     public void pnEventInboundInternalConsumer(Message<PublicKeyEvent.Payload> message) {
         log.info("Received message from internal queue: {}", message);
         PublicKeyEvent.Payload payload = message.getPayload();

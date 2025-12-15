@@ -1,6 +1,5 @@
 package it.pagopa.pn.apikey.manager.middleware.queue.consumer;
 
-import it.pagopa.pn.apikey.manager.config.PnApikeyManagerConfig;
 import it.pagopa.pn.apikey.manager.middleware.queue.consumer.event.PublicKeyEvent;
 import it.pagopa.pn.apikey.manager.model.PublicKeyEventAction;
 import it.pagopa.pn.apikey.manager.service.PublicKeyService;
@@ -10,20 +9,19 @@ import org.mockito.Mockito;
 import org.springframework.messaging.Message;
 import reactor.core.publisher.Mono;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 
 class InternalConsumerTest {
 
     private PublicKeyService publicKeyService;
-    private PnApikeyManagerConfig pnApikeyManagerConfig;
     private InternalConsumer internalConsumer;
 
     @BeforeEach
     void setUp() {
         publicKeyService = Mockito.mock(PublicKeyService.class);
-        pnApikeyManagerConfig = Mockito.mock(PnApikeyManagerConfig.class);
-        internalConsumer = new InternalConsumer(publicKeyService, pnApikeyManagerConfig);
+        internalConsumer = new InternalConsumer(publicKeyService);
     }
 
     @Test
