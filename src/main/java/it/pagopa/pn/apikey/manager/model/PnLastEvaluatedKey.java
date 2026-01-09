@@ -48,7 +48,7 @@ public class PnLastEvaluatedKey {
     }
 
     public static PnLastEvaluatedKey deserializeInternalLastEvaluatedKey( String encodedString ) throws JsonProcessingException {
-        String jsonString = new String( Base64.getDecoder().decode( encodedString ), StandardCharsets.UTF_8 );
+        String jsonString = new String( Base64.getUrlDecoder().decode( encodedString ), StandardCharsets.UTF_8 );
         KeyPair keyPair = objectReader.readValue( jsonString );
         PnLastEvaluatedKey pnLastEvaluatedKey = new PnLastEvaluatedKey();
         pnLastEvaluatedKey.setExternalLastEvaluatedKey( keyPair.getEk() );
@@ -66,7 +66,7 @@ public class PnLastEvaluatedKey {
         String result;
         try {
             result = objectWriter.writeValueAsString( toSerialize );
-            result = Base64.getEncoder().encodeToString( result.getBytes(StandardCharsets.UTF_8) );
+            result = Base64.getUrlEncoder().encodeToString( result.getBytes(StandardCharsets.UTF_8) );
         } catch ( JsonProcessingException e ) {
             throw new ApiKeyManagerException(
                     "ERROR_CODE_API_KEY_MANAGER_UNSUPPORTED_LAST_EVALUATED_KEY",
