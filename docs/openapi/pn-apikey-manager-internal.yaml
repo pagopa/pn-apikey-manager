@@ -266,6 +266,7 @@ components:
           type: string
           description: Id dell'api key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         name:
           type: string
           description: Nome dell'api key
@@ -273,6 +274,7 @@ components:
           type: string
           description: Valore dell'api key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         lastUpdate:
           type: string
           description: Data ultima modifica
@@ -340,10 +342,12 @@ components:
           type: string
           description: id dell'api key appena generata
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         apiKey:
           type: string
           description: Valore dell'api key appena generata
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
 
     RequestApiKeyStatus:
       title: Richiesta di cambio stato per una api key

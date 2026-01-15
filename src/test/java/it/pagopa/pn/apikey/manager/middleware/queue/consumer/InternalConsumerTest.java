@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -31,8 +32,10 @@ class InternalConsumerTest {
                 .cxId("testCxId")
                 .build();
 
+        MessageHeaders header = Mockito.mock(MessageHeaders.class);
         Message<PublicKeyEvent.Payload> message = Mockito.mock(Message.class);
         Mockito.when(message.getPayload()).thenReturn(payload);
+        Mockito.when(message.getHeaders()).thenReturn(header);
         Mockito.when(publicKeyService.handlePublicKeyEvent(any())).thenReturn(Mono.empty());
 
         internalConsumer.pnEventInboundInternalConsumer(message);
@@ -48,6 +51,8 @@ class InternalConsumerTest {
                 .build();
 
         Message<PublicKeyEvent.Payload> message = Mockito.mock(Message.class);
+        MessageHeaders header = Mockito.mock(MessageHeaders.class);
+        Mockito.when(message.getHeaders()).thenReturn(header);
         Mockito.when(message.getPayload()).thenReturn(payload);
         Mockito.when(publicKeyService.handlePublicKeyTtlEvent(any())).thenReturn(Mono.empty());
 
@@ -65,6 +70,8 @@ class InternalConsumerTest {
                 .build();
 
         Message<PublicKeyEvent.Payload> message = Mockito.mock(Message.class);
+        MessageHeaders header = Mockito.mock(MessageHeaders.class);
+        Mockito.when(message.getHeaders()).thenReturn(header);
         Mockito.when(message.getPayload()).thenReturn(payload);
         Mockito.when(publicKeyService.handlePublicKeyEvent(any()))
                 .thenReturn(Mono.error(new RuntimeException("JWKS error")));
@@ -80,6 +87,8 @@ class InternalConsumerTest {
                 .build();
 
         Message<PublicKeyEvent.Payload> message = Mockito.mock(Message.class);
+        MessageHeaders header = Mockito.mock(MessageHeaders.class);
+        Mockito.when(message.getHeaders()).thenReturn(header);
         Mockito.when(message.getPayload()).thenReturn(payload);
         Mockito.when(publicKeyService.handlePublicKeyTtlEvent(any()))
                 .thenReturn(Mono.error(new RuntimeException("DELETE error")));
@@ -95,6 +104,8 @@ class InternalConsumerTest {
                 .build();
 
         Message<PublicKeyEvent.Payload> message = Mockito.mock(Message.class);
+        MessageHeaders header = Mockito.mock(MessageHeaders.class);
+        Mockito.when(message.getHeaders()).thenReturn(header);
         Mockito.when(message.getPayload()).thenReturn(payload);
 
         IllegalArgumentException exception = assertThrows(

@@ -843,6 +843,7 @@ components:
           type: string
           description: Id dell'api key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         name:
           type: string
           description: Nome dell'api key
