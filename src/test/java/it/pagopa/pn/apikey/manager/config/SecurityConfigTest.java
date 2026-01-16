@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.config;
 
+import it.pagopa.pn.apikey.manager.CommonTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class SecurityConfigTest {
+class SecurityConfigTest extends CommonTestConfig {
 
     @Autowired
     @Qualifier("strictTransportSecurity")

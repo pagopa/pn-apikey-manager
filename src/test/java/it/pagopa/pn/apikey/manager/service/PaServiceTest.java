@@ -13,8 +13,8 @@ import it.pagopa.pn.apikey.manager.utils.DynamoBatchResponseUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,16 +38,16 @@ class PaServiceTest {
     @Autowired
     private PaService paService;
 
-    @MockBean
+    @MockitoBean
     private PaAggregationRepository paAggregationRepository;
 
-    @MockBean
+    @MockitoBean
     private DynamoBatchResponseUtils dynamoBatchResponseUtils;
 
-    @MockBean
+    @MockitoBean
     private ExternalRegistriesClient externalRegistriesClient;
 
-    @MockBean
+    @MockitoBean
     private AggregateRepository aggregateRepository;
 
     @Test

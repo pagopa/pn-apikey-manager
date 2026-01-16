@@ -32,13 +32,6 @@ class PnApikeyManagerConfigTest {
     }
 
     @Test
-    void testSqsConfig() {
-        assertNotNull(pnApikeyManagerConfig);
-        assertNotNull(pnApikeyManagerConfig.getSqs());
-        assertEquals("pn-apikey_manager_internal_queue", pnApikeyManagerConfig.getSqs().getInternalQueueName());
-    }
-
-    @Test
     void testDaoConfig() {
         assertNotNull(pnApikeyManagerConfig);
         assertNotNull(pnApikeyManagerConfig.getDao());

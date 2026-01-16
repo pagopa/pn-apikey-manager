@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.CommonTestConfig;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PgUserDetailDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.client.PnUserAttributesClient;
@@ -16,11 +17,10 @@ import it.pagopa.pn.apikey.manager.validator.VirtualKeyValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -39,31 +39,30 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @PropertySource("classpath:application-test.properties")
-@EnableConfigurationProperties
-class VirtualKeyServiceTest {
+class VirtualKeyServiceTest extends CommonTestConfig {
 
     @Autowired
     private VirtualKeyService virtualKeyService;
 
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
-    @MockBean
+    @MockitoBean
     private ApiKeyRepository apiKeyRepository;
 
-    @MockBean
+    @MockitoBean
     private PublicKeyRepository publicKeyRepository;
 
-    @MockBean
+    @MockitoBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
-    @MockBean
+    @MockitoBean
     private VirtualKeyValidator virtualKeyValidator;
 
-    @MockBean
+    @MockitoBean
     private PnExternalRegistriesClient pnExternalRegistriesClient;
 
-    @MockBean
+    @MockitoBean
     private PnUserAttributesClient pnUserAttributesClient;
 
     @Test

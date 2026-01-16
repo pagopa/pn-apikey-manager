@@ -356,7 +356,7 @@ Resources:
         ContainerEnvEntry4: !Sub 'PN_APIKEY_MANAGER_HEALTH_CHECK_PATH=${HealthCheckPath}'
         ContainerEnvEntry5: !Sub 'PN_APIKEY_MANAGER_FLAG_PDND=${FlagPdnd}'
         ContainerEnvEntry6: !Sub 'PN_APIKEY_MANAGER_SQS_INTERNALQUEUENAME=${ApikeyManagerInternalQueueName}'
-        ContainerEnvEntry7: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${ApikeyManagerInternalQueueName}'
+        ContainerEnvEntry7: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry8: !Sub 'PN_APIKEY_MANAGER_DAO_PUBLICKEYTABLENAME=${PublicKeyTableName}'
         ContainerEnvEntry9: !Sub 'PN_APIKEY_MANAGER_JWKSCACHEMAXDURATIONSEC=${JwksCacheMaxDurationSec}'
         ContainerEnvEntry10: !Sub 'PN_APIKEY_MANAGER_JWKSCACHERENEWSEC=${JwksCacheRenewSec}'
@@ -375,7 +375,6 @@ Resources:
         ContainerEnvEntry17: !Sub 'PN_APIKEY_MANAGER_USERATTRIBUTESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry18: !Sub 'PN_APIKEY_MANAGER_EXTERNALREGISTRIESBASEURL=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry19: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
-        ContainerEnvEntry20: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         MappedPaths: '/api-key-self/*,/api-key-bo/*,/api-key-prvt/*,/pg-self/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref VpcEgressSubnetsIds

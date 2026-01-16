@@ -345,7 +345,6 @@ components:
       required: true
       schema:
         type: string
-        x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
     queryStatus:
       description: >-
         Action per il cambio stato di una public key
@@ -398,10 +397,12 @@ components:
           type: string
           description: Id della public key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         issuer:
           type: string
           description: Issuer della public key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         name:
           type: string
           description: Nome della public key
@@ -409,6 +410,7 @@ components:
           type: string
           description: Valore dell public key restituito solo se il query param showPublicKey == True
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         createdAt:
           type: string
           description: Data censimento public key
@@ -480,6 +482,7 @@ components:
           type: string
           description: Kid della public key caricata da utilizzare nell'header kid del token JWT
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
         issuer:
           type: string
           description: Valore dell'issuer per la key caricata da utilizzare nel claims iss del token JWT

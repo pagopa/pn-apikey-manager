@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.support.DefaultServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.mock.http.server.reactive.MockServerHttpResponse;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
@@ -40,19 +40,19 @@ class ApiKeysPrvtControllerTest {
     @Autowired
     private ApiKeysPrvtController apiKeysPrvtController;
 
-    @MockBean
+    @MockitoBean
     private ManageApiKeyService manageApiKeyService;
 
     @Qualifier("apikeyManagerScheduler")
-    @MockBean
+    @MockitoBean
     private Scheduler scheduler;
 
-    @MockBean
+    @MockitoBean
     ServerWebExchange serverWebExchange;
-    @MockBean
+    @MockitoBean
     private PnAuditLogBuilder pnAuditLogBuilder;
 
-    @MockBean
+    @MockitoBean
     private PnAuditLogEvent pnAuditLogEvent;
 
     @Test
