@@ -3,7 +3,7 @@ package it.pagopa.pn.apikey.manager.repository;
 import it.pagopa.pn.apikey.manager.entity.PaAggregationModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -26,10 +26,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 class PaAggregationRepositoryImplTest {
 
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
-    @MockBean
+    @MockitoBean
     private DynamoDbAsyncTable<Object> dynamoDbAsyncTable;
 
     @Test

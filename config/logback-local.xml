@@ -7,10 +7,10 @@
         </encoder>
     </appender>
     <logger name="it.pagopa.pn.commons.pnclients.RestTemplateRetryable" level="INFO" />
-    <logger name="it.pagopa.pn" level="DEBUG" />
-    <logger name="software.amazon.awssdk.request" level="TRACE" />
-    <Logger name="io.netty.handler.logging" level="DEBUG" />
-    <Logger name="io.netty.handler.codec.http2.Http2FrameLogger" level="DEBUG" />
+    <logger name="it.pagopa.pn" level="INFO" />
+    <logger name="software.amazon.awssdk.request" level="INFO" />
+    <Logger name="io.netty.handler.logging" level="INFO" />
+    <Logger name="io.netty.handler.codec.http2.Http2FrameLogger" level="INFO" />
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>

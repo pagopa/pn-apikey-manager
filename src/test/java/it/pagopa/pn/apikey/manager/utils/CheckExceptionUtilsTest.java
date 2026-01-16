@@ -26,10 +26,10 @@ class CheckExceptionUtilsTest {
     void testLogAuditOnErrorOrWarnLevel() {
         Throwable throwable = new Throwable();
         PnAuditLogEvent pnAuditLogEvent = mock(PnAuditLogEvent.class);
-        when(pnAuditLogEvent.generateFailure(any(),  any())).thenReturn(new PnAuditLogEvent(
+        when(pnAuditLogEvent.generateFailure(any())).thenReturn(new PnAuditLogEvent(
                 PnAuditLogEventType.AUD_ACC_LOGIN, new HashMap<>(), "Not all who wander are lost", "Arguments"));
         CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, pnAuditLogEvent);
-        verify(pnAuditLogEvent).generateFailure(any(),  any());
+        verify(pnAuditLogEvent).generateFailure(any());
     }
 
     /**
@@ -39,10 +39,10 @@ class CheckExceptionUtilsTest {
     void testLogAuditOnErrorOrWarnLevel2() {
         ApiKeyManagerException throwable = new ApiKeyManagerException("An error occurred", HttpStatus.CONTINUE);
         PnAuditLogEvent pnAuditLogEvent = mock(PnAuditLogEvent.class);
-        when(pnAuditLogEvent.generateWarning(any(),  any())).thenReturn(new PnAuditLogEvent(
+        when(pnAuditLogEvent.generateWarning(any())).thenReturn(new PnAuditLogEvent(
                 PnAuditLogEventType.AUD_ACC_LOGIN, new HashMap<>(), "Not all who wander are lost", "Arguments"));
         CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, pnAuditLogEvent);
-        verify(pnAuditLogEvent).generateWarning(any(),  any());
+        verify(pnAuditLogEvent).generateWarning(any());
     }
 
 
@@ -56,9 +56,9 @@ class CheckExceptionUtilsTest {
         when(pnAuditLogEvent.log()).thenReturn(new PnAuditLogEvent(PnAuditLogEventType.AUD_ACC_LOGIN, new HashMap<>(),
                 "Not all who wander are lost", "Arguments"));
         PnAuditLogEvent pnAuditLogEvent1 = mock(PnAuditLogEvent.class);
-        when(pnAuditLogEvent1.generateFailure(any(),  any())).thenReturn(pnAuditLogEvent);
+        when(pnAuditLogEvent1.generateFailure(any())).thenReturn(pnAuditLogEvent);
         CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, pnAuditLogEvent1);
-        verify(pnAuditLogEvent1).generateFailure(any(),  any());
+        verify(pnAuditLogEvent1).generateFailure(any());
         verify(pnAuditLogEvent).log();
     }
 
@@ -69,9 +69,9 @@ class CheckExceptionUtilsTest {
         when(pnAuditLogEvent.log()).thenReturn(new PnAuditLogEvent(PnAuditLogEventType.AUD_ACC_LOGIN, new HashMap<>(),
                 "Not all who wander are lost", "Arguments"));
         PnAuditLogEvent pnAuditLogEvent1 = mock(PnAuditLogEvent.class);
-        when(pnAuditLogEvent1.generateWarning(any(),  any())).thenReturn(pnAuditLogEvent);
+        when(pnAuditLogEvent1.generateWarning(any())).thenReturn(pnAuditLogEvent);
         CheckExceptionUtils.logAuditOnErrorOrWarnLevel(throwable, pnAuditLogEvent1);
-        verify(pnAuditLogEvent1).generateWarning(any(),  any());
+        verify(pnAuditLogEvent1).generateWarning(any());
         verify(pnAuditLogEvent).log();
     }
 }

@@ -22,13 +22,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.support.DefaultServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.mock.http.server.reactive.MockServerHttpResponse;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
@@ -45,26 +45,26 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ApiKeysControllerTest {
 
-    @MockBean
+    @MockitoBean
     private ManageApiKeyService manageApiKeyService;
 
-    @MockBean
+    @MockitoBean
     private CreateApiKeyService createApiKeyService;
 
     @Autowired
     private ApiKeysController apiKeysController;
 
-    @MockBean
+    @MockitoBean
     private PnAuditLogBuilder auditLogBuilder;
 
-    @MockBean
+    @MockitoBean
     private PnAuditLogEvent pnAuditLogEvent;
 
     @Qualifier("apikeyManagerScheduler")
-    @MockBean
+    @MockitoBean
     private Scheduler scheduler;
 
-    @MockBean
+    @MockitoBean
     ServerWebExchange serverWebExchange;
 
     @ParameterizedTest

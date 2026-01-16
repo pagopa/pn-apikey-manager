@@ -7,6 +7,7 @@ import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import it.pagopa.pn.commons.log.PnLogger;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,7 +41,7 @@ public class ExternalRegistriesClient {
                 .bodyToMono(new ParameterizedTypeReference<List<PaDetailDto>>() {})
                 .doOnError(throwable -> {
                     if (throwable instanceof WebClientResponseException ex) {
-                        throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
+                        throw new ApiKeyManagerException(ex.getMessage(), HttpStatus.valueOf(ex.getStatusCode().value()));
                     }
                 });
     }
@@ -56,7 +57,7 @@ public class ExternalRegistriesClient {
                 .bodyToMono(InternalPaDetailDto.class)
                 .doOnError(throwable -> {
                     if (throwable instanceof WebClientResponseException ex) {
-                        throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
+                        throw new ApiKeyManagerException(ex.getMessage(), HttpStatus.valueOf(ex.getStatusCode().value()));
                     }
                 });
     }
@@ -79,7 +80,7 @@ public class ExternalRegistriesClient {
                 .bodyToMono(new ParameterizedTypeReference<List<PaGroup>>() {})
                 .doOnError(throwable -> {
                     if (throwable instanceof WebClientResponseException ex) {
-                        throw new ApiKeyManagerException(ex.getMessage(), ex.getStatusCode());
+                        throw new ApiKeyManagerException(ex.getMessage(), HttpStatus.valueOf(ex.getStatusCode().value()));
                     }
                 });
     }

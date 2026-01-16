@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Publisher;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.reactive.ClientHttpRequestDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.*;
@@ -40,7 +41,7 @@ public class ResponseExchangeFilter implements ExchangeFilterFunction {
         log.info("Response HTTP from {} {} {} - body: {} - timelapse: {}ms",
                 request.url(),
                 response.statusCode().value(),
-                response.statusCode().name(),
+                HttpStatus.valueOf(response.statusCode().value()).name(),
                 MaskDataUtils.maskInformation(String.format("%1."+MAX_LOGGED_BODY_SIZE+"s", body)),
                 duration);
     }
@@ -50,7 +51,7 @@ public class ResponseExchangeFilter implements ExchangeFilterFunction {
         log.info("Response HTTP from {} {} {} - body: {} - timelapse: {}ms",
                 request.url(),
                 exception.getStatusCode().value(),
-                exception.getStatusCode().name(),
+                HttpStatus.valueOf(exception.getStatusCode().value()).name(),
                 exception.getResponseBodyAsString(),
                 duration);
     }

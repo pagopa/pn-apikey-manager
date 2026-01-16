@@ -25,7 +25,6 @@ public class PnApikeyManagerConfig {
     private int jwksCacheMaxDurationSec;
     private int jwksCacheRenewSec;
     private String lambdaName;
-    private Sqs sqs;
 
     private AttributeResolverDatabase attributeResolversCfgsDatabase;
     private AttributeResolverPgCustom attributeResolversCfgsPgcustom;
@@ -35,11 +34,6 @@ public class PnApikeyManagerConfig {
     @Data
     public static class Dao {
         private String publicKeyTableName;
-    }
-
-    @Data
-    public static class Sqs {
-        private String internalQueueName;
     }
 
     @Data

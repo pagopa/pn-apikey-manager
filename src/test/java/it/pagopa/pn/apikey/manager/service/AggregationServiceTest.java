@@ -12,8 +12,8 @@ import it.pagopa.pn.apikey.manager.repository.PaAggregationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -34,28 +34,28 @@ import static org.mockito.Mockito.*;
 @ExtendWith(SpringExtension.class)
 class AggregationServiceTest {
 
-    @MockBean
+    @MockitoBean
     private AggregateRepository aggregateRepository;
 
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient asyncClient;
 
-    @MockBean
+    @MockitoBean
     private PaAggregationRepository paAggregationRepository;
 
-    @MockBean
+    @MockitoBean
     private UsagePlanService usagePlanService;
 
-    @MockBean
+    @MockitoBean
     private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
-    @MockBean
+    @MockitoBean
     private AggregationConverter aggregationConverter;
 
     @Autowired
     private AggregationService aggregationService;
 
-    @MockBean
+    @MockitoBean
     private ApiGatewayService apiGatewayService;
 
     @Test

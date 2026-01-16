@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.support.DefaultServerCodecConfigurer;
@@ -37,17 +37,17 @@ class AggregationControllerTest {
     @Autowired
     private AggregationController aggregationController;
 
-    @MockBean
+    @MockitoBean
     private AggregationService aggregationService;
 
-    @MockBean
+    @MockitoBean
     private PaService paService;
 
     @Qualifier("apikeyManagerScheduler")
-    @MockBean
+    @MockitoBean
     private Scheduler scheduler;
 
-    @MockBean
+    @MockitoBean
     ServerWebExchange serverWebExchange;
 
     @Test
