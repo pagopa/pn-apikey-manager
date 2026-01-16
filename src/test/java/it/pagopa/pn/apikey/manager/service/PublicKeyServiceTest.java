@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
@@ -49,7 +49,7 @@ class PublicKeyServiceTest {
     private PublicKeyValidator validator;
     private final PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
     private LambdaService lambdaService;
-    @MockBean
+    @MockitoBean
     private PnApikeyManagerConfig pnApikeyManagerConfig;
 
     @BeforeEach
@@ -434,7 +434,7 @@ class PublicKeyServiceTest {
         publicKeyRowDto.setStatus(PublicKeyStatusDto.ACTIVE);
         publicKeyRowDto.setKid("kid");
         publicKeyRowDto.setName("name");
-        publicKeyRowDto.setStatusHistory(null);
+        publicKeyRowDto.setStatusHistory(new ArrayList<>());
         publicKeyRowDto.setCreatedAt(Date.from(Instant.parse(createdAt)));
         responseDto.setItems(List.of(publicKeyRowDto));
         responseDto.setLastKey(null);

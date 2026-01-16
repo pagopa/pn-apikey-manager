@@ -68,6 +68,7 @@ components:
           type: string
           description: Valore dell'api key
           x-field-extra-annotation: "@lombok.ToString.Exclude" # NO EXTERNAL
+          format: password # NO EXTERNAL
 
     Problem:
       type: object

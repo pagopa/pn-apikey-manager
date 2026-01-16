@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.CommonTestConfig;
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.converter.ApiKeyBoConverter;
@@ -20,9 +21,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -45,33 +46,33 @@ import static org.mockito.Mockito.*;
         "pn.apikey.manager.flag.pdnd=true"
 })
 @ExtendWith(SpringExtension.class)
-class ManageApiKeyServiceTest {
+class ManageApiKeyServiceTest extends CommonTestConfig {
 
     @Autowired
     private ManageApiKeyService manageApiKeyService;
 
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
-    @MockBean
+    @MockitoBean
     private ApiGatewayAsyncClient apiGatewayAsyncClient;
 
-    @MockBean
+    @MockitoBean
     private ApiKeyRepository apiKeyRepository;
 
     @Autowired
     private ManageApiKeyService apiKeyService;
 
-    @MockBean
+    @MockitoBean
     private ApiKeyConverter apiKeyConverter;
 
-    @MockBean
+    @MockitoBean
     private ApiKeyBoConverter apiKeyBoConverter;
 
-    @MockBean
+    @MockitoBean
     private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
-    @MockBean
+    @MockitoBean
     private ExternalRegistriesClient externalRegistriesClient;
 
     @Test

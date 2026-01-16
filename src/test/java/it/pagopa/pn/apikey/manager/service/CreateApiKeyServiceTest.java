@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.service;
 
+import it.pagopa.pn.apikey.manager.CommonTestConfig;
 import it.pagopa.pn.apikey.manager.client.ExternalRegistriesClient;
 import it.pagopa.pn.apikey.manager.config.PnApikeyManagerUsagePlanConfig;
 import it.pagopa.pn.apikey.manager.entity.ApiKeyAggregateModel;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
@@ -38,33 +39,33 @@ import static org.mockito.Mockito.when;
         "pn.apikey.manager.flag.pdnd=true"
 })
 @ExtendWith(SpringExtension.class)
-class CreateApiKeyServiceTest {
+class CreateApiKeyServiceTest extends CommonTestConfig {
 
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
-    @MockBean
+    @MockitoBean
     private AggregateRepository aggregateRepository;
 
-    @MockBean
+    @MockitoBean
     private ApiKeyRepository apiKeyRepository;
 
-    @MockBean
+    @MockitoBean
     private AggregationService aggregationService;
 
     @Autowired
     private CreateApiKeyService apiKeyService;
 
-    @MockBean
+    @MockitoBean
     private PaAggregationsService paAggregationsService;
 
-    @MockBean
+    @MockitoBean
     private PnApikeyManagerUsagePlanConfig pnApikeyManagerUsagePlanConfig;
 
-    @MockBean
+    @MockitoBean
     private ExternalRegistriesClient externalRegistriesClient;
 
-    @MockBean
+    @MockitoBean
     private ApiGatewayService apiGatewayService;
 
     @Test

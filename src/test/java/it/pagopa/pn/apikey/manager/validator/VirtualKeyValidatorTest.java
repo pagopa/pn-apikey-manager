@@ -1,5 +1,6 @@
 package it.pagopa.pn.apikey.manager.validator;
 
+import it.pagopa.pn.apikey.manager.CommonTestConfig;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnexternalregistries.v1.dto.PrivacyNoticeVersionResponseDto;
 import it.pagopa.pn.apikey.manager.apikey.manager.generated.openapi.msclient.pnuserattributes.v1.dto.ConsentDto;
 import it.pagopa.pn.apikey.manager.client.PnExternalRegistriesClient;
@@ -20,8 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -38,19 +39,19 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-class VirtualKeyValidatorTest {
+class VirtualKeyValidatorTest extends CommonTestConfig {
 
     @Autowired
     private VirtualKeyValidator validator;
-    @MockBean
+    @MockitoBean
     private DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
-    @MockBean
+    @MockitoBean
     private ApiKeyRepository apiKeyRepository;
-    @MockBean
+    @MockitoBean
     private PublicKeyRepository publicKeyRepository;
-    @MockBean
+    @MockitoBean
     private PnUserAttributesClient pnUserAttributesClient;
-    @MockBean
+    @MockitoBean
     private PnExternalRegistriesClient pnExternalRegistriesClient;
 
     @BeforeEach

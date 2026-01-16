@@ -6,7 +6,7 @@ import it.pagopa.pn.apikey.manager.model.PaGroup;
 import it.pagopa.pn.apikey.manager.model.PaGroupStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,10 +26,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 class ExternalRegistriesClientTest {
 
-    @MockBean
+    @MockitoBean
     WebClient webClient;
 
-    @MockBean
+    @MockitoBean
     ExternalRegistriesWebClient externalRegistriesWebClient;
 
     @Test

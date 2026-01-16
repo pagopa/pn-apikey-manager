@@ -268,7 +268,6 @@ components:
       required: true
       schema:
         type: string
-        x-field-extra-annotation: "@lombok.ToString.Exclude"
 
   schemas:
     Problem:
@@ -357,10 +356,12 @@ components:
           type: string
           description: id della virtual key appena generata
           x-field-extra-annotation: "@lombok.ToString.Exclude"
+          format: password
         virtualKey:
           type: string
           description: Valore della virtual key appena generata
           x-field-extra-annotation: "@lombok.ToString.Exclude"
+          format: password
 
 
     RequestVirtualKeyStatus:
