@@ -557,6 +557,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-apikey-manager-bo'
         IntendedUsage: BACKOFFICE
         APIGatewayARNs: !GetAtt ApiKeyManagerApiGatewayAggregate.Outputs.APIGatewayARN
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   ApiKeyManagerMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
