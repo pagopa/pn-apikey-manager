@@ -325,7 +325,16 @@ Parameters:
       - "true"
       - "false"
 
+  CpuArchitecture:
+    Type: String
+    Default: 'ARM'
+    Description: CPU architecture for the Fargate tasks
 
+  JavaToolOptions:
+    Type: String
+    Default: ''
+    Description: Java tool options for the Fargate tasks
+    
 Resources:
 
   # PN-ApiKey-Manager microservice
@@ -390,6 +399,8 @@ Resources:
         TaskRoleManagedPolicyArn: !Ref ApikeyManagerMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
+        CpuArchitecture: !Ref CpuArchitecture
+        JavaToolOptions: !Ref JavaToolOptions
 
   PgPublicKeyTtlPipe:
     Type: AWS::Pipes::Pipe
